@@ -3,7 +3,7 @@
 		<Header />
 		<v-main>
 			<v-container>
-				<v-row class="mt-1">
+				<v-row class="my-1">
 					<h2 class="primary--text">Editor</h2>
 					<v-btn 
 						plain
@@ -104,7 +104,7 @@
   .my-editor {
     background: #080728;
     color: #ffff;
-		height: 55vh;
+		height: 54vh;
     font-family: Consolas;
     font-size: 14px;
     line-height: 1.5;
@@ -113,7 +113,7 @@
 
 	.output {
     border: 2px solid #080728;
-		height: 32vh;
+		height: 31vh;
     font-family: Consolas;
     font-size: 14px;
     line-height: 1.5;
@@ -122,7 +122,7 @@
 
 	.errorOutput {
     border: 2px solid #080728;
-		height: 14vh;
+		height: 13vh;
     font-family: Consolas;
     font-size: 14px;
     line-height: 1.5;
@@ -135,7 +135,7 @@
 
 	.overlaybtn {
 		position: fixed;
-		top: 16vh;
+		top: 18vh;
 		left: 46vw;
 		display: flex;
 		align-items: center;
