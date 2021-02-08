@@ -11,7 +11,7 @@ const vuetify = new Vuetify({
 			light: {
 				primary: "#0E0D47",
 				secondary: "#080728",
-				sucess: "#3EBCE5",
+				success: "#3EBCE5",
 				error: "#B80000",
 			},
 		},
