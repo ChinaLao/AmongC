@@ -2,11 +2,19 @@
 	<v-app-bar
 		app
 		absolute
-		color="blue darken-4"
+		color="primary"
 		dark
-		class="text-h5 font-weight-bold"
-		>Random Name Generator</v-app-bar
+		class="text-h4 font-weight-bold"
 	>
+		<v-row>
+			<v-avatar class="mx-5" tile size="50">
+				<v-img
+					:src="require('@/assets/logo.png')"
+				></v-img>
+			</v-avatar>
+			<span class="mt-1">Among C</span>
+		</v-row>
+	</v-app-bar>
 </template>
 
 <script>
