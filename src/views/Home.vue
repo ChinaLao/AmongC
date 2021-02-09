@@ -4,42 +4,51 @@
     <v-main>
       <v-container>
         <v-row class="my-1">
-          <h2 class="primary--text">Editor</h2>
-          <v-btn
-            plain
-            fab
-            small
-            color="success darken-2"
-            :loading="runClicked"
-            :disabled="!code || code === ''"
-            @click="run()"
-          >
-            <v-icon>play_arrow</v-icon>
-          </v-btn>
-          <v-btn
-            plain
-            fab
-            small
-            color="error lighten-2"
-            :disabled="!runClicked"
-            @click="stop()"
-          >
-            <v-icon>stop</v-icon>
-          </v-btn>
-          <v-btn
-            plain
-            fab
-            small
-            color="error lighten-2"
-            :disabled="!code || code === '' || runClicked"
-            @click="code = ''"
-          >
-            <v-icon>backspace</v-icon>
-          </v-btn>
-        </v-row>
-        <v-row class="my-1" align="center">
           <v-col cols="6">
-            <v-row class="mb-1">
+            <v-row>
+              <h2 class="primary--text">Editor</h2>
+              <v-btn
+                plain
+                fab
+                small
+                color="success darken-2"
+                :loading="runClicked"
+                :disabled="!code || code === ''"
+                @click="run()"
+              >
+                <v-icon>play_arrow</v-icon>
+              </v-btn>
+              <v-btn
+                plain
+                fab
+                small
+                color="error lighten-2"
+                :disabled="!runClicked"
+                @click="stop()"
+              >
+                <v-icon>stop</v-icon>
+              </v-btn>
+              <v-btn
+                plain
+                fab
+                small
+                color="error lighten-2"
+                :disabled="!code || code === '' || runClicked"
+                @click="code = ''"
+              >
+                <v-icon>backspace</v-icon>
+              </v-btn>
+            </v-row>
+          </v-col>
+          <v-col cols="5" class="ml-2">
+						<v-row>
+							<h2>Lexeme Table</h2>
+						</v-row>
+          </v-col>
+        </v-row>
+        <v-row align="center">
+          <v-col cols="6">
+            <v-row>
               <prism-editor
                 class="my-editor pt-8"
                 v-model="code"
@@ -47,20 +56,9 @@
                 line-numbers
               ></prism-editor>
             </v-row>
-            <v-row>
-              <h2 class="error--text">Lexical Error</h2>
-              <prism-editor
-                class="errorOutput"
-                v-model="error"
-                :highlight="highlighter"
-                line-numbers
-                readonly
-              ></prism-editor>
-            </v-row>
           </v-col>
           <v-col class="ml-2">
-            <v-row class="mb-1">
-              <h2 class="secondary--text">Lexical Table</h2>
+            <v-row>
               <prism-editor
                 class="output"
                 v-model="lexical"
@@ -70,10 +68,10 @@
               ></prism-editor>
             </v-row>
             <v-row>
-              <h2 class="secondary--text">Syntax Message</h2>
+              <h2 class="error--text">Errors</h2>
               <prism-editor
-                class="output"
-                v-model="syntax"
+                class="errorOutput"
+                v-model="error"
                 :highlight="highlighter"
                 line-numbers
                 readonly
@@ -126,7 +124,7 @@ export default {
 .my-editor {
   background: #080728;
   color: #ffff;
-  height: 54vh;
+  height: 72vh;
   font-family: Consolas;
   font-size: 14px;
   line-height: 1.5;
@@ -135,7 +133,7 @@ export default {
 
 .output {
   border: 2px solid #080728;
-  height: 31vh;
+  height: 50vh;
   font-family: Consolas;
   font-size: 14px;
   line-height: 1.5;
@@ -144,7 +142,7 @@ export default {
 
 .errorOutput {
   border: 2px solid #080728;
-  height: 13vh;
+  height: 17vh;
   font-family: Consolas;
   font-size: 14px;
   line-height: 1.5;
