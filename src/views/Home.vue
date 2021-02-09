@@ -41,9 +41,9 @@
             </v-row>
           </v-col>
           <v-col cols="5" class="ml-2">
-						<v-row>
-							<h2>Lexeme Table</h2>
-						</v-row>
+            <v-row>
+              <h2>Lexeme Table</h2>
+            </v-row>
           </v-col>
         </v-row>
         <v-row align="center">
@@ -61,7 +61,7 @@
             <v-row>
               <prism-editor
                 class="output"
-                v-model="lexical"
+                v-model="lexeme"
                 :highlight="highlighter"
                 line-numbers
                 readonly
@@ -101,6 +101,8 @@ export default {
   },
   data: () => ({
     code: null,
+    lexeme: null,
+    error: null,
     runClicked: false,
   }),
   methods: {
@@ -109,8 +111,9 @@ export default {
     },
     async run() {
       this.runClicked = true;
-      //code for run
-      await new Promise((r) => setTimeout(r, 5000));
+      this.lexeme = await this.$store.dispatch("lexical/GET_LEXEME", this.code);
+      console.log(this.lexeme);
+      // await new Promise((r) => setTimeout(r, 5000));
       this.runClicked = false;
     },
     stop() {
