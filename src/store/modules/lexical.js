@@ -14,8 +14,13 @@ export default {
   actions: {
     GET_LEXEME({ commit }, payload) {
       try {
-        commit("SET_LEXEME", payload);
-        return payload;
+        const code = payload.split('\n');
+        const byLineCode = code.map((mappedCode) => {
+          return {token: mappedCode}
+        });
+        commit("SET_LEXEME", byLineCode);
+        return byLineCode;
+
       } catch (errorMsg) {
         console.log(errorMsg);
       }
