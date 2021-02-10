@@ -57,25 +57,25 @@
               ></prism-editor>
             </v-row>
           </v-col>
-          <v-col class="ml-2">
+          <v-col cols="5" class="ml-2">
             <v-row>
-              <prism-editor
-                class="output"
-                v-model="lexeme"
-                :highlight="highlighter"
-                line-numbers
-                readonly
-              ></prism-editor>
+              <v-data-table
+                :headers="lexemeTableHeaders"
+                :items="lexeme"
+                :items-per-page="4"
+                height="200"
+                class="output elevation-1"
+              ></v-data-table>
             </v-row>
             <v-row>
               <h2 class="error--text">Errors</h2>
-              <prism-editor
-                class="errorOutput"
-                v-model="error"
-                :highlight="highlighter"
-                line-numbers
-                readonly
-              ></prism-editor>
+              <v-data-table
+                :headers="errorTableHeaders"
+                :items="lexeme"
+                :items-per-page="1"
+                height="120"
+                class="errorOutput elevation-1"
+              ></v-data-table>
             </v-row>
           </v-col>
         </v-row>
@@ -101,23 +101,42 @@ export default {
   },
   data: () => ({
     code: null,
-    lexeme: null,
-    error: null,
+    error: [],
     runClicked: false,
+    lexemeTableHeaders: [
+      {
+        text: "Lexeme",
+        align: "start",
+        sortable: false,
+        value: "token",
+      },
+    ],
+    errorTableHeaders: [
+      {
+        text: "Lexeme",
+        align: "start",
+        sortable: false,
+        value: "token",
+      },
+    ],
   }),
   methods: {
     highlighter(code) {
       return highlight(code, languages.js);
     },
-    async run() {
+    run() {
       this.runClicked = true;
-      this.lexeme = await this.$store.dispatch("lexical/GET_LEXEME", this.code);
+      this.$store.dispatch("lexical/GET_LEXEME", this.code);
       console.log(this.lexeme);
-      // await new Promise((r) => setTimeout(r, 5000));
       this.runClicked = false;
     },
     stop() {
       this.runClicked = false;
+    },
+  },
+  computed: {
+    lexeme() {
+      return this.$store.getters["lexical/LEXEME"];
     },
   },
 };
@@ -136,7 +155,7 @@ export default {
 
 .output {
   border: 2px solid #080728;
-  height: 50vh;
+  height: 40vh;
   font-family: Consolas;
   font-size: 14px;
   line-height: 1.5;
@@ -145,7 +164,7 @@ export default {
 
 .errorOutput {
   border: 2px solid #080728;
-  height: 17vh;
+  height: 27.5vh;
   font-family: Consolas;
   font-size: 14px;
   line-height: 1.5;
