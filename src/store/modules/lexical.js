@@ -4,9 +4,13 @@ export default {
     lexeme: [],
   },
   getters: {
+    SET_BY_LINE_CODE: (state) => state.byLineCode,
     LEXEME: (state) => state.lexeme,
   },
   mutations: {
+    SET_BY_LINE_CODE(state, payload) {
+      state.byLineCode = payload;
+    },
     SET_LEXEME(state, payload) {
       state.lexeme = payload;
     },
@@ -14,13 +18,36 @@ export default {
   actions: {
     GET_LEXEME({ commit }, payload) {
       try {
-        const code = payload.split('\n');
-        const byLineCode = code.map((mappedCode) => {
-          return {token: mappedCode}
-        });
-        commit("SET_LEXEME", byLineCode);
-        return byLineCode;
+        const dictionary = {
+          IN: "IN",
+          OUT: "OUT",
+        };
+        const code = payload.split("\n"); // returns an array of lines of code
 
+        const byLineCode = code.map((mappedCode) => {
+          return { token: mappedCode };
+        }); // returns an array of object of lines of code
+
+        let codeByWord = [];
+
+        byLineCode.forEach((element) => {
+          const splitElement = element.token.split(/[.\-_!%/*/+]/);
+
+          if (Object.prototype.hasOwnProperty.call(dictionary, splitElement)) {
+            const obj = {
+              word: splitElement,
+              token: dictionary[splitElement],
+            };
+            codeByWord.push(obj);
+          }
+
+        }); // returns code split to words with tokens
+
+        commit("SET_BY_LINE_CODE", byLineCode);
+        commit("SET_LEXEME", codeByWord);
+        
+        return codeByWord;
+        
       } catch (errorMsg) {
         console.log(errorMsg);
       }

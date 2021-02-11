@@ -108,6 +108,11 @@ export default {
         text: "Lexeme",
         align: "start",
         sortable: false,
+        value: "word",
+      },
+      {
+        text: "Token",
+        sortable: false,
         value: "token",
       },
     ],
