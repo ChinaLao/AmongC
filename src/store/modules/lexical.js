@@ -19,9 +19,13 @@ export default {
   actions: {
     GET_LEXEME({ commit }, payload) {
       try {
-        const dictionary = {
+        const keywordDictionary = {
           IN: "IN",
           OUT: "OUT",
+        };
+        const symbolDictionary = {
+          "(": "(",
+          "[": "[",
         };
         const code = payload.split("\n"); // returns an array of lines of code
 
@@ -31,32 +35,56 @@ export default {
 
         let codeByWord = [];
 
-        byLineCode.forEach((element) => {
-          const splitElement = element.token.split(/[.\-_!%/*/+]/);
+        byLineCode.forEach((lineElement) => {
+          const wordOnly = lineElement.token.split(/[%/*+-=!><;,.()\][{}:#\s]/);
+          const symbolOnly = lineElement.token.split(/[A-Za-z 0-9]/);
+          console.log(wordOnly, symbolOnly);
+          wordOnly.forEach((wordElement) => {
+            if (
+              Object.prototype.hasOwnProperty.call(
+                keywordDictionary,
+                wordElement
+              )
+            ) {
+              const obj = {
+                word: wordElement,
+                token: keywordDictionary[wordElement],
+              };
+              codeByWord.push(obj);
+            }
+          });
+          symbolOnly.forEach((symbolElement) => {
+            const symbols = symbolElement.split("");
 
-          if (Object.prototype.hasOwnProperty.call(dictionary, splitElement)) {
-            const obj = {
-              word: splitElement,
-              token: dictionary[splitElement],
-            };
-            codeByWord.push(obj);
-          }
-
+            symbols.forEach((symbol) => {
+              if (
+                Object.prototype.hasOwnProperty.call(
+                  symbolDictionary,
+                  symbol
+                )
+              ) {
+                const obj = {
+                  word: symbol,
+                  token: symbolDictionary[symbol],
+                };
+                codeByWord.push(obj);
+              }
+            });
+          });
         }); // returns code split to words with tokens
 
         commit("SET_BY_LINE_CODE", byLineCode);
         commit("SET_LEXEME", codeByWord);
-        
-        return codeByWord;
 
+        return codeByWord;
       } catch (errorMsg) {
         console.log(errorMsg);
       }
     },
-    CLEAR({ commit }){
+    CLEAR({ commit }) {
       const byLineCode = [];
       const lexeme = [];
-      
+
       commit("SET_BY_LINE_CODE", byLineCode);
       commit("SET_LEXEME", lexeme);
     },
