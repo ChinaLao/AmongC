@@ -34,7 +34,7 @@
                 small
                 color="error lighten-2"
                 :disabled="!code || code === '' || runClicked"
-                @click="code = ''"
+                @click="clearCode()"
               >
                 <v-icon>backspace</v-icon>
               </v-btn>
@@ -138,6 +138,10 @@ export default {
     stop() {
       this.runClicked = false;
     },
+    clearCode() {
+      this.code = "";
+      this.$store.dispatch("lexical/CLEAR");
+    }
   },
   computed: {
     lexeme() {

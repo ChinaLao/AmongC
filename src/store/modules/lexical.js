@@ -1,6 +1,7 @@
 export default {
   namespaced: true,
   state: {
+    byLineCode: [],
     lexeme: [],
   },
   getters: {
@@ -47,10 +48,17 @@ export default {
         commit("SET_LEXEME", codeByWord);
         
         return codeByWord;
-        
+
       } catch (errorMsg) {
         console.log(errorMsg);
       }
+    },
+    CLEAR({ commit }){
+      const byLineCode = [];
+      const lexeme = [];
+      
+      commit("SET_BY_LINE_CODE", byLineCode);
+      commit("SET_LEXEME", lexeme);
     },
     // async GET_DISCOUNT_LIST({ commit }) {
     //     try{
