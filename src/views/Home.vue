@@ -7,37 +7,61 @@
           <v-col cols="6">
             <v-row>
               <h2 class="primary--text">Editor</h2>
-              <v-btn
-                plain
-                fab
-                small
-                color="success darken-2"
-                :loading="runClicked"
-                :disabled="!code || code === ''"
-                @click="run()"
-              >
-                <v-icon>play_arrow</v-icon>
-              </v-btn>
-              <v-btn
-                plain
-                fab
-                small
-                color="error lighten-2"
-                :disabled="!runClicked"
-                @click="stop()"
-              >
-                <v-icon>stop</v-icon>
-              </v-btn>
-              <v-btn
-                plain
-                fab
-                small
-                color="error lighten-2"
-                :disabled="!code || code === '' || runClicked"
-                @click="clearCode()"
-              >
-                <v-icon>backspace</v-icon>
-              </v-btn>
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn
+                    plain
+                    fab
+                    small
+                    color="success darken-2"
+                    :loading="runClicked"
+                    :disabled="!code || code === ''"
+                    @click="run()"
+                    v-bind="attrs"
+                    v-on="on"
+                  >
+                    <v-icon>play_arrow</v-icon>
+                  </v-btn>
+                </template>
+                <span>Analyze Program</span>
+              </v-tooltip>
+
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn
+                    plain
+                    fab
+                    small
+                    color="error lighten-2"
+                    :disabled="!runClicked"
+                    @click="stop()"
+                    v-bind="attrs"
+                    v-on="on"
+                  >
+                    <v-icon>stop</v-icon>
+                  </v-btn>
+                </template>
+                <span>Stop Analyzing</span>
+              </v-tooltip>
+
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn
+                    plain
+                    fab
+                    small
+                    color="error lighten-2"
+                    :disabled="!code || code === '' || runClicked"
+                    @click="clearCode()"
+                    v-bind="attrs"
+                    v-on="on"
+                  >
+                    <v-icon>backspace</v-icon>
+                  </v-btn>
+                </template>
+                <span>Clear All</span>
+              </v-tooltip>
+
             </v-row>
           </v-col>
           <v-col cols="5" class="ml-2">
@@ -141,7 +165,7 @@ export default {
     clearCode() {
       this.code = "";
       this.$store.dispatch("lexical/CLEAR");
-    }
+    },
   },
   computed: {
     lexeme() {
