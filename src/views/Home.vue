@@ -62,7 +62,7 @@
               <v-data-table
                 :headers="lexemeTableHeaders"
                 :items="lexeme"
-                :items-per-page="4"
+                :items-per-page="5"
                 height="200"
                 class="output elevation-1"
               ></v-data-table>
@@ -72,7 +72,7 @@
               <v-data-table
                 :headers="errorTableHeaders"
                 :items="lexeme"
-                :items-per-page="1"
+                :items-per-page="5"
                 height="120"
                 class="errorOutput elevation-1"
               ></v-data-table>
