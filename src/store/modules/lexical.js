@@ -20,8 +20,35 @@ export default {
     GET_LEXEME({ commit }, payload) {
       try {
         const keywordDictionary = {
-          IN: "IN",
-          OUT: "OUT",
+          IN: "Main Start",
+          OUT: "Main End",
+          int: "Integer Data Type",
+          dec: "Decimal Data Type",
+          str: "String Data Type",
+          bool: "Boolean Data Type",
+          empty: "Void Data Type",
+          struct: "Data Structure",
+          shoot: "Output Keyword",
+          scan: "Input Keyword",
+          if: "If Condition Keyword",
+          else: "Else Condition Keyword",
+          elf: "Else If Condition Keyword",
+          switch: "Switch Condition Keyword",
+          vote: "Switch Case",
+          default: "Switch Case Default",
+          for: "For Loop Keyword",
+          while: "While Loop Keyword",
+          do: "Do While Loop Keyword",
+          kill: "Break Control Keyword",
+          continue: "Continue Control Keyword",
+          true: "Boolean True Value",
+          false: "Boolean False Value",
+          return: "Return Keyword",
+          and: "Logical And Keyword",
+          or: "Logical Or Keyword",
+          vital: "Declare Constant Keyword",
+          task: "Declare Function Keyword",
+          clean: "Clear Screen Keyword",
         };
         const symbolDictionary = {
           ";": "Terminator",
@@ -78,10 +105,7 @@ export default {
 
             symbols.forEach((symbol) => {
               if (
-                Object.prototype.hasOwnProperty.call(
-                  symbolDictionary,
-                  symbol
-                )
+                Object.prototype.hasOwnProperty.call(symbolDictionary, symbol)
               ) {
                 const obj = {
                   word: symbol,
