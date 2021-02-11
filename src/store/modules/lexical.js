@@ -24,8 +24,28 @@ export default {
           OUT: "OUT",
         };
         const symbolDictionary = {
+          ";": "Terminator",
+          ",": "Separator",
+          ".": "decimal point; struct element accessor",
+          '"': '"',
           "(": "(",
+          ")": ")",
           "[": "[",
+          "]": "]",
+          "{": "{",
+          "}": "}",
+          ":": ":",
+          "#": "Single line comment",
+          "'": "'",
+          "=": "=",
+          "+": "+",
+          "-": "-",
+          "*": "*",
+          "/": "/",
+          "%": "%",
+          ">": ">",
+          "<": "<",
+          "!": "!",
         };
         const code = payload.split("\n"); // returns an array of lines of code
 
