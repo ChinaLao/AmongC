@@ -159,8 +159,8 @@ export default {
     },
     run() {
       this.runClicked = true;
-      this.$store.dispatch("lexical/GET_LEXEME", this.code);
-      console.log(this.lexeme);
+      // this.$store.dispatch("lexical/GET_LEXEME", this.code);
+      this.$store.dispatch("syntax/GET_SYNTAX", this.code);
       this.runClicked = false;
     },
     stop() {
@@ -173,7 +173,7 @@ export default {
   },
   computed: {
     lexeme() {
-      return this.$store.getters["lexical/LEXEME"];
+      return this.$store.getters["syntax/LEXEME"];
     },
   },
 };
