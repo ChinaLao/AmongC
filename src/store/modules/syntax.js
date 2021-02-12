@@ -34,12 +34,12 @@ export default {
       //   parser.parse("adfe34bc zxg");
       const grammar = {
         rules: [
-          ["\\s+\\t+", "/* skip whitespace */"],
+          ["\\s+", "/* skip whitespace */"],
           //   ["\\t+", "/* skip tab */"],
-          ["int", "return 'int';"],
+
           ["IN", "return 'IN';"],
           ["OUT", "return 'OUT';"],
-
+          ["int", "return 'int';"],
           ["dec", "return 'dec';"],
           ["str", "return 'str';"],
           ["bool", "return 'bool';"],
@@ -69,40 +69,38 @@ export default {
           ["clean", "return 'clean';"],
 
           [";", "return ';';"],
-
-          //   [";", "return ';';"],
-          //   [",", "return ',';"],
-          //   [".", "return '.';"],
-          //   ['"', "return" + '"' + ";"],
-          //   ["(", "return '(';"],
-          //   [")", "return ')';"],
-          //   ["{", "return '{';"],
-          //   ["}", "return '}';"],
-          //   ["[", "return '[';"],
-          //   ["]", "return ']';"],
-          //   [":", "return ':';"],
-          //   ["#", "return '#';"],
-          //   ["'", "return ''';"],
-          //   ["==", "return '==';"],
-          //   [">=", "return '>=';"],
-          //   ["<=", "return '<=';"],
-          //   ["!=", "return '!=';"],
-          //   ["+=", "return '+=';"],
-          //   ["-=", "return '-=';"],
-          //   ["**=", "return '**=';"],
-          //   ["//=", "return '//=';"],
-          //   ["/=", "return '/=';"],
-          //   ["%=", "return '%=';"],
-          //   ["=", "return '=';"],
-          //   ["++", "return '++';"],
-          //   ["+", "return '+';"],
-          //   ["--", "return '--';"],
-          //   ["-", "return '-';"],
-          //   ["**", "return '**';"],
-          //   ["*", "return '*';"],
-          //   ["//", "return '//';"],
-          //   ["/", "return '/';"],
-          //   ["%", "return '%';"],
+          [",", "return ',';"],
+          [".", "return '.';"],
+          ['\\"', "return '\"';"],
+          ["\\(", "return '(';"],
+          ["\\)", "return ')';"],
+          ["{", "return '{';"],
+          ["}", "return '}';"],
+          ["\\[", "return '[';"],
+          ["\\]", "return ']';"],
+          ["\\:", "return ':';"],
+          ["#", "return '#';"],
+          ["\\'", 'return "\'";'],
+          ["==", "return '==';"],
+          [">=", "return '>=';"],
+          ["<=", "return '<=';"],
+          ["!=", "return '!=';"],
+          ["\\+=", "return '+=';"],
+          ["-=", "return '-=';"],
+          ["\\*\\*=", "return '**=';"],
+          ["//=", "return '//=';"],
+          ["/=", "return '/=';"],
+          ["%=", "return '%=';"],
+          ["=", "return '=';"],
+          ["\\+\\+", "return '++';"],
+          ["\\+", "return '+';"],
+          ["--", "return '--';"],
+          ["-", "return '-';"],
+          ["\\*\\*", "return '**';"],
+          ["\\*", "return '*';"],
+          ["//", "return '//';"],
+          ["/", "return '/';"],
+          ["%", "return '%';"],
 
           ["#.+", "return 'comment';"],
           ["[a-z]+[a-zA-Z0-9]*", "return 'identifier';"],
@@ -121,7 +119,7 @@ export default {
       codeByLine.forEach((line, i) => {
         console.log(keyword);
         index = 0;
-        keyword = "";
+        keyword = ""; //pag nabasa niya yung unang keyword sa isang line, nagnenext line na siya, di niya na binabasa yung iba sadge
         while (index < line.length && line[index].match(/[A-Za-z]/g)) {
           //all symbols naka not A-Z and not 0-9
           console.log(line[index], index, keyword);
