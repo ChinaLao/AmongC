@@ -1,3 +1,4 @@
+/* eslint-disable no-prototype-builtins */
 export default {
   namespaced: true,
   state: {
@@ -49,8 +50,8 @@ export default {
           vital: "Declare Constant Keyword",
           task: "Declare Function Keyword",
           clean: "Clear Screen Keyword",
-        };
-        const symbolDictionary = {
+          // };
+          // const symbolDictionary = {
           ";": "Terminator",
           ",": "Separator",
           ".": "decimal point; struct element accessor",
@@ -75,49 +76,103 @@ export default {
           "!": "!",
         };
         const code = payload.split("\n"); // returns an array of lines of code
-
-        const byLineCode = code.map((mappedCode) => {
-          return { token: mappedCode };
-        }); // returns an array of object of lines of code
-
         let codeByWord = [];
-
-        byLineCode.forEach((lineElement) => {
-          const wordOnly = lineElement.token.split(/[%/*+-=!><;,.()\][{}:#\s]/);
-          const symbolOnly = lineElement.token.split(/[A-Za-z 0-9]/);
-          console.log(wordOnly, symbolOnly);
-          wordOnly.forEach((wordElement) => {
-            if (
-              Object.prototype.hasOwnProperty.call(
-                keywordDictionary,
-                wordElement
-              )
-            ) {
-              const obj = {
-                word: wordElement,
-                token: keywordDictionary[wordElement],
-              };
-              codeByWord.push(obj);
-            }
-          });
-          symbolOnly.forEach((symbolElement) => {
-            const symbols = symbolElement.split("");
-
-            symbols.forEach((symbol) => {
-              if (
-                Object.prototype.hasOwnProperty.call(symbolDictionary, symbol)
-              ) {
-                const obj = {
-                  word: symbol,
-                  token: symbolDictionary[symbol],
-                };
-                codeByWord.push(obj);
+        code.forEach((line, index) => {
+          let keyword = "";
+          let splitCode = [];
+          let quoteCounter = 0;
+          let isPartOfStr = false;
+          for (let counter = 0; counter < line.length; counter++) {
+            if (line.charAt(counter).match(/[A-Za-z0-9"]/g) && !isPartOfStr) {
+              // for keywords
+              console.log(counter, line.charAt(counter));
+              if (line.charAt(counter) === '"') {
+                isPartOfStr = true;
+                counter--;
+              } else keyword += line.charAt(counter);
+            } else if (isPartOfStr || line.charAt(counter) === '"') {
+              // for string literals
+              console.log(counter, line.charAt(counter));
+              while (quoteCounter !== 2 && counter < line.length) {
+                keyword += line.charAt(counter);
+                if (line.charAt(counter) === '"') quoteCounter++;
+                if (quoteCounter === 2) {
+                  const obj = {
+                    word: keyword,
+                    line: index + 1,
+                  };
+                  keyword = "";
+                  isPartOfStr = false;
+                  splitCode.push(obj);
+                }
+                if (line.charAt(counter) === '"') {
+                  const obj = {
+                    word: line.charAt(counter),
+                    line: index + 1,
+                  };
+                  splitCode.push(obj);
+                  if (quoteCounter === 2) {
+                    isPartOfStr = false;
+                  }
+                }
+                counter++;
               }
-            });
-          });
-        }); // returns code split to words with tokens
+              quoteCounter = 0;
+              counter--;
+            } else {
+              // to push the remaining part of keyword whenever a symbol is encountered
+              console.log(counter, line.charAt(counter));
+              if (keyword !== "" && keyword !== " " && keyword !== "\t") {
+                const obj = {
+                  word: keyword,
+                  line: index + 1,
+                };
+                splitCode.push(obj);
+                keyword = "";
+              }
+            }
+            if (
+              // for symbols
+              line.charAt(counter).match(/[^A-Za-z0-9" \t]/g) &&
+              !isPartOfStr
+            ) {
+              console.log(counter, line.charAt(counter));
+              const obj = {
+                word: line.charAt(counter),
+                line: index + 1,
+              };
+              splitCode.push(obj);
+            }
+          }
+          if (keyword !== "") {
+            // to push the remaining keywords
+            const obj = {
+              word: keyword,
+              line: index + 1,
+            };
+            splitCode.push(obj);
+          }
+          // reset all values
+          keyword = "";
+          quoteCounter = 0;
+          isPartOfStr = false;
 
-        commit("SET_BY_LINE_CODE", byLineCode);
+          // search all found words and their tokens
+          splitCode.forEach((wordElement) => {
+            const finalObj = {
+              word: wordElement.word,
+              line: wordElement.line,
+            };
+            if (keywordDictionary.hasOwnProperty(finalObj.word))
+              finalObj.token = keywordDictionary[finalObj.word];
+            else if (finalObj.word.match(/"/g))
+              finalObj.token = "String Literal";
+            codeByWord.push(finalObj);
+          });
+          splitCode = [];
+        });
+
+        commit("SET_BY_LINE_CODE", code);
         commit("SET_LEXEME", codeByWord);
 
         return codeByWord;
@@ -132,46 +187,5 @@ export default {
       commit("SET_BY_LINE_CODE", byLineCode);
       commit("SET_LEXEME", lexeme);
     },
-    // async GET_DISCOUNT_LIST({ commit }) {
-    //     try{
-    //         const discountListRef = await DB.collection('providers')
-    //             .doc('settings')
-    //             .collection('pieces_discount')
-    //             .get();
-
-    //         const discounts = discountListRef.docs.map(discount => {
-    //             const data = discount.data();
-    //             data.id = discount.id;
-    //             return data;
-    //         });
-    //         commit('SetDiscountList', discounts)
-    //     } catch(error){
-    //         throw error;
-    //     }
-    // },
-    // async ADD_DISCOUNT({ commit }, payload){
-    //     try {
-    //         const discount = await DB.collection('providers').doc('settings').collection('pieces_discount').add(payload);
-    //         payload.id = discount.id;
-    //         commit('AddToDiscountList', payload);
-
-    //     } catch(error) {
-    //         throw error;
-    //     }
-    // },
-    // async UPDATE_DISCOUNT({ commit }, payload) {
-    //     const id = payload.id;
-    //     delete payload.id;
-
-    //     try {
-    //       await DB.collection('providers').doc('settings').collection('pieces_discount').doc(id).update(payload);
-    //       payload.id = id;
-    //       console.log(payload);
-    //       commit('UpdateDiscountList', payload);
-
-    //     } catch(error) {
-    //       throw error;
-    //     }
-    // },
   },
 };
