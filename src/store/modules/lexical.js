@@ -50,8 +50,7 @@ export default {
           vital: "Declare Constant Keyword",
           task: "Declare Function Keyword",
           clean: "Clear Screen Keyword",
-          // };
-          // const symbolDictionary = {
+
           ";": "Terminator",
           ",": "Separator",
           ".": "decimal point; struct element accessor",
@@ -82,6 +81,7 @@ export default {
           let splitCode = [];
           let quoteCounter = 0;
           let isPartOfStr = false;
+          let isPartOfDec = false;
           for (let counter = 0; counter < line.length; counter++) {
             if (line.charAt(counter).match(/[A-Za-z"]/g) && !isPartOfStr) {
               // for keywords
@@ -127,8 +127,21 @@ export default {
               }
               quoteCounter = 0;
               counter--;
-            } else if (line.charAt(counter).match(/^[0-9.]+$/g)) {
-              // for number literals
+            } else if (
+              line.charAt(counter).match(/[.]/g) &&
+              !isPartOfDec &&
+              keyword.match(/^[0-9]+$/g)
+            ) {
+              // for dec literals
+              console.log(counter, line.charAt(counter));
+              if (keyword.match(/^[0-9]+$/g)) {
+                console.log(counter, line.charAt(counter));
+                isPartOfDec = true;
+                keyword += line.charAt(counter);
+              }
+            } else if (line.charAt(counter).match(/[0-9]/g)) {
+              // for int literals
+              console.log(counter, line.charAt(counter));
               keyword += line.charAt(counter);
             } else {
               // to push the remaining part of keyword whenever a symbol is encountered
@@ -140,12 +153,14 @@ export default {
                 };
                 splitCode.push(obj);
                 keyword = "";
+                isPartOfDec = false;
               }
             }
             if (
               // for symbols
               line.charAt(counter).match(/[^A-Za-z0-9" \t]/g) &&
-              !isPartOfStr
+              !isPartOfStr &&
+              !isPartOfDec
             ) {
               console.log(counter, line.charAt(counter));
               const obj = {
