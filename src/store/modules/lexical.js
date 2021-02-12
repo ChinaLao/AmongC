@@ -83,7 +83,7 @@ export default {
           let quoteCounter = 0;
           let isPartOfStr = false;
           for (let counter = 0; counter < line.length; counter++) {
-            if (line.charAt(counter).match(/[A-Za-z0-9"]/g) && !isPartOfStr) {
+            if (line.charAt(counter).match(/[A-Za-z"]/g) && !isPartOfStr) {
               // for keywords
               console.log(counter, line.charAt(counter));
               if (line.charAt(counter) === '"') {
@@ -119,6 +119,9 @@ export default {
               }
               quoteCounter = 0;
               counter--;
+            } else if (line.charAt(counter).match(/^[0-9.]+$/g)) {
+              // for number literals
+              keyword += line.charAt(counter);
             } else {
               // to push the remaining part of keyword whenever a symbol is encountered
               console.log(counter, line.charAt(counter));
@@ -169,6 +172,8 @@ export default {
               finalObj.token = "String Literal";
             else if (finalObj.word.match(/^[0-9]+$/g))
               finalObj.token = "Int Literal";
+            else if (finalObj.word.match(/^[0-9.]+$/g))
+              finalObj.token = "Dec Literal";
             codeByWord.push(finalObj);
           });
           splitCode = [];
