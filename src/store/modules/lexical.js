@@ -174,6 +174,12 @@ export default {
               finalObj.token = "Int Literal";
             else if (finalObj.word.match(/^[0-9.]+$/g))
               finalObj.token = "Dec Literal";
+            else if (
+              finalObj.word.match(/^[a-z][a-zA-Z0-9]*$/g) &&
+              finalObj.word.length <= 15
+            )
+              finalObj.token = "Identifier";
+            else finalObj.token = "Unknown";
             codeByWord.push(finalObj);
           });
           splitCode = [];
