@@ -93,6 +93,14 @@ export default {
             } else if (isPartOfStr || line.charAt(counter) === '"') {
               // for string literals
               console.log(counter, line.charAt(counter));
+              if (keyword !== "") {
+                const obj = {
+                  word: keyword,
+                  line: index + 1,
+                };
+                splitCode.push(obj);
+                keyword = "";
+              }
               while (quoteCounter !== 2 && counter < line.length) {
                 keyword += line.charAt(counter);
                 if (line.charAt(counter) === '"') quoteCounter++;
