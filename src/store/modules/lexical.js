@@ -167,6 +167,8 @@ export default {
               finalObj.token = keywordDictionary[finalObj.word];
             else if (finalObj.word.match(/"/g))
               finalObj.token = "String Literal";
+            else if (finalObj.word.match(/^[0-9]+$/g))
+              finalObj.token = "Int Literal";
             codeByWord.push(finalObj);
           });
           splitCode = [];
