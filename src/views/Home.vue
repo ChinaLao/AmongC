@@ -7,43 +7,66 @@
           <v-col cols="6">
             <v-row>
               <h2 class="primary--text">Editor</h2>
-              <v-btn
-                plain
-                fab
-                small
-                color="success darken-2"
-                :loading="runClicked"
-                :disabled="!code || code === ''"
-                @click="run()"
-              >
-                <v-icon>play_arrow</v-icon>
-              </v-btn>
-              <v-btn
-                plain
-                fab
-                small
-                color="error lighten-2"
-                :disabled="!runClicked"
-                @click="stop()"
-              >
-                <v-icon>stop</v-icon>
-              </v-btn>
-              <v-btn
-                plain
-                fab
-                small
-                color="error lighten-2"
-                :disabled="!code || code === '' || runClicked"
-                @click="code = ''"
-              >
-                <v-icon>backspace</v-icon>
-              </v-btn>
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn
+                    plain
+                    fab
+                    small
+                    color="success darken-2"
+                    :loading="runClicked"
+                    :disabled="!code || code === ''"
+                    @click="run()"
+                    v-bind="attrs"
+                    v-on="on"
+                  >
+                    <v-icon>play_arrow</v-icon>
+                  </v-btn>
+                </template>
+                <span>Analyze Program</span>
+              </v-tooltip>
+
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn
+                    plain
+                    fab
+                    small
+                    color="error lighten-2"
+                    :disabled="!runClicked"
+                    @click="stop()"
+                    v-bind="attrs"
+                    v-on="on"
+                  >
+                    <v-icon>stop</v-icon>
+                  </v-btn>
+                </template>
+                <span>Stop Analyzing</span>
+              </v-tooltip>
+
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn
+                    plain
+                    fab
+                    small
+                    color="error lighten-2"
+                    :disabled="!code || code === '' || runClicked"
+                    @click="clearCode()"
+                    v-bind="attrs"
+                    v-on="on"
+                  >
+                    <v-icon>backspace</v-icon>
+                  </v-btn>
+                </template>
+                <span>Clear All</span>
+              </v-tooltip>
             </v-row>
           </v-col>
           <v-col cols="5" class="ml-2">
-						<v-row>
-							<h2>Lexeme Table</h2>
-						</v-row>
+            <v-row>
+              <h2>Lexeme Table</h2>
+            </v-row>
           </v-col>
         </v-row>
         <v-row align="center">
@@ -57,25 +80,25 @@
               ></prism-editor>
             </v-row>
           </v-col>
-          <v-col class="ml-2">
+          <v-col cols="5" class="ml-2">
             <v-row>
-              <prism-editor
-                class="output"
-                v-model="lexical"
-                :highlight="highlighter"
-                line-numbers
-                readonly
-              ></prism-editor>
+              <v-data-table
+                :headers="lexemeTableHeaders"
+                :items="lexeme"
+                :items-per-page="-1"
+                height="200"
+                class="output elevation-1"
+              ></v-data-table>
             </v-row>
             <v-row>
               <h2 class="error--text">Errors</h2>
-              <prism-editor
-                class="errorOutput"
-                v-model="error"
-                :highlight="highlighter"
-                line-numbers
-                readonly
-              ></prism-editor>
+              <v-data-table
+                :headers="errorTableHeaders"
+                :items="lexeme"
+                :items-per-page="-1"
+                height="120"
+                class="errorOutput elevation-1"
+              ></v-data-table>
             </v-row>
           </v-col>
         </v-row>
@@ -101,20 +124,56 @@ export default {
   },
   data: () => ({
     code: null,
+    error: [],
     runClicked: false,
+    lexemeTableHeaders: [
+      {
+        text: "Lexeme",
+        align: "start",
+        sortable: false,
+        value: "word",
+      },
+      {
+        text: "Token",
+        sortable: false,
+        value: "token",
+      },
+      {
+        text: "Line",
+        sortable: false,
+        value: "line",
+      },
+    ],
+    errorTableHeaders: [
+      {
+        text: "Lexeme",
+        align: "start",
+        sortable: false,
+        value: "token",
+      },
+    ],
   }),
   methods: {
     highlighter(code) {
       return highlight(code, languages.js);
     },
-    async run() {
+    run() {
       this.runClicked = true;
-      //code for run
-      await new Promise((r) => setTimeout(r, 5000));
+      this.$store.dispatch("lexical/GET_LEXEME", this.code);
+      console.log(this.lexeme);
       this.runClicked = false;
     },
     stop() {
       this.runClicked = false;
+    },
+    clearCode() {
+      this.code = "";
+      this.$store.dispatch("lexical/CLEAR");
+    },
+  },
+  computed: {
+    lexeme() {
+      return this.$store.getters["lexical/LEXEME"];
     },
   },
 };
@@ -133,7 +192,7 @@ export default {
 
 .output {
   border: 2px solid #080728;
-  height: 50vh;
+  height: 40vh;
   font-family: Consolas;
   font-size: 14px;
   line-height: 1.5;
@@ -142,7 +201,7 @@ export default {
 
 .errorOutput {
   border: 2px solid #080728;
-  height: 17vh;
+  height: 27.5vh;
   font-family: Consolas;
   font-size: 14px;
   line-height: 1.5;
