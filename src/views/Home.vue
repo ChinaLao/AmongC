@@ -61,7 +61,6 @@
                 </template>
                 <span>Clear All</span>
               </v-tooltip>
-
             </v-row>
           </v-col>
           <v-col cols="5" class="ml-2">
@@ -86,7 +85,7 @@
               <v-data-table
                 :headers="lexemeTableHeaders"
                 :items="lexeme"
-                :items-per-page="5"
+                :items-per-page="-1"
                 height="200"
                 class="output elevation-1"
               ></v-data-table>
@@ -96,7 +95,7 @@
               <v-data-table
                 :headers="errorTableHeaders"
                 :items="lexeme"
-                :items-per-page="5"
+                :items-per-page="-1"
                 height="120"
                 class="errorOutput elevation-1"
               ></v-data-table>
@@ -138,6 +137,11 @@ export default {
         text: "Token",
         sortable: false,
         value: "token",
+      },
+      {
+        text: "Line",
+        sortable: false,
+        value: "line",
       },
     ],
     errorTableHeaders: [
