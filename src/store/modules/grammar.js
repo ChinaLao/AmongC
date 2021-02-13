@@ -95,8 +95,8 @@ function id(x) { return x[0]; }
 var grammar = {
     Lexer: lexer,
     ParserRules: [
-    {"name": "program", "symbols": ["global", (lexer.has("space") ? {type: "space"} : space), (lexer.has("IN") ? {type: "IN"} : IN), "main_statement", (lexer.has("OUT") ? {type: "OUT"} : OUT), "function"]},
-    {"name": "global", "symbols": ["global_choice"]},
+    {"name": "program", "symbols": ["global", (lexer.has("space") ? {type: "space"} : space), (lexer.has("IN") ? {type: "IN"} : IN), (lexer.has("space") ? {type: "space"} : space), "main_statement", (lexer.has("space") ? {type: "space"} : space), (lexer.has("OUT") ? {type: "OUT"} : OUT), (lexer.has("space") ? {type: "space"} : space), "function"]},
+    {"name": "global", "symbols": ["global_choice", "global"]},
     {"name": "global", "symbols": ["comment", "global"]},
     {"name": "global", "symbols": []},
     {"name": "global_choice", "symbols": ["vital_define"]},
@@ -178,7 +178,7 @@ var grammar = {
     {"name": "statement_choice", "symbols": ["return_statement"]},
     {"name": "statement_choice", "symbols": ["function_statement", (lexer.has("terminator") ? {type: "terminator"} : terminator)]},
     {"name": "statement_choice", "symbols": ["control_statement"]},
-    {"name": "statement_choice", "symbols": [(lexer.has("clean") ? {type: "clean"} : clean), (lexer.has("open_paran") ? {type: "open_paran"} : open_paran), (lexer.has("close_paran") ? {type: "close_paran"} : close_paran)]},
+    {"name": "statement_choice", "symbols": [(lexer.has("clean") ? {type: "clean"} : clean), (lexer.has("open_paran") ? {type: "open_paran"} : open_paran), (lexer.has("close_paran") ? {type: "close_paran"} : close_paran), (lexer.has("terminator") ? {type: "terminator"} : terminator)]},
     {"name": "control_statement", "symbols": [(lexer.has("continue") ? {type: "continue"} : continue), (lexer.has("terminator") ? {type: "terminator"} : terminator)]},
     {"name": "control_statement", "symbols": [(lexer.has("kill") ? {type: "kill"} : kill), (lexer.has("terminator") ? {type: "terminator"} : terminator)]},
     {"name": "control_statement", "symbols": []},

@@ -3,8 +3,6 @@
 
     const lexer = moo.compile({
     
-        
-
         //special characters
         arith_oper: [
             "+"," +","+ "," + ",
@@ -93,10 +91,10 @@
 @lexer lexer
 
 program -> 
-        global %space %IN main_statement %OUT function
+        global %space %IN %space main_statement %space %OUT %space function
 
 global -> 
-        global_choice 
+        global_choice global
     |   comment global 
     |   null
 
@@ -125,7 +123,7 @@ vital_define ->
         %vital data_type %id %equal literal recur_vital %terminator
 
 recur_vital -> 
-        %comma %id %equal literal 
+        %comma %id %equal literal recur_vital
     |   null
 
 declare_choice -> 
@@ -225,7 +223,7 @@ statement ->
 
 function_statement -> 
         statement_choice function_statement
-    |   function_statement
+    |   null
 
 statement_choice ->
         data_declare
@@ -239,7 +237,7 @@ statement_choice ->
     |   return_statement
     |   function_statement %terminator
     |   control_statement
-    |   %clean %open_paran %close_paran
+    |   %clean %open_paran %close_paran %terminator
 
 control_statement ->
         %continue %terminator
