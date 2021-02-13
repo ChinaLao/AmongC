@@ -1,5 +1,4 @@
-// const parser = require("ebnf-parser");
-// const Parser = require("jison").Parser;
+
 const JisonLex = require("jison-lex");
 export default {
   namespaced: true,
@@ -16,161 +15,218 @@ export default {
   },
   actions: {
     GET_SYNTAX({ state, commit }, payload) {
-      //   const grammar = {
-      //     lex: {
-      //       rules: [
-      //         ["\\s+", "/* skip whitespace */"],
-      //         ["[a-f0-9]+", "return 'HEX';"],
-      //       ],
-      //     },
-      //   };
-
-      //   let parser = new Parser(grammar);
-
-      //   //   let parserSource = parser.generate();
-
-      //   parser.parse("adfe34bc e82a");
-
-      //   parser.parse("adfe34bc zxg");
       const grammar = {
         rules: [
-          ["\\s+", "/* skip whitespace */"],
-          //   ["\\t+", "/* skip tab */"],
+          ["\\s+",                          "/* skip whitespace */"],
+          ['^[\\"].+[\\"]?',                "return 'str_literal';"],
+          ["^[#].+$",                       "return 'comment';"],
+          ["^[0-9]+[.][0-9]+$",             "return 'dec_literal';"],
+          ["^[0-9]+$",                      "return 'int_literal';"],
 
-          ["IN", "return 'IN';"],
-          ["OUT", "return 'OUT';"],
-          ["int", "return 'int';"],
-          ["dec", "return 'dec';"],
-          ["str", "return 'str';"],
-          ["bool", "return 'bool';"],
-          ["empty", "return 'empty';"],
-          ["struct", "return 'struct';"],
-          ["shoot", "return 'shoot';"],
-          ["scan", "return 'scan';"],
-          ["if", "return 'if';"],
-          ["else", "return 'else';"],
-          ["elf", "return 'elf';"],
-          ["switch", "return 'switch';"],
-          ["vote", "return 'vote';"],
-          ["default", "return 'default';"],
-          ["for", "return 'for';"],
-          ["while", "return 'while';"],
-          ["do", "return 'do';"],
-          ["kill", "return 'kill';"],
-          ["continue", "return 'continue';"],
-          ["true", "return 'true';"],
-          ["false", "return 'false';"],
-          ["return", "return 'return';"],
-          ["and", "return 'and';"],
-          ["or", "return 'or';"],
-          ["vital", "return 'vital';"],
-          ["true", "return 'true';"],
-          ["task", "return 'task';"],
-          ["clean", "return 'clean';"],
+          ["^[I][N]$",                      "return 'IN';"],
+          ["^[O][U][T]$",                   "return 'OUT';"],
+          ["^[i][n][t]$",                   "return 'int';"],
+          ["^[d][e][c]$",                   "return 'dec';"],
+          ["^[s][t][r][u][c][t]$",          "return 'struct';"],
+          ["^[s][t][r]$",                   "return 'str';"],
+          ["^[b][o][o][l]$",                "return 'bool';"],
+          ["^[e][m][p][t][y]$",             "return 'empty';"],
+          ["^[s][h][o][o][t]$",             "return 'shoot';"],
+          ["^[s][c][a][n]$",                "return 'scan';"],
+          ["^[i][f]$",                      "return 'if';"],
+          ["^[e][l][s][e]$",                "return 'else';"],
+          ["^[e][l][f]$",                   "return 'elf';"],
+          ["^[s][w][i][t][c][h]$",          "return 'switch';"],
+          ["^[v][o][t][e]$",                "return 'vote';"],
+          ["^[d][e][f][a][u][l][t]$",       "return 'default';"],
+          ["^[f][o][r]$",                   "return 'for';"],
+          ["^[w][h][i][l][e]$",             "return 'while';"],
+          ["^[d][o]$",                      "return 'do';"],
+          ["^[k][i][l][l]$",                "return 'kill';"],
+          ["^[c][o][n][t][i][n][u][e]$",    "return 'continue';"],
+          ["^[t][r][u][e]$",                "return 'true';"],
+          ["^[f][a][l][s][e]$",             "return 'false';"],
+          ["^[r][e][t][u][r][n]$",          "return 'return';"],
+          ["^[a][n][d]$",                   "return 'and';"],
+          ["^[o][r]$",                      "return 'or';"],
+          ["^[v][i][t][a][l]$",             "return 'vital';"],
+          ["^[t][r][u][e]$",                "return 'true';"],
+          ["^[t][a][s][k]$",                "return 'task';"],
+          ["^[c][l][e][a][n]$",             "return 'clean';"],
 
-          [";", "return ';';"],
-          [",", "return ',';"],
-          [".", "return '.';"],
-          ['\\"', "return '\"';"],
-          ["\\(", "return '(';"],
-          ["\\)", "return ')';"],
-          ["{", "return '{';"],
-          ["}", "return '}';"],
-          ["\\[", "return '[';"],
-          ["\\]", "return ']';"],
-          ["\\:", "return ':';"],
-          ["#", "return '#';"],
-          ["\\'", 'return "\'";'],
-          ["==", "return '==';"],
-          [">=", "return '>=';"],
-          ["<=", "return '<=';"],
-          ["!=", "return '!=';"],
-          ["\\+=", "return '+=';"],
-          ["-=", "return '-=';"],
-          ["\\*\\*=", "return '**=';"],
-          ["//=", "return '//=';"],
-          ["/=", "return '/=';"],
-          ["%=", "return '%=';"],
-          ["=", "return '=';"],
-          ["\\+\\+", "return '++';"],
-          ["\\+", "return '+';"],
-          ["--", "return '--';"],
-          ["-", "return '-';"],
-          ["\\*\\*", "return '**';"],
-          ["\\*", "return '*';"],
-          ["//", "return '//';"],
-          ["/", "return '/';"],
-          ["%", "return '%';"],
+          ["^[;]$",                         "return ';';"],
+          ["^[,]$",                         "return ',';"],
+          ["^[.]$",                         "return '.';"],
+          ['^[\\"]$',                       "return '\"';"],
+          ["^[\\(]$",                       "return '(';"],
+          ["^[\\)]$",                       "return ')';"],
+          ["^[{]$",                         "return '{';"],
+          ["^[}]$",                         "return '}';"],
+          ["^[\\[]$",                       "return '[';"],
+          ["^[\\]]$",                       "return ']';"],
+          ["^[\\:]$",                       "return ':';"],
+          ["^[#]$",                         "return '#';"],
+          ["^[=][=]$",                      "return '==';"],
+          ["^[>][=]$",                      "return '>=';"],
+          ["^[<][=]$",                      "return '<=';"],
+          ["^[!][=]$",                      "return '!=';"],
+          ["^[\\+][=]$",                    "return '+=';"],
+          ["^[-][=]$",                      "return '-=';"],
+          ["^[/][/][=]$",                   "return '//=';"],
+          ["^[/][=]$",                      "return '/=';"],
+          ["^[%][=]$",                      "return '%=';"],
+          ["^[=]$",                         "return '=';"],
+          ["^[\\+][\\+]$",                  "return '++';"],
+          ["^[\\+]$",                       "return '+';"],
+          ["^[-][-]$",                      "return '--';"],
+          ["^[-]$",                         "return '-';"],
+          ["^[/][/]$",                      "return '//';"],
+          ["^[/]$",                         "return '/';"],
+          ["^[%]$",                         "return '%';"],
+          ["^[>]$",                         "return '>';"],
+          ["^[<]$",                         "return '<';"],
+          ["^[*][*][=]$",                   "return '**=';"],
+          ["^[*][*]$",                      "return '**';"],
+          ["^[*][=]$",                      "return '*=';"],
+          ["^[*]$",                         "return '*';"],
 
-          ["#.+", "return 'comment';"],
-          ["[a-z]+[a-zA-Z0-9]*", "return 'identifier';"],
-          ["\\'\\'\\'.+\\'\\'\\'", "return 'comment';"],
-          ["^[0-9]+[.]?[0-9]+$", "return 'dec_literal';"],
-          ['\\".+\\"', "return 'str_literal';"],
-          ["^[0-9]+[.]?[0-9]+$", "return 'dec_literal';"],
-          ["[0-9]+", "return 'int_literal';"],
+          ["[a-z][a-zA-Z0-9]*$",            "return 'id';"],
         ],
       };
+      
       const lexer = new JisonLex(grammar);
       const codeByLine = payload.split("\n");
       let tokenizedLexer = [];
       let index = 0;
       let keyword = "";
-      codeByLine.forEach((line, i) => {
+
+      codeByLine.forEach((line, i) => { //read each line
         console.log(keyword);
         index = 0;
-        keyword = ""; //pag nabasa niya yung unang keyword sa isang line, nagnenext line na siya, di niya na binabasa yung iba sadge
-        while (index < line.length && line[index].match(/[A-Za-z]/g)) {
-          //all symbols naka not A-Z and not 0-9
+        keyword = ""; 
+        console.log(line.length);
+
+        while (index < line.length) { //read character per line
+          keyword = "";
           console.log(line[index], index, keyword);
-          keyword += line[index];
-          index++; //i always forgetti this
+          
+          while (line[index] && line[index].match(/[^a-zA-Z0-9\s'"]/g)) { // symbols
+            let symbol = "";
+            symbol += line[index]; 
+            if (line[index] === "#") { //single line comment
+              while (index < line.length) {
+                keyword += line[index];
+                index++;
+              }
+            }
+            if (line[index] && line[index].match(/[+-=/*!%><]/g)) { //operators
+              if (line[index] === line[index + 1] && !line[index].match(/[!%><]/g) ) { //++,--,==,//,**
+                index++;
+                symbol += line[index];
+                console.log(symbol);
+              } else if (line[index + 1] === "=") { //+=,-=,*=,/=,%=,>=,<=,!=
+                index++;
+                symbol += line[index];
+                console.log(symbol);
+              }
+              if ((symbol === "//" || symbol === "**") && line[index + 1] === "=") { // //=,**=
+                index++;
+                symbol += line[index];
+                console.log(symbol);
+              }
+            }
+
+            lexer.setInput(symbol);
+            const obj = {
+              word: symbol,
+              token: lexer.lex(),
+              line: i + 1,
+            };
+            tokenizedLexer.push(obj);
+            index++;
+          }
+
+          while (line[index] && line[index].match(/[a-zA-Z0-9."]/g)) { // for keywords and identifiers
+            let isPartOfStr = false;
+            let quoteCounter = 0;
+            if (line[index] === '"') {
+              isPartOfStr = true;
+              quoteCounter++;
+              lexer.setInput(line[index]);
+              const obj = {
+                word: line[index],
+                token: lexer.lex(),
+                line: i + 1,
+              };
+              tokenizedLexer.push(obj);
+            }
+            while ((isPartOfStr || quoteCounter === 1) && index < line.length) { //str literal
+              keyword += line[index]; 
+              index++; 
+              if (line[index] === '"') {
+                quoteCounter++;
+                isPartOfStr = false;
+                keyword += line[index];
+                lexer.setInput(keyword);
+                const keyObj = {
+                  word: keyword,
+                  token: lexer.lex(),
+                  line: i + 1,
+                };
+                tokenizedLexer.push(keyObj);
+                keyword = "";
+                lexer.setInput(line[index]);
+                const obj = {
+                  word: line[index],
+                  token: lexer.lex(),
+                  line: i + 1,
+                };
+                tokenizedLexer.push(obj);
+                index++;
+              }
+            }
+            console.log(line[index]);
+            if (!isPartOfStr && line[index] && line[index].match(/[a-zA-Z0-9.]/g)) { //struct
+              console.log(line[index], index, keyword);
+              if (line[index] === "." && keyword !== "" && !keyword.match(/^[0-9]+$/g)) { //struct element
+                lexer.setInput(keyword);
+                const obj = {
+                  word: keyword,
+                  token: lexer.lex(),
+                  line: i + 1,
+                };
+                tokenizedLexer.push(obj);
+                lexer.setInput(line[index]);
+                const dotObj = {
+                  word: line[index],
+                  token: lexer.lex(),
+                  line: i + 1,
+                };
+                tokenizedLexer.push(dotObj);
+                index++;
+                keyword = "";
+              }
+              if (!line[index].match(/\s/g)) { //to continue reading after .
+                console.log(line[index], index, keyword);
+                keyword += line[index];
+              }
+              index++;
+            }
+          }
+          while (line[index] && line[index].match(/\s/g)) index++; // to skip spaces
+          console.log(line[index], index, keyword);
+          if (keyword !== "") { // to skip pushing blank
+            lexer.setInput(keyword);
+            const obj = {
+              word: keyword,
+              token: lexer.lex(),
+              line: i + 1,
+            };
+            tokenizedLexer.push(obj);
+          }
         }
-        console.log(keyword);
-        lexer.setInput(keyword);
-        const obj = {
-          word: keyword,
-          token: lexer.lex(),
-          line: i + 1,
-        };
-        tokenizedLexer.push(obj);
       });
-      //   for (let i = 0; i < codeByLine.length; i++) {
-      //     console.log(keyword);
-      //     index = 0;
-      //     keyword = "";
-      //     while (codeByLine[index] && codeByLine[index].match(/[A-Za-z]/g)) {
-      //       //all symbols naka not A-Z and not 0-9
-      //       console.log(codeByLine[index], index, keyword);
-      //       keyword += codeByLine[index];
-      //       index++; //i always forgetti this
-      //     }
-      //     console.log(keyword);
-      //     lexer.setInput(keyword);
-      //     const obj = {
-      //       word: keyword,
-      //       token: lexer.lex(),
-      //       line: i + 1,
-      //     };
-      //     tokenizedLexer.push(obj);
-      //   }
-      //   lexer.setInput(payload);
-      //   console.log(payload, lexer.length, lexer);
-      //   let tokenizedLexer = [];
-      //   for (let i = 0; i < payload.length; i++) {
-      //     const obj = {
-      //       word: payload[i],
-      //       token: lexer.lex(),
-      //       line: 1,
-      //     };
-      //     tokenizedLexer.push(obj);
-      //     console.log(tokenizedLexer, obj, payload[0], lexer.length);
-      //   }
       commit("SET_LEXEME", tokenizedLexer);
-      //   lexer.setInput("#hello \\n '''hello'''");
-      //   console.log(lexer.lex());
-      //   console.log(lexer.lex());
-      //   console.log(lexer.lex());
     },
   },
 };
