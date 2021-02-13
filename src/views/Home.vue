@@ -94,7 +94,7 @@
               <h2 class="error--text">Errors</h2>
               <v-data-table
                 :headers="errorTableHeaders"
-                :items="lexeme"
+                :items="error"
                 :items-per-page="-1"
                 height="120"
                 class="errorOutput elevation-1"
@@ -124,7 +124,6 @@ export default {
   },
   data: () => ({
     code: null,
-    error: [],
     runClicked: false,
     lexemeTableHeaders: [
       {
@@ -146,11 +145,16 @@ export default {
     ],
     errorTableHeaders: [
       {
-        text: "Lexeme",
+        text: "Error Message",
         align: "start",
         sortable: false,
-        value: "token",
+        value: "msg",
       },
+      {
+        text: "Line",
+        sortable: false,
+        value: "line",
+      }
     ],
   }),
   methods: {
@@ -160,7 +164,8 @@ export default {
     run() {
       this.runClicked = true;
       // this.$store.dispatch("lexical/GET_LEXEME", this.code);
-      this.$store.dispatch("syntax/GET_SYNTAX", this.code);
+      this.$store.dispatch("syntax/TEMPORARY_SYNTAX", this.code);
+      // this.$store.dispatch("analysis/GET_ANALYSIS", this.lexeme);
       this.runClicked = false;
     },
     stop() {
@@ -174,6 +179,9 @@ export default {
   computed: {
     lexeme() {
       return this.$store.getters["syntax/LEXEME"];
+    },
+    error() {
+      return this.$store.getters["analysis/ANALYSIS"];
     },
   },
 };
