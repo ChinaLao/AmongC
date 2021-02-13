@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve",
+    "serve": "yarn generate-grammar && vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "generate-grammar": "nearleyc ./src/store/modules/grammar.ne -o ./src/store/modules/grammar.js"
   },
   "dependencies": {
     "core-js": "^3.6.5",
@@ -13,6 +14,8 @@
     "firebase": "^8.2.4",
     "jison": "^0.4.18",
     "jison-lex": "^0.3.4",
+    "moo": "^0.5.1",
+    "nearley": "^2.20.1",
     "prismjs": "^1.23.0",
     "register-service-worker": "^1.7.1",
     "vue": "^2.6.11",
