@@ -150,11 +150,6 @@ export default {
         sortable: false,
         value: "msg",
       },
-      {
-        text: "Line",
-        sortable: false,
-        value: "line",
-      }
     ],
   }),
   methods: {
@@ -165,7 +160,7 @@ export default {
       this.runClicked = true;
       // this.$store.dispatch("lexical/GET_LEXEME", this.code);
       this.$store.dispatch("syntax/TEMPORARY_SYNTAX", this.code);
-      // this.$store.dispatch("analysis/GET_ANALYSIS", this.lexeme);
+      this.$store.dispatch("syntax/GET_SYNTAX", this.code);
       this.runClicked = false;
     },
     stop() {
@@ -181,7 +176,7 @@ export default {
       return this.$store.getters["syntax/LEXEME"];
     },
     error() {
-      return this.$store.getters["analysis/ANALYSIS"];
+      return this.$store.getters["syntax/ERROR"];
     },
   },
 };
