@@ -119,6 +119,7 @@ assign_choice ->
         recur_assign %equal variable_choice 
     |   assign_array recur_assign %equal variable_choice 
     |   assign_struct recur_assign %equal variable_choice
+    |   %terminator #added terminator for id = id = id;
 
 data_declare -> 
         data_type %id declare_choice %terminator
@@ -216,10 +217,10 @@ statement_choice ->
     |   if_statement 
     |   switch_statement 
     |   %id id_start_statement
-    |   unary %id
+    |   unary %id %terminator #added terminator
     # |   iterate_statement %terminator //
     |   return_statement
-    # |   function_call_statement %terminator //
+    |   function_call_statement %terminator
     |   control_statement 
     |   %clean %open_paren %close_paren %terminator
 
@@ -235,7 +236,7 @@ function_call_statement_choice ->
 
 #this is new
 iterate_statement_choice ->
-        unary
+        unary %terminator
     |   %assign_oper iterate_choice
     |   null
 
@@ -292,18 +293,32 @@ extra_compute ->
         %arith_oper compute_choice
 
 condition_choice ->
-        %id
-    |   literal
-    |   compute_choice
+        notter %id
+    # |   literal removed literal
+    |   notter compute_choice
 
 oper_choice ->
         %relation_oper
     |   %logical_oper
 
+#NEW
+notter ->
+        %not
+    |   null
+
+#NEW
+enclosed_condition ->
+        %open_paren condition_choice additional_condition %close_paren
+    |   condition_choice additional_condition
+
+#NEW
+next_condition ->
+        oper_choice condition recur_condition
+    |   null
+
 condition -> 
-        condition_choice oper_choice condition recur_condition
-    |   %not %open_paren condition_choice additional_condition %close_paren recur_condition
-    |   condition_choice
+        condition_choice next_condition
+    |   notter enclosed_condition recur_condition
 
 recur_condition ->
         additional_condition
@@ -312,6 +327,7 @@ recur_condition ->
 additional_condition ->
         oper_choice condition_choice recur_condition
     |   extra_condition
+    |   null
 
 extra_condition -> 
         oper_choice condition
@@ -449,11 +465,31 @@ recur_parameter ->
         %comma data_type %id array_parameter recur_parameter
     |   null
 
+id_array ->
+        %open_bracket array_size %close_bracket id_array_2D
+    |   null
+
+id_array_2D ->
+        %open_bracket array_size %close_bracket id_array_2D
+    |   null
+
+function_variables ->
+        %id id_array
+    |   literal
+    |   function_call_statement
+    |   struct_statement
+    |   compute_choice
+    |   condition
+
 function_call_statement ->
         %id %open_paren function_call %close_paren
 
 function_call ->
-        variable_choice
+        function_variables additional_call
+    |   null
+
+additional_call ->
+        %comma function_variables additional_call
     |   null
 
 unary ->
