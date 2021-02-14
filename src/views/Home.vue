@@ -164,6 +164,7 @@ export default {
     },
     async run() {
       this.runClicked = true;
+      this.clearOutput();
       // this.$store.dispatch("lexical/GET_LEXEME", this.code);
       await this.$store.dispatch("syntax/GET_SYNTAX", this.code);
       console.log(this.lexeme);
@@ -175,7 +176,10 @@ export default {
     },
     clearCode() {
       this.code = "";
-      this.$store.dispatch("lexical/CLEAR");
+      this.clearOutput();
+    },
+    clearOutput() {
+      this.$store.dispatch("syntax/CLEAR");
     },
   },
   computed: {

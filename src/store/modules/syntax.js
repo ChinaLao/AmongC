@@ -308,5 +308,10 @@ export default {
       });
       commit("SET_LEXEME", Lexemes);
     },
+    CLEAR({ state, commit }) {
+      const blank = [];
+      commit("SET_LEXEME", blank);
+      commit("SET_ERROR", blank);
+    },
   },
 };
