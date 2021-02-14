@@ -27,7 +27,7 @@
         //  \": /^[\\"]$/,
         
         //unit keywords
-        start: "start", 
+        IN: "start", 
         OUT: "end",
         int: "int",
         dec: "dec",
@@ -68,7 +68,7 @@
 @lexer lexer
 
 program -> 
-        global %start main_statement %OUT function
+        global %IN main_statement %OUT function
 
 global -> 
         global_choice global
@@ -123,8 +123,9 @@ assign_choice ->
 data_declare -> 
         data_type %id declare_choice %terminator
 
+#removed %id at the start
 assign_statement ->
-        %id assign_choice %terminator 
+        assign_choice %terminator 
 
 variable_array ->
         assign_array
@@ -205,24 +206,43 @@ function_statement ->
         statement_choice function_statement
     |   null
 
+#added %id id_start_statement; removed three production sets
 statement_choice ->
         data_declare
-    |   assign_statement
-    |   out_statement
-    |   in_statement
-    |   loop_statement
-    |   if_statement
-    |   switch_statement
-    |   iterate_statement %terminator
+    # |   assign_statement //
+    |   out_statement 
+    |   in_statement 
+    |   loop_statement 
+    |   if_statement 
+    |   switch_statement 
+    |   %id id_start_statement
+    |   unary %id
+    # |   iterate_statement %terminator //
     |   return_statement
-    |   function_call_statement %terminator
-    |   control_statement
+    # |   function_call_statement %terminator //
+    |   control_statement 
     |   %clean %open_paren %close_paren %terminator
+
+#this is new
+id_start_statement ->
+        assign_statement
+    |   iterate_statement_choice
+    |   function_call_statement_choice
+
+#this is new
+function_call_statement_choice ->
+        %open_paren function_call %close_paren
+
+#this is new
+iterate_statement_choice ->
+        unary
+    |   %assign_oper iterate_choice
+    |   null
 
 control_statement ->
         %control %terminator
     |   %kill %terminator
-    |   null
+    # |   null
 
 out_statement ->
         %shoot %open_paren output %close_paren %terminator
@@ -246,17 +266,19 @@ id_choice ->
         %dot %id assign_array
     |   null
 
-# digit_choice ->
-#         %int_literal
-#     |   %dec_literal
+#added id production set
+digit_choice ->
+        %int_literal
+    |   %dec_literal
+    |   %id
 
 compute_choice -> 
         digit_choice %arith_oper compute_choice recur_compute
     |   %open_paren digit_choice additional_compute %close_paren recur_compute
     |   compute
 
-# compute ->
-#         digit_choice
+compute ->
+        digit_choice
 
 recur_compute ->
         additional_compute
@@ -266,8 +288,8 @@ additional_compute ->
         %arith_oper digit_choice recur_compute
     |   extra_compute
 
-# extra_compute ->
-#         %arith_oper compute_choice
+extra_compute ->
+        %arith_oper compute_choice
 
 condition_choice ->
         %id
@@ -350,13 +372,17 @@ vote ->
         %vote vote_choice %colon function_statement %kill %terminator vote
     |   null
 
-# return_statement ->
-#         %stateReturn return_choice %terminator
+return_statement ->
+        %stateReturn return_first_choice %terminator
 
-# return_choice -> 
-#         variable_choice
-#     |   %id
-#     |   null
+return_first_choice ->
+        return_choice
+    |   %open_paren return_choice %close_paren
+
+return_choice -> 
+        variable_choice
+    |   %id
+    |   null
 
 struct_declare ->
         %struct %id %open_brace recur_struct %close_brace
@@ -368,34 +394,34 @@ recur_struct ->
         data_type %id parameter_define %terminator recur_struct
     |   null
 
-# struct_define ->
-#         %id %id parameter_define %terminator
+struct_define ->
+        %id %id parameter_define %terminator
 
-# assign_struct ->
-#         struct_choice element
+assign_struct ->
+        struct_choice element
     
-# struct_statement ->
-#         %id struct_choice element
+struct_statement ->
+        %id struct_choice element
 
-# struct_choice ->
-#         %open_bracket array_size %close_bracket extra_struct
-#     |   null
+struct_choice ->
+        %open_bracket array_size %close_bracket extra_struct
+    |   null
 
-# extra_struct ->
-#         %open_bracket array_size %close_bracket
-#     |   null
+extra_struct ->
+        %open_bracket array_size %close_bracket
+    |   null
 
-# element_choice ->
-#         %open_bracket array_size %close_bracket element_option
-#     |   null
+element_choice ->
+        %open_bracket array_size %close_bracket element_option
+    |   null
 
-# element_option ->
-#         %open_bracket array_size %close_bracket
-#     |   null
+element_option ->
+        %open_bracket array_size %close_bracket
+    |   null
 
-# element ->
-#         %dot %id element_choice
-#     |   null
+element ->
+        %dot %id element_choice
+    |   null
 
 recur_define ->
         %comma %id parameter_define
@@ -406,29 +432,29 @@ parameter_define ->
     |   assign_struct_size recur_define
     |   null
 
-# function ->
-#         %task function_data_type %id %open_paren parameter %close_paren %open_brace function_statement %close_brace function
-#     |   comment function
-#     |   null
+function ->
+        %task function_data_type %id %open_paren parameter %close_paren %open_brace function_statement %close_brace function
+    |   comment function
+    |   null
 
-# array_parameter ->
-#         %open_bracket %close_bracket
-#     |   null
+array_parameter ->
+        %open_bracket %close_bracket
+    |   null
 
-# parameter -> 
-#         data_type %id array_parameter recur_parameter
-#     |   null
+parameter -> 
+        data_type %id array_parameter recur_parameter
+    |   null
 
-# recur_parameter ->
-#         %comma data_type %id array_parameter recur_parameter
-#     |   null
+recur_parameter ->
+        %comma data_type %id array_parameter recur_parameter
+    |   null
 
-# function_call_statement ->
-#         %id %open_paren function_call %close_paren
+function_call_statement ->
+        %id %open_paren function_call %close_paren
 
-# function_call ->
-#         variable_choice
-#     |   null
+function_call ->
+        variable_choice
+    |   null
 
 unary ->
         %unary_oper
