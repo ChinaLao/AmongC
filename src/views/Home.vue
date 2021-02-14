@@ -150,17 +150,24 @@ export default {
         sortable: false,
         value: "msg",
       },
+      {
+        text: "Line",
+        align: "center",
+        sortable: false,
+        value: "line",
+      },
     ],
   }),
   methods: {
     highlighter(code) {
       return highlight(code, languages.js);
     },
-    run() {
+    async run() {
       this.runClicked = true;
       // this.$store.dispatch("lexical/GET_LEXEME", this.code);
-      this.$store.dispatch("syntax/TEMPORARY_SYNTAX", this.code);
-      this.$store.dispatch("syntax/GET_SYNTAX", this.code);
+      await this.$store.dispatch("syntax/GET_SYNTAX", this.code);
+      console.log(this.lexeme);
+      await this.$store.dispatch("syntax/TEMPORARY_SYNTAX", this.code);
       this.runClicked = false;
     },
     stop() {

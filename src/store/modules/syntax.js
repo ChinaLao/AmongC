@@ -10,13 +10,13 @@ export default {
     error: [],
     lexRules: [
       ["\\s+", "/* skip whitespace */"],
-      ['^[\\"].+[\\"]?', "return 'str_literal';"],
-      ["^[#].+$", "return 'comment';"],
-      ["^[0-9]+[.][0-9]+$", "return 'dec_literal';"],
-      ["^[0-9]+$", "return 'int_literal';"],
+      ['^[\\"].+[\\"]?', "return 'litStr';"],
+      ["^[#].+$", "return 'singleComment';"],
+      ["^[0-9]+[.][0-9]+$", "return 'litDec';"],
+      ["^[0-9]+$", "return 'litInt';"],
 
-      ["^[I][N]$", "return 'IN';"],
-      ["^[O][U][T]$", "return 'OUT';"],
+      ["^[I][N]$", "return 'start';"],
+      ["^[O][U][T]$", "return 'end';"],
       ["^[i][n][t]$", "return 'int';"],
       ["^[d][e][c]$", "return 'dec';"],
       ["^[s][t][r][u][c][t]$", "return 'struct';"],
@@ -28,59 +28,59 @@ export default {
       ["^[i][f]$", "return 'if';"],
       ["^[e][l][s][e]$", "return 'else';"],
       ["^[e][l][f]$", "return 'elf';"],
-      ["^[s][w][i][t][c][h]$", "return 'switch';"],
+      ["^[s][w][i][t][c][h]$", "return 'stateSwitch';"],
       ["^[v][o][t][e]$", "return 'vote';"],
       ["^[d][e][f][a][u][l][t]$", "return 'default';"],
       ["^[f][o][r]$", "return 'for';"],
       ["^[w][h][i][l][e]$", "return 'while';"],
       ["^[d][o]$", "return 'do';"],
       ["^[k][i][l][l]$", "return 'kill';"],
-      ["^[c][o][n][t][i][n][u][e]$", "return 'continue';"],
-      ["^[t][r][u][e]$", "return 'bool_literal';"],
-      ["^[f][a][l][s][e]$", "return 'bool_literal';"],
+      ["^[c][o][n][t][i][n][u][e]$", "return 'control';"],
+      ["^[t][r][u][e]$", "return 'litBool';"],
+      ["^[f][a][l][s][e]$", "return 'litBool';"],
       ["^[r][e][t][u][r][n]$", "return 'return';"],
       ["^[a][n][d]$", "return 'and';"],
       ["^[o][r]$", "return 'or';"],
       ["^[v][i][t][a][l]$", "return 'vital';"],
-      ["^[t][r][u][e]$", "return 'true';"],
       ["^[t][a][s][k]$", "return 'task';"],
       ["^[c][l][e][a][n]$", "return 'clean';"],
 
-      ["^[;]$", "return ';';"],
-      ["^[,]$", "return ',';"],
-      ["^[.]$", "return '.';"],
-      ['^[\\"]$', "return '\"';"],
-      ["^[\\(]$", "return '(';"],
-      ["^[\\)]$", "return ')';"],
-      ["^[{]$", "return '{';"],
-      ["^[}]$", "return '}';"],
-      ["^[\\[]$", "return '[';"],
-      ["^[\\]]$", "return ']';"],
-      ["^[\\:]$", "return ':';"],
-      ["^[#]$", "return '#';"],
-      ["^[=][=]$", "return '==';"],
-      ["^[>][=]$", "return '>=';"],
-      ["^[<][=]$", "return '<=';"],
-      ["^[!][=]$", "return '!=';"],
-      ["^[\\+][=]$", "return '+=';"],
-      ["^[-][=]$", "return '-=';"],
-      ["^[/][/][=]$", "return '//=';"],
-      ["^[/][=]$", "return '/=';"],
-      ["^[%][=]$", "return '%=';"],
-      ["^[=]$", "return '=';"],
-      ["^[\\+][\\+]$", "return '++';"],
-      ["^[\\+]$", "return '+';"],
-      ["^[-][-]$", "return '--';"],
-      ["^[-]$", "return '-';"],
-      ["^[/][/]$", "return '//';"],
-      ["^[/]$", "return '/';"],
-      ["^[%]$", "return '%';"],
-      ["^[>]$", "return '>';"],
-      ["^[<]$", "return '<';"],
-      ["^[*][*][=]$", "return '**=';"],
-      ["^[*][*]$", "return '**';"],
-      ["^[*][=]$", "return '*=';"],
-      ["^[*]$", "return '*';"],
+      ["^[;]$", "return 'terminator';"],
+      ["^[,]$", "return 'comma';"],
+      ["^[.]$", "return 'dot';"],
+      ['^[\\"]$', "return 'quote';"],
+      ["^[\\(]$", "return 'openParen';"],
+      ["^[\\)]$", "return 'closeParen';"],
+      ["^[{]$", "return 'openBrace';"],
+      ["^[}]$", "return 'closeBrace';"],
+      ["^[\\[]$", "return 'openBracket';"],
+      ["^[\\]]$", "return 'closeBracket';"],
+      ["^[\\:]$", "return 'colon';"],
+      ["^[#]$", "return 'sharp';"],
+      ["^[=][=]$", "return 'relationOper';"],
+      ["^[>][=]$", "return 'relationOper';"],
+      ["^[<][=]$", "return 'relationOper';"],
+      ["^[!][=]$", "return 'relationOper';"],
+      ["^[\\+][=]$", "return 'assignOper';"],
+      ["^[-][=]$", "return 'assignOper';"],
+      ["^[/][/][=]$", "return 'assignOper';"],
+      ["^[/][=]$", "return 'assignOper';"],
+      ["^[%][=]$", "return 'assignOper';"],
+      ["^[=]$", "return 'equal';"],
+      ["^[\\+][\\+]$", "return 'unary';"],
+      ["^[\\+]$", "return 'arithOper';"],
+      ["^[-][-]$", "return 'unary';"],
+      ["^[-]$", "return 'arithOper';"],
+      ["^[/][/]$", "return 'arithOper';"],
+      ["^[/]$", "return 'arithOper';"],
+      ["^[%]$", "return 'arithOper';"],
+      ["^[>]$", "return 'relationOper';"],
+      ["^[<]$", "return 'relationOper';"],
+      ["^[*][*][=]$", "return 'assignOper';"],
+      ["^[*][*]$", "return 'arithOper';"],
+      ["^[*][=]$", "return 'assignOper';"],
+      ["^[*]$", "return 'arithOper';"],
+      ["^[!]$", "return 'not';"],
 
       ["[a-z][a-zA-Z0-9]*$", "return 'id';"],
     ],
@@ -98,21 +98,36 @@ export default {
     },
   },
   actions: {
-    TEMPORARY_SYNTAX({ state, commit }, payload) {
+    TEMPORARY_SYNTAX({ state, commit }) {
+      console.log("a");
       const parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar));
+      console.log("b");
       let errArray = [];
-      try {
-        parser.feed(payload);
-        console.log(parser.results.length);
-        console.log(parser.results);
-      } catch (err) {
-        console.log(err.message);
-        const errors = {
-          msg: err.message,
-        };
-        errArray.push(errors);
-        commit("SET_ERROR", errArray);
-      }
+      const lexeme = state.lexeme;
+      console.log("c");
+      lexeme.forEach((lex, index) => {
+        try {
+          console.log(lex.word, lex.token);
+          parser.feed(lex.token);
+          console.log(parser.entries, parser.results);
+        } catch (err) {
+          const errors = {
+            msg: err.message,
+            line: lex.line,
+          };
+          errArray.push(errors);
+          commit("SET_ERROR", errArray);
+        }
+        console.log("loop ", index);
+      });
+      // try {
+      //   parser.feed(state.lexeme);
+      //   console.log(parser.results.length);
+      //   console.log(parser.results);
+      // } catch (err) {
+      //   console.log(err.message);
+
+      // }
     },
 
     GET_SYNTAX({ state, commit }, payload) {
@@ -282,9 +297,12 @@ export default {
       });
       Lexemes.forEach((lexeme) => {
         try {
+          console.log(lexeme.word, lexeme.line);
           lexer.setInput(lexeme.word);
           lexeme.token = lexer.lex();
+          console.log(lexeme.word, lexeme.token, lexeme.line);
         } catch (err) {
+          console.log(err);
           lexeme.token = "Unknown";
         }
       });
