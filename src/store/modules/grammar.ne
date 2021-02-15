@@ -329,7 +329,7 @@ enclosed_condition ->
         %open_paren condition_choice additional_condition %close_paren
     |   condition_choice additional_condition
 
-#NEW
+#this is new
 next_condition ->
         oper_choice condition recur_condition
     |   null
@@ -363,8 +363,8 @@ for_initial_extra ->
         array_size oper
 
 iterate_choice ->
-        iterate_choice %int_literal
-    |   iterate_choice %dec_literal
+        negation %int_literal
+    |   negation %dec_literal
     |   %quote %str_literal %quote
     |   function_call_statement
     |   struct_statement
@@ -410,6 +410,7 @@ vote ->
 return_statement ->
         %stateReturn return_first_choice %terminator
 
+#this is new
 return_first_choice ->
         return_choice
     |   %open_paren return_choice %close_paren
@@ -485,10 +486,12 @@ recur_parameter ->
         %comma data_type %id array_parameter recur_parameter
     |   null
 
+#this is new
 id_array ->
         %open_bracket array_size %close_bracket id_array_2D
     |   null
 
+#this is new
 id_array_2D ->
         %open_bracket array_size %close_bracket id_array_2D
     |   null
