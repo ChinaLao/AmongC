@@ -12,8 +12,8 @@ export default {
       ["\\s+", "/* skip whitespace */"],
       ['^[\\"].+[\\"]?', "return 'litStr';"],
       ["^[#].+$", "return 'singleComment';"],
-      ["^[0-9]+[.][0-9]+$", "return 'litDec';"],
-      ["^[0-9]+$", "return 'litInt';"],
+      ["^[~]?[0-9]+[.][0-9]+$", "return 'litDec';"],
+      ["^[~]?[0-9]+$", "return 'litInt';"],
 
       ["^[I][N]$", "return 'start';"],
       ["^[O][U][T]$", "return 'end';"],
@@ -81,7 +81,7 @@ export default {
       ["^[*][=]$", "return 'assignOper';"],
       ["^[*]$", "return 'arithOper';"],
       ["^[!]$", "return 'not';"],
-
+      ["^[~]$", "return 'negative';"],
       ["[a-z][a-zA-Z0-9]*$", "return 'id';"],
     ],
   },
@@ -164,6 +164,18 @@ export default {
                 index++;
               }
             }
+            if(line[index] === "~"){
+              //negative
+              const obj = {
+                word: line[index],
+                // token: lexer.lex(),
+                line: i + 1,
+              };
+              Lexemes.push(obj);
+              if(line[index+1].match(/[0-9]/g))
+                keyword+=line[index];
+              index++;
+            }
             if (line[index] && line[index].match(/[+-=/*!%><]/g)) {
               //operators
               if (
@@ -192,15 +204,17 @@ export default {
             }
 
             // lexer.setInput(symbol);
-            const obj = {
-              word: symbol,
-              // token: lexer.lex(),
-              line: i + 1,
-            };
-            Lexemes.push(obj);
-            index++;
+            if(symbol !== "~"){
+                const obj = {
+                word: symbol,
+                // token: lexer.lex(),
+                line: i + 1,
+              };
+              Lexemes.push(obj);
+              index++;
+            }
           }
-
+          console.log(line[index], keyword);
           while (line[index] && line[index].match(/[a-zA-Z0-9."]/g)) {
             // for keywords and identifiers
             let isPartOfStr = false;
@@ -253,7 +267,7 @@ export default {
               if (
                 line[index] === "." &&
                 keyword !== "" &&
-                !keyword.match(/^[0-9]+$/g)
+                !keyword.match(/^[~]?[0-9]+$/g)
               ) {
                 //struct element
                 // lexer.setInput(keyword);

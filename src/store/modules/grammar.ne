@@ -25,6 +25,7 @@
         quote: "quote",
         sharp: "sharp",
         //  \": /^[\\"]$/,
+        negative: "negative",
         
         //unit keywords
         IN: "start", 
@@ -90,9 +91,13 @@ function_data_type ->
         data_type 
     |   %empty
 
+negation ->
+        %negative
+    |   null
+
 literal -> 
-        %int_literal 
-    |   %dec_literal 
+        negation %int_literal 
+    |   negation %dec_literal 
     |   %quote %str_literal %quote
     |   %bool_literal
 
@@ -104,10 +109,11 @@ recur_vital ->
         %comma %id %equal literal recur_vital
     |   null
 
+#removed struct_define
 declare_choice -> 
         variable
     |   array
-    |   struct_define 
+    # |   struct_define 
     |   null
 
 recur_assign -> 
@@ -119,10 +125,10 @@ assign_choice ->
         recur_assign %equal variable_choice 
     |   assign_array recur_assign %equal variable_choice 
     |   assign_struct recur_assign %equal variable_choice
-    |   %terminator #added terminator for id = id = id;
+    # |   %terminator #added terminator for id = id = id;
 
 data_declare -> 
-        data_type %id declare_choice %terminator
+        data_type %id declare_choice %terminator 
 
 #removed %id at the start
 assign_statement ->
@@ -132,6 +138,7 @@ variable_array ->
         assign_array
     |   null
 
+#temporarily removed id from the start of variable_array
 variable_choice ->
         %id variable_array
     |   literal
@@ -220,15 +227,23 @@ statement_choice ->
     |   unary %id %terminator #added terminator
     # |   iterate_statement %terminator //
     |   return_statement
-    |   function_call_statement %terminator
+    # |   function_call_statement %terminator
     |   control_statement 
     |   %clean %open_paren %close_paren %terminator
 
 #this is new
 id_start_statement ->
-        assign_statement
-    |   iterate_statement_choice
-    |   function_call_statement_choice
+        %id struct_define_choice
+    |   assign_statement
+    |   iterate_statement_choice %terminator
+    |   function_call_statement_choice %terminator
+    
+
+# %id parameter_define %terminator
+
+#this is new
+struct_define_choice ->
+        parameter_define %terminator
 
 #this is new
 function_call_statement_choice ->
@@ -236,7 +251,7 @@ function_call_statement_choice ->
 
 #this is new
 iterate_statement_choice ->
-        unary %terminator
+        unary 
     |   %assign_oper iterate_choice
     |   null
 
@@ -255,23 +270,25 @@ recur_output ->
         %comma output
     |   null
 
-in_statement ->
+in_statement -> #id, array element, structure
         %scan %open_paren %id recur_id %close_paren %terminator
 
+#added %dot %id recur_id; added recur_id to ending of productions
 recur_id ->
-        assign_array id_choice
+        assign_array id_choice recur_id
     |   %comma %id recur_id
+    |   %dot %id recur_id
     |   null
 
 id_choice ->
         %dot %id assign_array
     |   null
 
-#added id production set
+#added id production set 
 digit_choice ->
-        %int_literal
-    |   %dec_literal
-    |   %id
+        negation %int_literal
+    |   negation %dec_literal
+    |   negation %id
 
 compute_choice -> 
         digit_choice %arith_oper compute_choice recur_compute
@@ -280,6 +297,7 @@ compute_choice ->
 
 compute ->
         digit_choice
+    |   %open_paren digit_choice %close_paren
 
 recur_compute ->
         additional_compute
@@ -301,12 +319,12 @@ oper_choice ->
         %relation_oper
     |   %logical_oper
 
-#NEW
+#this is new
 notter ->
         %not
     |   null
 
-#NEW
+#this is new
 enclosed_condition ->
         %open_paren condition_choice additional_condition %close_paren
     |   condition_choice additional_condition
@@ -316,6 +334,7 @@ next_condition ->
         oper_choice condition recur_condition
     |   null
 
+#removed a production set; updated the others
 condition -> 
         condition_choice next_condition
     |   notter enclosed_condition recur_condition
@@ -344,8 +363,8 @@ for_initial_extra ->
         array_size oper
 
 iterate_choice ->
-        %int_literal
-    |   %dec_literal
+        iterate_choice %int_literal
+    |   iterate_choice %dec_literal
     |   %quote %str_literal %quote
     |   function_call_statement
     |   struct_statement
@@ -381,7 +400,7 @@ switch_statement ->
         %stateSwitch %open_paren %id %close_paren %open_brace %vote vote_choice %colon function_statement %kill %terminator vote %stateDefault %colon function_statement %close_brace
 
 vote_choice ->
-        %int_literal
+        negation %int_literal
     |   %quote %str_literal %quote
 
 vote ->
@@ -410,8 +429,9 @@ recur_struct ->
         data_type %id parameter_define %terminator recur_struct
     |   null
 
+#removed id
 struct_define ->
-        %id %id parameter_define %terminator
+        %id parameter_define %terminator
 
 assign_struct ->
         struct_choice element
