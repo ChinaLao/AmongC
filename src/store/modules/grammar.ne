@@ -3,10 +3,19 @@
 
     const lexer = moo.compile({
         
+        //unary: ["++", "--"],
+        //appendAssign: "+=", //added for string append
+        //assignOper: ["-=", "**=", "*=", "//=", "/=", "%="],
+        //comparison: ["==", "!="],
+        //relationOper: [">=", "<=", ">", "<"],
+        //equal: "=",
+        //append: "+",
+        //arithOper: [ "-", "**", "*", "//", "/", "%"],
+
         //special characters
-        arith_oper: "arithOper",
-        relation_oper: "relationOper",
-        assign_oper: "assignOper", 
+        arith_oper: ["arithOper", "append"],
+        relation_oper: ["relationOper", "comparison"],
+        assign_oper: ["assignOper", "appendAssign"], 
         
         equal: "equal",
         not: "not",
@@ -22,8 +31,8 @@
         dot: "dot",
         colon: "colon",
         //space: [" ", "\t"],
-        quote: "quote",
-        sharp: "sharp",
+        //quote: "quote",
+       // sharp: "sharp",
         //  \": /^[\\"]$/,
         negative: "negative",
         
@@ -98,7 +107,7 @@ negation ->
 literal -> 
         negation %int_literal 
     |   negation %dec_literal 
-    |   %quote %str_literal %quote
+    |   %str_literal
     |   %bool_literal
 
 
@@ -365,7 +374,7 @@ for_initial_extra ->
 iterate_choice ->
         negation %int_literal
     |   negation %dec_literal
-    |   %quote %str_literal %quote
+    |   %str_literal
     |   function_call_statement
     |   struct_statement
 
@@ -401,7 +410,7 @@ switch_statement ->
 
 vote_choice ->
         negation %int_literal
-    |   %quote %str_literal %quote
+    |   %str_literal
 
 vote ->
         %vote vote_choice %colon function_statement %kill %terminator vote
@@ -523,5 +532,5 @@ oper ->
     |   null
 
 comment ->
-        %sharp %singleComment
+        %singleComment
     # |   null       

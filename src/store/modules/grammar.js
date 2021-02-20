@@ -7,10 +7,19 @@ function id(x) { return x[0]; }
 
     const lexer = moo.compile({
         
+        //unary: ["++", "--"],
+        //appendAssign: "+=", //added for string append
+        //assignOper: ["-=", "**=", "*=", "//=", "/=", "%="],
+        //comparison: ["==", "!="],
+        //relationOper: [">=", "<=", ">", "<"],
+        //equal: "=",
+        //append: "+",
+        //arithOper: [ "-", "**", "*", "//", "/", "%"],
+
         //special characters
-        arith_oper: "arithOper",
-        relation_oper: "relationOper",
-        assign_oper: "assignOper", 
+        arith_oper: ["arithOper", "append"],
+        relation_oper: ["relationOper", "comparison"],
+        assign_oper: ["assignOper", "appendAssign"], 
         
         equal: "equal",
         not: "not",
@@ -26,8 +35,8 @@ function id(x) { return x[0]; }
         dot: "dot",
         colon: "colon",
         //space: [" ", "\t"],
-        quote: "quote",
-        sharp: "sharp",
+        //quote: "quote",
+       // sharp: "sharp",
         //  \": /^[\\"]$/,
         negative: "negative",
         
@@ -88,7 +97,7 @@ var grammar = {
     {"name": "negation", "symbols": []},
     {"name": "literal", "symbols": ["negation", (lexer.has("int_literal") ? {type: "int_literal"} : int_literal)]},
     {"name": "literal", "symbols": ["negation", (lexer.has("dec_literal") ? {type: "dec_literal"} : dec_literal)]},
-    {"name": "literal", "symbols": [(lexer.has("quote") ? {type: "quote"} : quote), (lexer.has("str_literal") ? {type: "str_literal"} : str_literal), (lexer.has("quote") ? {type: "quote"} : quote)]},
+    {"name": "literal", "symbols": [(lexer.has("str_literal") ? {type: "str_literal"} : str_literal)]},
     {"name": "literal", "symbols": [(lexer.has("bool_literal") ? {type: "bool_literal"} : bool_literal)]},
     {"name": "vital_define", "symbols": [(lexer.has("vital") ? {type: "vital"} : vital), "data_type", (lexer.has("id") ? {type: "id"} : id), (lexer.has("equal") ? {type: "equal"} : equal), "literal", "recur_vital", (lexer.has("terminator") ? {type: "terminator"} : terminator)]},
     {"name": "recur_vital", "symbols": [(lexer.has("comma") ? {type: "comma"} : comma), (lexer.has("id") ? {type: "id"} : id), (lexer.has("equal") ? {type: "equal"} : equal), "literal", "recur_vital"]},
@@ -217,7 +226,7 @@ var grammar = {
     {"name": "for_initial_extra", "symbols": ["array_size", "oper"]},
     {"name": "iterate_choice", "symbols": ["negation", (lexer.has("int_literal") ? {type: "int_literal"} : int_literal)]},
     {"name": "iterate_choice", "symbols": ["negation", (lexer.has("dec_literal") ? {type: "dec_literal"} : dec_literal)]},
-    {"name": "iterate_choice", "symbols": [(lexer.has("quote") ? {type: "quote"} : quote), (lexer.has("str_literal") ? {type: "str_literal"} : str_literal), (lexer.has("quote") ? {type: "quote"} : quote)]},
+    {"name": "iterate_choice", "symbols": [(lexer.has("str_literal") ? {type: "str_literal"} : str_literal)]},
     {"name": "iterate_choice", "symbols": ["function_call_statement"]},
     {"name": "iterate_choice", "symbols": ["struct_statement"]},
     {"name": "iterate_statement", "symbols": [(lexer.has("id") ? {type: "id"} : id), "unary"]},
@@ -237,7 +246,7 @@ var grammar = {
     {"name": "else_choice", "symbols": []},
     {"name": "switch_statement", "symbols": [(lexer.has("stateSwitch") ? {type: "stateSwitch"} : stateSwitch), (lexer.has("open_paren") ? {type: "open_paren"} : open_paren), (lexer.has("id") ? {type: "id"} : id), (lexer.has("close_paren") ? {type: "close_paren"} : close_paren), (lexer.has("open_brace") ? {type: "open_brace"} : open_brace), (lexer.has("vote") ? {type: "vote"} : vote), "vote_choice", (lexer.has("colon") ? {type: "colon"} : colon), "function_statement", (lexer.has("kill") ? {type: "kill"} : kill), (lexer.has("terminator") ? {type: "terminator"} : terminator), "vote", (lexer.has("stateDefault") ? {type: "stateDefault"} : stateDefault), (lexer.has("colon") ? {type: "colon"} : colon), "function_statement", (lexer.has("close_brace") ? {type: "close_brace"} : close_brace)]},
     {"name": "vote_choice", "symbols": ["negation", (lexer.has("int_literal") ? {type: "int_literal"} : int_literal)]},
-    {"name": "vote_choice", "symbols": [(lexer.has("quote") ? {type: "quote"} : quote), (lexer.has("str_literal") ? {type: "str_literal"} : str_literal), (lexer.has("quote") ? {type: "quote"} : quote)]},
+    {"name": "vote_choice", "symbols": [(lexer.has("str_literal") ? {type: "str_literal"} : str_literal)]},
     {"name": "vote", "symbols": [(lexer.has("vote") ? {type: "vote"} : vote), "vote_choice", (lexer.has("colon") ? {type: "colon"} : colon), "function_statement", (lexer.has("kill") ? {type: "kill"} : kill), (lexer.has("terminator") ? {type: "terminator"} : terminator), "vote"]},
     {"name": "vote", "symbols": []},
     {"name": "return_statement", "symbols": [(lexer.has("stateReturn") ? {type: "stateReturn"} : stateReturn), "return_first_choice", (lexer.has("terminator") ? {type: "terminator"} : terminator)]},
@@ -295,7 +304,7 @@ var grammar = {
     {"name": "unary", "symbols": [(lexer.has("unary_oper") ? {type: "unary_oper"} : unary_oper)]},
     {"name": "oper", "symbols": [(lexer.has("arith_oper") ? {type: "arith_oper"} : arith_oper), "array_size", "oper"]},
     {"name": "oper", "symbols": []},
-    {"name": "comment", "symbols": [(lexer.has("sharp") ? {type: "sharp"} : sharp), (lexer.has("singleComment") ? {type: "singleComment"} : singleComment)]}
+    {"name": "comment", "symbols": [(lexer.has("singleComment") ? {type: "singleComment"} : singleComment)]}
 ]
   , ParserStart: "program"
 }

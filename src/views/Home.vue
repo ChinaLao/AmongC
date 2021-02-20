@@ -150,17 +150,29 @@ export default {
     ],
     errorTableHeaders: [
       {
+        text: "Error Type",
+        align: "center",
+        sortable: false,
+        value: "type",
+      },
+      {
         text: "Error Message",
         align: "start",
         sortable: false,
         value: "msg",
       },
-      // {
-      //   text: "Line",
-      //   align: "center",
-      //   sortable: false,
-      //   value: "line",
-      // },
+      {
+        text: "Line",
+        align: "center",
+        sortable: false,
+        value: "line",
+      },
+      {
+        text: "Column",
+        align: "center",
+        sortable: false,
+        value: "col",
+      }
     ],
   }),
   methods: {
@@ -173,6 +185,7 @@ export default {
       // this.$store.dispatch("lexical/GET_LEXEME", this.code);
       // await this.$store.dispatch("syntax/GET_SYNTAX", this.code);
       await this.$store.dispatch("lexicalAnalyzer/LEXICAL", this.code);
+      await this.$store.dispatch("lexicalAnalyzer/SYNTAX");
       console.log(this.lexeme);
       // await this.$store.dispatch("syntax/TEMPORARY_SYNTAX", this.code);
       this.runClicked = false;
