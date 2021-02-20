@@ -226,7 +226,14 @@ export default {
         const parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar));
         console.log("b");
         const lexeme = state.lexeme;
+        const lexemeLast = lexeme[lexeme.length-1];
         console.log("c");
+        lexeme.push({
+          word: "EOF",
+          token: "EOF",
+          line: lexemeLast["line"]+1,
+          col: 1,
+        });
         lexeme.forEach((lex, index) => {
           try {
             console.log(lex.word, lex.token);

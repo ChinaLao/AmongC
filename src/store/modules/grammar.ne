@@ -72,13 +72,15 @@
         dec_literal: "litDec",
         int_literal: "litInt",
         id: "id", 
+
+        eof: "EOF",
     }); 
 %}
 
 @lexer lexer
 
 program -> 
-        global %IN main_statement %OUT function
+        global %IN main_statement %OUT function %eof
 
 global -> 
         global_choice global

@@ -76,11 +76,13 @@ function id(x) { return x[0]; }
         dec_literal: "litDec",
         int_literal: "litInt",
         id: "id", 
+
+        eof: "EOF",
     }); 
 var grammar = {
     Lexer: lexer,
     ParserRules: [
-    {"name": "program", "symbols": ["global", (lexer.has("IN") ? {type: "IN"} : IN), "main_statement", (lexer.has("OUT") ? {type: "OUT"} : OUT), "function"]},
+    {"name": "program", "symbols": ["global", (lexer.has("IN") ? {type: "IN"} : IN), "main_statement", (lexer.has("OUT") ? {type: "OUT"} : OUT), "function", (lexer.has("eof") ? {type: "eof"} : eof)]},
     {"name": "global", "symbols": ["global_choice", "global"]},
     {"name": "global", "symbols": ["comment", "global"]},
     {"name": "global", "symbols": []},
