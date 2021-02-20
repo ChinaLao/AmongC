@@ -142,6 +142,11 @@ export default {
         sortable: false,
         value: "line",
       },
+      {
+        text: "Column",
+        sortable: false,
+        value: "col"
+      },
     ],
     errorTableHeaders: [
       {
@@ -150,12 +155,12 @@ export default {
         sortable: false,
         value: "msg",
       },
-      {
-        text: "Line",
-        align: "center",
-        sortable: false,
-        value: "line",
-      },
+      // {
+      //   text: "Line",
+      //   align: "center",
+      //   sortable: false,
+      //   value: "line",
+      // },
     ],
   }),
   methods: {
@@ -166,9 +171,10 @@ export default {
       this.runClicked = true;
       this.clearOutput();
       // this.$store.dispatch("lexical/GET_LEXEME", this.code);
-      await this.$store.dispatch("syntax/GET_SYNTAX", this.code);
+      // await this.$store.dispatch("syntax/GET_SYNTAX", this.code);
+      await this.$store.dispatch("lexicalAnalyzer/LEXICAL", this.code);
       console.log(this.lexeme);
-      await this.$store.dispatch("syntax/TEMPORARY_SYNTAX", this.code);
+      // await this.$store.dispatch("syntax/TEMPORARY_SYNTAX", this.code);
       this.runClicked = false;
     },
     stop() {
@@ -179,15 +185,18 @@ export default {
       this.clearOutput();
     },
     clearOutput() {
-      this.$store.dispatch("syntax/CLEAR");
+      this.$store.commit("lexicalAnalyzer/CLEAR_OUTPUTS");
+      // this.$store.commit("syntax/CLEAR");
     },
   },
   computed: {
     lexeme() {
-      return this.$store.getters["syntax/LEXEME"];
+      return this.$store.getters["lexicalAnalyzer/LEXEME"];
+      // return this.$store.getters["syntax/LEXEME"];
     },
     error() {
-      return this.$store.getters["syntax/ERROR"];
+      return this.$store.getters["lexicalAnalyzer/ERROR"];
+      // return this.$store.getters["syntax/ERROR"];
     },
   },
 };

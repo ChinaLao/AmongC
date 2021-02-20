@@ -10,10 +10,13 @@ export default {
     error: [],
     lexRules: [
       ["\\s+", "/* skip whitespace */"],
-      ['^[\\"].+[\\"]?', "return 'litStr';"],
+      ['^[\\"].+[\\"]$', "return 'litStr';"],
       ["^[#].+$", "return 'singleComment';"],
-      ["^[~]?[0-9]+[.][0-9]+$", "return 'litDec';"],
-      ["^[~]?[0-9]+$", "return 'litInt';"],
+      ["^[~]?[0-9]{1,9}[.][0-9]{1,5}$", "return 'litDec';"],
+      ["^[~]?[0-9]{1,9}$", "return 'litInt';"],
+
+      //["[a-z][a-zA-Z0-9]{0,14}[.][a-z][a-zA-Z0-9]{0,14}$", "return 'element';"],
+      
 
       ["^[I][N]$", "return 'start';"],
       ["^[O][U][T]$", "return 'end';"],
@@ -56,7 +59,7 @@ export default {
       ["^[\\[]$", "return 'openBracket';"],
       ["^[\\]]$", "return 'closeBracket';"],
       ["^[\\:]$", "return 'colon';"],
-      ["^[#]$", "return 'sharp';"],
+      //["^[#]$", "return 'sharp';"],
       ["^[=][=]$", "return 'relationOper';"],
       ["^[>][=]$", "return 'relationOper';"],
       ["^[<][=]$", "return 'relationOper';"],
@@ -82,7 +85,12 @@ export default {
       ["^[*]$", "return 'arithOper';"],
       ["^[!]$", "return 'not';"],
       ["^[~]$", "return 'negative';"],
-      ["[a-z][a-zA-Z0-9]*$", "return 'id';"],
+
+      ["[a-z][a-zA-Z0-9]{0,14}$", "return 'id';"],
+      
+    ],
+    delimRules: [
+      ["[+=!)}\\[:><,;]", "return 'litStr';"],
     ],
   },
   getters: {
@@ -156,13 +164,16 @@ export default {
           while (line[index] && line[index].match(/[^a-zA-Z0-9\s"]/g)) {
             // symbols
             let symbol = "";
-            symbol += line[index];
+            
             if (line[index] === "#") {
               //single line comment
               while (index < line.length) {
                 keyword += line[index];
                 index++;
               }
+            }
+            else{
+              symbol += line[index];
             }
             if(line[index] === "~"){
               //negative
@@ -204,7 +215,7 @@ export default {
             }
 
             // lexer.setInput(symbol);
-            if(symbol !== "~"){
+            if(symbol !== "~" && symbol !== ""){
                 const obj = {
                 word: symbol,
                 // token: lexer.lex(),
@@ -223,12 +234,12 @@ export default {
               isPartOfStr = true;
               quoteCounter++;
               // lexer.setInput(line[index]);
-              const obj = {
-                word: line[index],
-                // token: lexer.lex(),
-                line: i + 1,
-              };
-              Lexemes.push(obj);
+              // const obj = {
+              //   word: line[index],
+              //   // token: lexer.lex(),
+              //   line: i + 1,
+              // };
+              // Lexemes.push(obj);
             }
             while ((isPartOfStr || quoteCounter === 1) && index < line.length) {
               //str literal
@@ -247,12 +258,12 @@ export default {
                 Lexemes.push(keyObj);
                 keyword = "";
                 // lexer.setInput(line[index]);
-                const obj = {
-                  word: line[index],
-                  // token: lexer.lex(),
-                  line: i + 1,
-                };
-                Lexemes.push(obj);
+                // const obj = {
+                //   word: line[index],
+                //   // token: lexer.lex(),
+                //   line: i + 1,
+                // };
+                // Lexemes.push(obj);
                 index++;
               }
             }
@@ -309,18 +320,30 @@ export default {
           }
         }
       });
-      Lexemes.forEach((lexeme) => {
+      const finalLex = [];
+      for (const lexeme of Lexemes) {
         try {
           console.log(lexeme.word, lexeme.line);
           lexer.setInput(lexeme.word);
           lexeme.token = lexer.lex();
           console.log(lexeme.word, lexeme.token, lexeme.line);
+          finalLex.push({
+            word: lexeme.word,
+            token: lexeme.token,
+            line: lexeme.line
+          });
         } catch (err) {
           console.log(err);
-          lexeme.token = "Unknown";
+          const obj = []
+          obj.push({
+            msg: `Limit Exceeded at line ${lexeme.line}`,
+            line: lexeme.line
+          });
+          commit("SET_ERROR", obj);
+          break;
         }
-      });
-      commit("SET_LEXEME", Lexemes);
+      } // int num 
+      commit("SET_LEXEME", finalLex);
     },
     CLEAR({ state, commit }) {
       const blank = [];
