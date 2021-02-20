@@ -69,8 +69,11 @@
 
         str_literal: "litStr",
         singleComment: "singleComment",
+        int_literal: ["litInt", "negaLitInt"],
+        posi_int_literal: "litInt",
         dec_literal: "litDec",
-        int_literal: "litInt",
+        
+        
         id: "id", 
 
         eof: "EOF",
@@ -107,8 +110,8 @@ negation ->
     |   null
 
 literal -> 
-        negation %int_literal 
-    |   negation %dec_literal 
+        %int_literal 
+    |   %dec_literal 
     |   %str_literal
     |   %bool_literal
 
@@ -137,7 +140,7 @@ assign_choice ->
     |   assign_array recur_assign %equal variable_choice 
     |   assign_struct recur_assign %equal variable_choice
     # |   %terminator #added terminator for id = id = id;
-
+id
 data_declare -> 
         data_type %id declare_choice %terminator 
 
@@ -173,7 +176,7 @@ array_size ->
 
 struct_size ->
         %id
-    |   %int_literal
+    |   %posi_int_literal
     |   function_call_statement
     |   compute_choice
 
@@ -297,9 +300,14 @@ id_choice ->
 
 #added id production set 
 digit_choice ->
-        negation %int_literal
-    |   negation %dec_literal
-    |   negation %id
+        notter digit_notter
+
+digit_notter ->
+        %int_literal
+    |   %dec_literal
+    |   negation %id id_array
+    |   function_call_statement
+    |   struct_statement
 
 compute_choice -> 
         digit_choice %arith_oper compute_choice recur_compute
@@ -322,9 +330,12 @@ extra_compute ->
         %arith_oper compute_choice
 
 condition_choice ->
-        notter %id
-    # |   literal removed literal
-    |   notter compute_choice
+        notter condition_notter
+    
+condition_notter ->
+        negation %id
+    |   literal
+    |   compute_choice
 
 oper_choice ->
         %relation_oper
@@ -335,20 +346,41 @@ notter ->
         %not
     |   null
 
-#this is new
-enclosed_condition ->
-        %open_paren condition_choice additional_condition %close_paren
-    |   condition_choice additional_condition
+# #this is new
+# enclosed_condition -> 
+#         %open_paren condition_choice additional_condition %close_paren
+#     |   condition_choice additional_condition
 
-#this is new
-next_condition ->
-        oper_choice condition recur_condition
-    |   null
+# #this is new
+# next_condition ->
+#         oper_choice another_condition recur_condition
+#     |   null
 
-#removed a production set; updated the others
+# another_condition ->
+#         condition_choice next_condition
+#     |   notter enclosed_condition recur_condition
+
+# #removed a production set; updated the others
+# condition -> 
+#         condition_choice next_condition
+#     |   notter enclosed_condition recur_condition
+
+# recur_condition ->
+#         additional_condition
+#     |   null
+
+# additional_condition ->
+#         oper_choice condition_choice recur_condition
+#     |   extra_condition
+#     |   null
+
+# extra_condition -> 
+#         oper_choice condition
+
 condition -> 
-        condition_choice next_condition
-    |   notter enclosed_condition recur_condition
+        condition_choice oper_choice condition recur_condition
+    |   notter %open_paren condition_choice additional_condition %close_paren recur_condition
+    |   condition_choice
 
 recur_condition ->
         additional_condition
@@ -356,42 +388,66 @@ recur_condition ->
 
 additional_condition ->
         oper_choice condition_choice recur_condition
-    |   extra_condition
-    |   null
-
-extra_condition -> 
+        extra_condition
+    
+extra_condition ->
         oper_choice condition
 
 for_int ->
         %int
     |   null
 
-for_initial ->
-        for_int %id %equal for_initial_extra
-    |   null
-
-for_initial_extra ->
-        array_size oper
-
-iterate_choice ->
-        negation %int_literal
-    |   negation %dec_literal
-    |   %str_literal
+for_choice -> 
+        notter for_notter
+    
+for_notter ->
+        negation %id %id_array
+    |   literal
     |   function_call_statement
     |   struct_statement
 
-iterate_statement ->
-        %id unary
-    |   unary %id
-    |   %id %assign_oper iterate_choice
+for_initial ->
+        for_int %id %equal for_choice for_initial_extra
     |   null
+    
+for_initial_extra ->
+        %comma for_initial
+    |   null
+
+iterate_statement_extra ->
+        %comma iterate_statement
+    |   null
+
+iterate_choice ->
+        %int_literal
+    |   %dec_literal
+    |   function_call_statement
+    |   struct_statement
+    |   %id id_array
+
+unary_choice ->
+        %id id_array
+    |   struct_statement
+
+iterate_statement ->
+        unary_choice iterate_unary
+    |   unary unary_choice iterate_statement_extra
+    |   null
+
+iterate_unary ->
+        unary iterate_statement_extra
+    |   %assign_oper iterate_choice iterate_statement_extra
 
 recur_for_condition ->
         %logical_oper for_condition
     |   null
 
-for_condition ->
-        %id oper_choice array_size recur_for_condition
+for_condition_extra ->
+        %comma for_condition
+    |   null
+
+for_condition -> 
+        %id oper_choice for_choice recur_for_condition for_condition_extra
     |   null
 
 loop_statement ->
@@ -407,11 +463,19 @@ else_choice ->
     |   %stateElse statement
     |   null
 
+switch_choice ->
+        notter switch_notter
+
+switch_notter ->
+        %id id_array
+    |   function_call_statement
+    |   struct_statement
+
 switch_statement ->
-        %stateSwitch %open_paren %id %close_paren %open_brace %vote vote_choice %colon function_statement %kill %terminator vote %stateDefault %colon function_statement %close_brace
+        %stateSwitch %open_paren switch_choice %close_paren %open_brace %vote vote_choice %colon function_statement %kill %terminator vote %stateDefault %colon function_statement %close_brace
 
 vote_choice ->
-        negation %int_literal
+        %int_literal
     |   %str_literal
 
 vote ->
