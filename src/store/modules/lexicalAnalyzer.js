@@ -60,15 +60,17 @@ export default {
         colon: ":",
         sharp: "#",
         unary: ["++", "--"],
-        append: ["+=", "+"], //added for string append
+        appendAssign: "+=", //added for string append
         assignOper: ["-=", "**=", "*=", "//=", "/=", "%="],
-        relationOper: ["==", ">=", "<=", "!=", ">", "<"],
+        comparison: ["==", "!="],
+        relationOper: [">=", "<=", ">", "<"],
         equal: "=",
+        append: "+",
         arithOper: [ "-", "**", "*", "//", "/", "%"],
         not: "!",
         negative: "~",
 
-        element: /[a-z][a-zA-Z0-9]{0,14}[.][a-z][a-zA-Z0-9]{0,14}/,
+        // element: /[a-z][a-zA-Z0-9]{0,14}[.][a-z][a-zA-Z0-9]{0,14}/,
         id: /[a-z][a-zA-Z0-9]{0,14}/,
     },
     delimRules: {
@@ -123,6 +125,59 @@ export default {
         openBracket: ["(", /0-9/, /a-z/, " "],
         closeBracket: ["+", "-", "*", "/", "%", "[", "]", ";", ",", ">", "<", "!", "}", "=", " "],
         singleComment: "\n",
+    },
+    delims: {
+      litStr: ["appendAssign", "comma", "terminator", "and", "or", "closeParen", "closeBrace", "openBracket", "colon", "append", "whitespace"],
+      litInt: ["arithOper", "relationOper", "closeParen", "closeBracket", "colon", "comparison", "closeBrace", "comma", "terminator", "whitespace"],
+      litDec: ["arithOper", "relationOper", "closeParen", "comparison", "closeBrace", "comma", "terminator", "whitespace"],
+      litBool: ["closeBrace", "closeParen", "comma", "terminator", "whitespace"],
+      IN: ["whitespace", "newline"],
+      int: "whitespace",
+      dec: "whitespace",
+      str: "whitespace",
+      bool: "whitespace",
+      empty: "whitespace",
+      struct: "whitespace",
+      shoot: "openParen",
+      scan: "openParen",
+      if: ["whitespace", "openParen"],
+      else: ["whitespace", "newline"],
+      elf: ["whitespace", "openParen"],
+      switch: ["openParen", "whitespace"],
+      vote: "whitespace",
+      default: ["colon", "whitespace"],
+      for: ["openParen", "whitespace"],
+      while: ["openParen", "whitespace"],
+      do: ["openBrace", "whitespace"],
+      kill: "terminator",
+      continue: "terminator",
+      true: ["terminator", "closeParen", "whitespace"],
+      false: ["terminator", "closeParen", "whitespace"],
+      return: ["terminator", "openParen", "whitespace"],
+      OUT: ["whitespace", "newline"],
+      and: "whitespace",
+      or: "whitespace",
+      vital: "whitespace",
+      clean: "openParen",
+      id: ["openBracket", "openParen", "unary", "appendAssign", "assignOper", "relationOper", "equal", "append", "arithOper", "closeParen", "closeBracket", "whitespace", "comparison", "dot"],
+      // element: ["openBracket", "unary", "appendAssign", "assignOper", "relationOper", "append", "arithOper", "equal", "closeParen", "closeBracket", "whitespace", "comparison"],
+      arithOper: ["negative", "openParen", "litInt", "litDec", "id", "whitespace"],
+      unary: ["closeBracket", "closeParen", "closeBrace", "comma", "terminator", "id", "whitespace"],
+      append: ["negative", "openParen", "litStr", "litInt", "litDec", "id", "whitespace"],
+      assignOper: ["negative", "openParen", "litInt", "litDec", "id", "whitespace"],
+      relationOper: ["negative", "openParen", "litInt", "litDec", "id", "whitespace"],
+      equal: ["negative", "openParen", "litInt", "litDec", "litStr", "litBool", "id", "whitespace"],
+      not: ["negative", "openParen", "id", "whitespace"],
+      colon: ["whitespace", "newline"],
+      terminator: ["unary", "id", "openParen", "closeParen", "terminator", "whitespace", "newline", "singleComment"],
+      comma: ["unary", "not", "openBrace", "openParen", "litStr", "litInt", "litDec", "litBool", "id", "whitespace", "negative"],
+      openBrace: ["unary", "litStr", "not", "negative", "openParen", "openBrace", "closeBrace", "litInt", "litDec", "litBool", "id", "whitespace", "newline", "singleComment"],
+      closeBrace: ["comma", "terminator", "closeBrace", "singleComment", "whitespace", "newline"],
+      openParen: ["negative", "litStr", "closeParen", "not", "openParen", "terminator", "litInt", "litDec", "litBool", "id", "whitespace", "int", "dec", "str", "bool"],
+      closeParen: ["comma", "terminator", "arithOper", "append", "comparison", "closeParen", "closeBracket", "closeBrace", "relationOper", "whitespace"],
+      openBracket: ["openParen", "litInt", "id", "whitespace"],
+      closeBracket: ["dot", "append", "arithOper", "appendAssign", "assignOper", "unary", "openBracket", "closeBracket", "terminator", "comma", "comparison", "relationOper", "closeBrace", "equal", "whitespace"],
+      singleComment: "newline",
     }
   },
   getters: {
@@ -151,7 +206,7 @@ export default {
             let token = " ";
             while(token){
                 token = reader.next();
-                if(token && token.type !== "newline" && token.type !== "whitespace"){
+                if(token){
                     tokenStream.push({
                         word: token.value,
                         token: token.type,
@@ -160,28 +215,48 @@ export default {
                     });
                 }  
             }
-            const delimParser = moo.compile(state.delimRules);
-            let index = 0;
-            console.log("a"); 
-            while(index < tokenStream.length){ //litStr, terminator 
-                console.log("a", tokenStream);
-                let delim;
-                if(index+1 !== tokenStream.length) { 
-                    let delimReader = delimParser.reset(tokenStream[index+1].word);
-                    console.log("a");
-                    delim = delimReader.next();
-                    console.log(delim);
+            let index = 0; // int num;
+            while(index < tokenStream.length){
+              console.log(index, tokenStream.length);
+              if(index+1 < tokenStream.length)
+              {
+                const testStream = tokenStream[index+1]; // num
+                const token = testStream.token; // id
+                const streamToken = tokenStream[index].token; // int
+                const delims = state.delims; // rules
+                console.log(index, tokenStream.length, delims[streamToken], token);
+                if(delims[streamToken] !== "whitespace" && 
+                   delims[streamToken] !== "newline" && 
+                   delims[streamToken].includes(token)
+                ){
+                  console.log(index, tokenStream.length, "ey");
                 }
-                if(index === tokenStream.length-1 || delim.type === tokenStream[index].token){
-                    console.log("a");
-                    totoo.push(tokenStream[index]);
-                }
-                if(index+1 === tokenStream.length)
-                    break;
-                else
-                    index++;
-                
+                else console.log(index, tokenStream.length, "aw man");
+              }
+              index++;
             }
+            // const delimParser = moo.compile(state.delimRules);
+            // let index = 0;
+            // console.log("a"); 
+            // while(index < tokenStream.length){ //litStr, terminator 
+            //     console.log("a", tokenStream);
+            //     let delim;
+            //     if(index+1 !== tokenStream.length) { 
+            //         let delimReader = delimParser.reset(tokenStream[index+1].word);
+            //         console.log("a");
+            //         delim = delimReader.next();
+            //         console.log(delim);
+            //     }
+            //     if(index === tokenStream.length-1 || delim.type === tokenStream[index].token){
+            //         console.log("a");
+            //         totoo.push(tokenStream[index]);
+            //     }
+            //     if(index+1 === tokenStream.length)
+            //         break;
+            //     else
+            //         index++;
+                
+            // }
 
             console.log(tokenStream, totoo);
         }
