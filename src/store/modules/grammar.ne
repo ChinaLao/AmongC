@@ -15,7 +15,7 @@
         //special characters
         arith_oper: ["arithOper", "append"],
         relation_oper: ["relationOper", "comparison"],
-        assign_oper: ["assignOper", "appendAssign"], 
+        assign_oper: ["appendAssign", "assignOper"], 
         
         equal: "equal",
         not: "not",
@@ -140,7 +140,7 @@ assign_choice ->
     |   assign_array recur_assign %equal variable_choice 
     |   assign_struct recur_assign %equal variable_choice
     # |   %terminator #added terminator for id = id = id;
-id
+
 data_declare -> 
         data_type %id declare_choice %terminator 
 
@@ -172,13 +172,25 @@ recur_variable ->
 
 array_size ->
         struct_size
-    |   struct_statement
+    |   struct_statement array_unary
+    |   unary struct_statement
+
+array_unary ->
+        unary
+    |   null
+
+struct_unary ->
+        %assign_oper iterate_choice
+    |   id_array unary
+    
 
 struct_size ->
-        %id
+        %id id_array
     |   %posi_int_literal
     |   function_call_statement
     |   compute_choice
+    |   unary %id id_array
+    |   %id struct_unary
 
 assign_struct_2D ->
         %open_bracket struct_size %close_bracket
@@ -197,21 +209,27 @@ assign_array ->
 array ->
          %open_bracket array_size %close_bracket array_define_first recur_variable
 
+array_choice ->
+        for_choice
+    |   iterate_statement
+    |   null
+
+#[2] = {wow}
 array_define_first ->
-        %equal %open_brace literal additional_literal_1D %close_brace
+        %equal %open_brace array_choice additional_literal_1D %close_brace
     |   %open_bracket array_size %close_bracket array_define_second
     |   null
 
 array_define_second ->
-        %equal %open_brace %open_brace literal additional_literal_1D %close_brace additional_literal_2D %close_brace
+        %equal %open_brace %open_brace array_choice additional_literal_1D %close_brace additional_literal_2D %close_brace
     |   null
 
 additional_literal_1D ->
-        %comma literal additional_literal_1D
+        %comma array_choice additional_literal_1D
     |   null
 
 additional_literal_2D ->
-        %comma %open_brace literal additional_literal_1D %close_brace additional_literal_2D
+        %comma %open_brace array_choice additional_literal_1D %close_brace additional_literal_2D
     |   null
 
 main_statement ->
@@ -244,6 +262,7 @@ statement_choice ->
     # |   function_call_statement %terminator
     |   control_statement 
     |   %clean %open_paren %close_paren %terminator
+    |   comment
 
 #this is new
 id_start_statement ->
@@ -336,6 +355,7 @@ condition_notter ->
         negation %id
     |   literal
     |   compute_choice
+    |   iterate_statement
 
 oper_choice ->
         %relation_oper

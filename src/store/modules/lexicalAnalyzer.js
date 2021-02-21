@@ -100,7 +100,7 @@ export default {
       default: ["colon", "whitespace"],
       for: ["openParen", "whitespace"],
       while: ["openParen", "whitespace"],
-      do: ["openBrace", "whitespace"],
+      do: ["openBrace", "whitespace", "newline"],
       kill: "terminator",
       continue: "terminator",
       true: ["terminator", "closeParen", "whitespace"],
@@ -111,7 +111,7 @@ export default {
       or: "whitespace",
       vital: "whitespace",
       clean: "openParen",
-      id: ["openBracket", "openParen", "unary", "appendAssign", "assignOper", "relationOper", "equal", "append", "arithOper", "closeParen", "closeBracket", "whitespace", "comparison", "dot", "terminator", "comma", "openBrace"],
+      id: ["openBracket", "openParen", "unary", "appendAssign", "assignOper", "relationOper", "equal", "append", "arithOper", "closeParen", "closeBracket", "whitespace", "comparison", "dot", "terminator", "comma", "openBrace", "closeBrace"],
     
       arithOper: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "id", "whitespace"],
       unary: ["closeBracket", "closeParen", "closeBrace", "comma", "terminator", "id", "whitespace"],
@@ -121,15 +121,15 @@ export default {
       relationOper: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "id", "whitespace"],
       comparison: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "litBool", "litStr", "id", "whitespace"],
       equal: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "litStr", "litBool", "id", "whitespace"],
-      not: ["negative", "openParen", "id", "whitespace", "litInt", "negaLitInt", "litDec", "litStr", "litBool"],
+      not: ["negative", "openParen", "id", "whitespace", "litInt", "negaLitInt", "litDec", "litStr", "litBool", "unary"],
       colon: ["whitespace", "newline"],
       terminator: ["unary", "id", "openParen", "closeParen", "terminator", "whitespace", "newline", "singleComment"],
       comma: ["unary", "not", "openBrace", "openParen", "litStr", "litInt", "negaLitInt", "litDec", "litBool", "id", "whitespace", "negative"],
       openBrace: ["unary", "litStr", "not", "negative", "openParen", "openBrace", "closeBrace", "litInt", "negaLitInt", "litDec", "litBool", "id", "whitespace", "newline", "singleComment"],
-      closeBrace: ["comma", "terminator", "closeBrace", "singleComment", "whitespace", "newline"],
-      openParen: ["negative", "litStr", "closeParen", "not", "openParen", "terminator", "litInt", "negaLitInt", "litDec", "litBool", "id", "whitespace", "int", "dec", "str", "bool"],
+      closeBrace: ["comma", "terminator", "closeBrace", "singleComment", "whitespace", "newline", "while"],
+      openParen: ["negative", "litStr", "closeParen", "not", "openParen", "terminator", "litInt", "negaLitInt", "litDec", "litBool", "id", "whitespace", "int", "dec", "str", "bool", "unary"],
       closeParen: ["comma", "terminator", "arithOper", "append", "comparison", "closeParen", "closeBracket", "closeBrace", "relationOper", "whitespace", "openBrace", "newline"],
-      openBracket: ["openParen", "litInt", "id", "whitespace"],
+      openBracket: ["openParen", "litInt", "id", "whitespace", "unary"],
       closeBracket: ["dot", "append", "arithOper", "appendAssign", "assignOper", "unary", "openBracket", "closeBracket", "terminator", "comma", "comparison", "relationOper", "closeBrace", "equal", "whitespace", "closeParen"],
       singleComment: "newline",
       negative: "id",
@@ -204,7 +204,7 @@ export default {
                   commit("CHANGE_ERROR", true);
                   break;
                 } 
-              } else if(tokenStream[index] !== ""){
+              } else if(tokenStream[index] !== "" && tokenStream[index]["token"] !== "whitespace" && tokenStream[index]["token"] !== "newline"){
                 totoo.push(tokenStream[index]);
               }
               index++;
