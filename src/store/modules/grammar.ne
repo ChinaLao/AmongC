@@ -397,10 +397,15 @@ notter ->
 # extra_condition -> 
 #         oper_choice condition
 
+#changed condtion_choice to condition_extra to add parenthesis
+condition_extra ->
+        condition_choice
+    |   %open_paren condition_choice %close_paren
+
 condition -> 
-        condition_choice oper_choice condition recur_condition
-    |   notter %open_paren condition_choice additional_condition %close_paren recur_condition
-    |   condition_choice
+        condition_extra oper_choice condition recur_condition
+    |   notter %open_paren condition_extra additional_condition %close_paren recur_condition
+    |   condition_extra
 
 recur_condition ->
         additional_condition
@@ -408,7 +413,7 @@ recur_condition ->
 
 additional_condition ->
         oper_choice condition_choice recur_condition
-        extra_condition
+    |   extra_condition
     
 extra_condition ->
         oper_choice condition
@@ -418,13 +423,15 @@ for_int ->
     |   null
 
 for_choice -> 
-        notter for_notter
+        compute_choice
+    |   notter for_notter 
     
-for_notter ->
-        negation %id %id_array
-    |   literal
+    for_notter ->
+        literal
+    |   negation %id %id_array
     |   function_call_statement
     |   struct_statement
+    |   iterate_statement
 
 for_initial ->
         for_int %id %equal for_choice for_initial_extra
@@ -466,8 +473,13 @@ for_condition_extra ->
         %comma for_condition
     |   null
 
+#changed for_choice to for_choice extra to add parenthesis
+for_choice_extra ->
+        for_choice
+    |   %open_paren for_choice %close_paren
+
 for_condition -> 
-        %id oper_choice for_choice recur_for_condition for_condition_extra
+        for_choice_extra oper_choice for_choice_extra recur_for_condition for_condition_extra
     |   null
 
 loop_statement ->
@@ -479,8 +491,8 @@ if_statement ->
         %stateIf %open_paren condition %close_paren statement else_choice
 
 else_choice ->
-        %elf %open_paren condition %close_paren statement else_choice
-    |   %stateElse statement
+        %stateElse statement
+    |   %elf %open_paren condition %close_paren statement else_choice
     |   null
 
 switch_choice ->

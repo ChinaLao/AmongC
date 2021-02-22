@@ -114,17 +114,17 @@ export default {
       id: ["openBracket", "openParen", "unary", "appendAssign", "assignOper", "relationOper", "equal", "append", "arithOper", "closeParen", "closeBracket", "whitespace", "comparison", "dot", "terminator", "comma", "openBrace", "closeBrace"],
     
       arithOper: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "id", "whitespace"],
-      unary: ["closeBracket", "closeParen", "closeBrace", "comma", "terminator", "id", "whitespace"],
+      unary: ["closeBracket", "closeParen", "closeBrace", "comma", "terminator", "id", "whitespace", "relationOper", "comparison"],
       append: ["negative", "openParen", "litStr", "litInt", "negaLitInt", "litDec", "id", "whitespace"],
       appendAssign: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "id", "whitespace", "litStr"],
       assignOper: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "id", "whitespace"],
-      relationOper: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "id", "whitespace"],
-      comparison: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "litBool", "litStr", "id", "whitespace"],
+      relationOper: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "id", "whitespace", "not"],
+      comparison: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "litBool", "litStr", "id", "whitespace","not"],
       equal: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "litStr", "litBool", "id", "whitespace"],
       not: ["negative", "openParen", "id", "whitespace", "litInt", "negaLitInt", "litDec", "litStr", "litBool", "unary"],
       colon: ["whitespace", "newline"],
       terminator: ["unary", "id", "openParen", "closeParen", "terminator", "whitespace", "newline", "singleComment"],
-      comma: ["unary", "not", "openBrace", "openParen", "litStr", "litInt", "negaLitInt", "litDec", "litBool", "id", "whitespace", "negative"],
+      comma: ["unary", "not", "openBrace", "openParen", "litStr", "litInt", "negaLitInt", "litDec", "litBool", "id", "whitespace", "negative", "int", "dec", "str", "bool"],
       openBrace: ["unary", "litStr", "not", "negative", "openParen", "openBrace", "closeBrace", "litInt", "negaLitInt", "litDec", "litBool", "id", "whitespace", "newline", "singleComment"],
       closeBrace: ["comma", "terminator", "closeBrace", "singleComment", "whitespace", "newline", "while"],
       openParen: ["negative", "litStr", "closeParen", "not", "openParen", "terminator", "litInt", "negaLitInt", "litDec", "litBool", "id", "whitespace", "int", "dec", "str", "bool", "unary"],
@@ -165,61 +165,73 @@ export default {
 
         let token = " ";
         try{
-            while(token){
-                token = reader.next();
-                if(token){
-                    tokenStream.push({
-                        word: token.value,
-                        token: token.type,
-                        line: token.line,
-                        col: token.col,
-                    });
-                }  
-            }
-            let index = 0; // int num;
-            while(index < tokenStream.length){
-              console.log(index, tokenStream.length);
-              if(index+1 < tokenStream.length)
-              {
-                const testStream = tokenStream[index+1]; // space
-                const token = testStream.token; // whitespace
-                const streamToken = tokenStream[index].token; // int
-                const delims = state.delims; // rules
-                console.log(index, tokenStream.length, delims[streamToken], token, streamToken);
-                if(streamToken !== "whitespace" && 
-                   streamToken !== "newline" && 
-                   delims[streamToken].includes(token)
-                ){
-                  console.log(index, tokenStream.length, "ey");
-                  totoo.push(tokenStream[index]);
-                }
-                else if(streamToken !== "whitespace" && streamToken !== "newline"){
-                  const error = {
-                    type: "lex-error",
-                    msg: `Invalid delimiter`,
-                    line: tokenStream[index].line,
-                    col: tokenStream[index].col
-                  };
-                  commit("SET_ERROR", error);
-                  commit("CHANGE_ERROR", true);
-                  break;
-                } 
-              } else if(tokenStream[index] !== "" && tokenStream[index]["token"] !== "whitespace" && tokenStream[index]["token"] !== "newline"){
-                totoo.push(tokenStream[index]);
-              }
-              index++;
-            }
-
-            console.log(tokenStream, totoo);
+          while(token){
+            token = reader.next();
+            if(token){
+              tokenStream.push({
+                word: token.value,
+                token: token.type,
+                line: token.line,
+                col: token.col,
+              });
+            }  
+          }
         }
         catch(error){
-            commit("SET_ERROR", {
-              type: "lex-error",
-              msg: error.message,
-              line: token.line,
-              col: token.col+1
-            });
-            console.log(error);
+          commit("SET_ERROR", {
+            type: "lex-error",
+            msg: "Invalid Keyword",
+            line: token.line,
+            col: token.col+1
+          });
+          commit("CHANGE_ERROR", true);
+          console.log(error);
+        }
+        try{
+          let index = 0; // int num;
+          while(index < tokenStream.length){
+            console.log(index, tokenStream.length);
+            if(index+1 < tokenStream.length)
+            {
+              const testStream = tokenStream[index+1]; // space
+              const token = testStream.token; // whitespace
+              const streamToken = tokenStream[index].token; // int
+              const delims = state.delims; // rules
+              console.log(index, tokenStream.length, delims[streamToken], token, streamToken);
+              if(streamToken !== "whitespace" && 
+                  streamToken !== "newline" && 
+                  delims[streamToken].includes(token)
+              ){
+                console.log(index, tokenStream.length, "ey");
+                totoo.push(tokenStream[index]);
+              }
+              else if(streamToken !== "whitespace" && streamToken !== "newline"){
+                const error = {
+                  type: "lex-error",
+                  msg: `Invalid delimiter`,
+                  line: tokenStream[index].line,
+                  col: tokenStream[index].col
+                };
+                commit("SET_ERROR", error);
+                commit("CHANGE_ERROR", true);
+                break;
+              } 
+            } else if(tokenStream[index] !== "" && tokenStream[index]["token"] !== "whitespace" && tokenStream[index]["token"] !== "newline"){
+              totoo.push(tokenStream[index]);
+            }
+            index++;
+          }
+
+          console.log(tokenStream, totoo);
+        }catch(err){
+          const error = {
+            type: "programmer-error",
+            msg: `Missing delimiter rule`,
+            line: tokenStream[index].line,
+            col: tokenStream[index].col
+          };
+          commit("SET_ERROR", error);
+          commit("CHANGE_ERROR", true);
         }
         commit("SET_LEXEME", totoo);
     },
