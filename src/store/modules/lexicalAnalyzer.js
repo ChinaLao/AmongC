@@ -206,9 +206,15 @@ export default {
                 totoo.push(tokenStream[index]);
               }
               else if(streamToken !== "whitespace" && streamToken !== "newline"){
+                let message;
+                if(tokenStream[index]["token"] !== "dot" && (tokenStream[index]["token"] === tokenStream[index+1]["token"] || tokenStream[index+1]["token"] === "litInt" || tokenStream[index+1]["token"] === "litDec"))
+                  message = "Limit exceeded";
+                else
+                  message = "Invalid delimiter";
+                
                 const error = {
                   type: "lex-error",
-                  msg: `Invalid delimiter`,
+                  msg: message,
                   line: tokenStream[index].line,
                   col: tokenStream[index].col
                 };
