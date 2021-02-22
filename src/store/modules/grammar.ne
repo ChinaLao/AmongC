@@ -13,9 +13,9 @@
         //arithOper: [ "-", "**", "*", "//", "/", "%"],
 
         //special characters
+        assign_oper: ["appendAssign", "assignOper"], 
         arith_oper: ["arithOper", "append"],
         relation_oper: ["relationOper", "comparison"],
-        assign_oper: ["appendAssign", "assignOper"], 
         
         equal: "equal",
         not: "not",
@@ -209,27 +209,27 @@ assign_array ->
 array ->
          %open_bracket array_size %close_bracket array_define_first recur_variable
 
-array_choice ->
-        for_choice
-    |   iterate_statement
-    |   null
+# array_choice -> BAKA DI KA NA KAILANGAN
+#         for_choice
+#     |   iterate_statement
+#     |   null
 
-#[2] = {wow}
+#changed array_choice to condition
 array_define_first ->
-        %equal %open_brace array_choice additional_literal_1D %close_brace
+        %equal %open_brace condition additional_literal_1D %close_brace
     |   %open_bracket array_size %close_bracket array_define_second
     |   null
 
 array_define_second ->
-        %equal %open_brace %open_brace array_choice additional_literal_1D %close_brace additional_literal_2D %close_brace
+        %equal %open_brace %open_brace condition additional_literal_1D %close_brace additional_literal_2D %close_brace
     |   null
 
 additional_literal_1D ->
-        %comma array_choice additional_literal_1D
+        %comma condition additional_literal_1D
     |   null
 
 additional_literal_2D ->
-        %comma %open_brace array_choice additional_literal_1D %close_brace additional_literal_2D
+        %comma %open_brace condition additional_literal_1D %close_brace additional_literal_2D
     |   null
 
 main_statement ->
@@ -348,14 +348,18 @@ additional_compute ->
 extra_compute ->
         %arith_oper compute_choice
 
+iterate_statement_condition ->
+        unary_choice iterate_unary
+    |   unary unary_choice iterate_statement_extra
+
 condition_choice ->
         notter condition_notter
     
 condition_notter ->
-        negation %id
+        negation %id 
     |   literal
     |   compute_choice
-    |   iterate_statement
+    |   iterate_statement_condition
 
 oper_choice ->
         %relation_oper
@@ -365,37 +369,6 @@ oper_choice ->
 notter ->
         %not
     |   null
-
-# #this is new
-# enclosed_condition -> 
-#         %open_paren condition_choice additional_condition %close_paren
-#     |   condition_choice additional_condition
-
-# #this is new
-# next_condition ->
-#         oper_choice another_condition recur_condition
-#     |   null
-
-# another_condition ->
-#         condition_choice next_condition
-#     |   notter enclosed_condition recur_condition
-
-# #removed a production set; updated the others
-# condition -> 
-#         condition_choice next_condition
-#     |   notter enclosed_condition recur_condition
-
-# recur_condition ->
-#         additional_condition
-#     |   null
-
-# additional_condition ->
-#         oper_choice condition_choice recur_condition
-#     |   extra_condition
-#     |   null
-
-# extra_condition -> 
-#         oper_choice condition
 
 #changed condtion_choice to condition_extra to add parenthesis
 condition_extra ->
@@ -478,8 +451,12 @@ for_choice_extra ->
         for_choice
     |   %open_paren for_choice %close_paren
 
-for_condition -> 
-        for_choice_extra oper_choice for_choice_extra recur_for_condition for_condition_extra
+# for_condition -> 
+#         for_choice_extra oper_choice for_choice_extra recur_for_condition for_condition_extra
+#     |   null
+
+for_condition ->
+        condition for_condition_extra
     |   null
 
 loop_statement ->
@@ -528,10 +505,13 @@ return_choice ->
     |   null
 
 struct_declare ->
-        %struct %id %open_brace recur_struct %close_brace
+        %struct %id %open_brace first_struct %close_brace
 
 recur_declare ->
         %comma parameter_define
+
+first_struct ->
+        data_type %id parameter_define %terminator recur_struct
 
 recur_struct -> 
         data_type %id parameter_define %terminator recur_struct
@@ -587,11 +567,17 @@ array_parameter ->
 
 parameter -> 
         data_type %id array_parameter recur_parameter
+    |   %id %id array_parameter recur_parameter
     |   null
 
 recur_parameter ->
-        %comma data_type %id array_parameter recur_parameter
+        %comma recur_parameter_again
     |   null
+
+recur_parameter_again ->
+        data_type %id array_parameter recur_parameter
+    |   %id %id array_parameter recur_parameter
+    
 
 #this is new
 id_array ->
