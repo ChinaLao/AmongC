@@ -112,9 +112,12 @@ negation ->
 literal -> 
         %int_literal 
     |   %dec_literal 
-    |   %str_literal
+    |   %str_literal string_access
     |   %bool_literal
 
+string_access ->
+        %open_bracket array_size %close_bracket
+    |   null
 
 vital_define -> 
         %vital data_type %id %equal literal recur_vital %terminator
@@ -485,7 +488,7 @@ switch_statement ->
 
 vote_choice ->
         %int_literal
-    |   %str_literal
+    |   %str_literal string_access
 
 vote ->
         %vote vote_choice %colon function_statement %kill %terminator vote
