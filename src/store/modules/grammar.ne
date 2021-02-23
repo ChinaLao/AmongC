@@ -72,7 +72,7 @@
         int_literal: ["litInt", "negaLitInt"],
         posi_int_literal: "litInt",
         dec_literal: "litDec",
-        
+        access: "access",
         
         id: "id", 
 
@@ -116,7 +116,7 @@ literal ->
     |   %bool_literal
 
 string_access ->
-        %open_bracket array_size %close_bracket
+        %access %open_paren array_size %close_paren
     |   null
 
 vital_define -> 
@@ -128,8 +128,8 @@ recur_vital ->
 
 #removed struct_define
 declare_choice -> 
-        variable
-    |   array
+        variable 
+    |   array 
     # |   struct_define 
     |   null
 
@@ -157,10 +157,10 @@ variable_array ->
 
 #temporarily removed id from the start of variable_array
 variable_choice ->
-        %id variable_array
+        %id string_access variable_array
     |   literal
-    |   function_call_statement
-    |   struct_statement
+    |   function_call_statement string_access
+    |   struct_statement string_access
     |   compute_choice
     |   condition
 
@@ -174,7 +174,7 @@ recur_variable ->
     |   null
 
 array_size ->
-        struct_size
+        struct_size 
     |   struct_statement array_unary
     |   unary struct_statement
 
@@ -186,13 +186,12 @@ struct_unary ->
         %assign_oper iterate_choice
     |   id_array unary
     
-
 struct_size ->
-        %id id_array
+        %id id_array 
     |   %posi_int_literal
-    |   function_call_statement
+    |   function_call_statement 
     |   compute_choice
-    |   unary %id id_array
+    |   unary %id id_array 
     |   %id struct_unary
 
 assign_struct_2D ->
@@ -203,7 +202,7 @@ assign_struct_size ->
         %open_bracket struct_size %close_bracket assign_struct_2D
 
 assign_array_2D ->
-        %open_bracket array_size %close_bracket
+        %open_bracket array_size %close_bracket 
     |   null
 
 assign_array ->
@@ -218,9 +217,10 @@ array ->
 #     |   null
 
 #changed array_choice to condition
+#added string_access
 array_define_first ->
         %equal %open_brace condition additional_literal_1D %close_brace
-    |   %open_bracket array_size %close_bracket array_define_second
+    |   %open_bracket array_size %close_bracket string_access array_define_second
     |   null
 
 array_define_second ->
@@ -324,12 +324,13 @@ id_choice ->
 digit_choice ->
         notter digit_notter
 
+#added string_access
 digit_notter ->
         %int_literal
     |   %dec_literal
-    |   negation %id id_array
-    |   function_call_statement
-    |   struct_statement
+    |   negation %id id_array string_access
+    |   function_call_statement string_access 
+    |   struct_statement string_access
 
 compute_choice -> 
         digit_choice %arith_oper compute_choice recur_compute
@@ -402,11 +403,12 @@ for_choice ->
         compute_choice
     |   notter for_notter 
     
-    for_notter ->
+#added string_access
+for_notter ->
         literal
-    |   negation %id %id_array
-    |   function_call_statement
-    |   struct_statement
+    |   negation %id %id_array string_access
+    |   function_call_statement string_access
+    |   struct_statement string_access
     |   iterate_statement
 
 for_initial ->
@@ -424,9 +426,9 @@ iterate_statement_extra ->
 iterate_choice ->
         %int_literal
     |   %dec_literal
-    |   function_call_statement
-    |   struct_statement
-    |   %id id_array
+    |   function_call_statement 
+    |   struct_statement 
+    |   %id id_array 
 
 unary_choice ->
         %id id_array
@@ -475,13 +477,16 @@ else_choice ->
     |   %elf %open_paren condition %close_paren statement else_choice
     |   null
 
+#added literal string access
 switch_choice ->
         notter switch_notter
+    |   %str_literal %access %open_paren array_size %close_paren
 
+#added string_access
 switch_notter ->
-        %id id_array
-    |   function_call_statement
-    |   struct_statement
+        %id id_array string_access
+    |   function_call_statement string_access
+    |   struct_statement string_access
 
 switch_statement ->
         %stateSwitch %open_paren switch_choice %close_paren %open_brace %vote vote_choice %colon function_statement %kill %terminator vote %stateDefault %colon function_statement %close_brace
@@ -530,20 +535,24 @@ assign_struct ->
 struct_statement ->
         %id struct_choice element
 
+#added string_access
 struct_choice ->
-        %open_bracket array_size %close_bracket extra_struct
+        %open_bracket array_size %close_bracket string_access extra_struct
     |   null
 
+#added string_access
 extra_struct ->
-        %open_bracket array_size %close_bracket
+        %open_bracket array_size %close_bracket string_access
     |   null
 
+#added string_access
 element_choice ->
-        %open_bracket array_size %close_bracket element_option
+        %open_bracket array_size %close_bracket string_access element_option
     |   null
 
+#added string_access
 element_option ->
-        %open_bracket array_size %close_bracket
+        %open_bracket array_size string_access %close_bracket
     |   null
 
 element ->
