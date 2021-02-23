@@ -47,7 +47,7 @@ export default {
         control: "continue",
         litBool: ["true", "false"],
         return: "return",
-        and: "and",
+        and: /^[a][n][d]$/,
         or: "or",
         vital: "vital",
         task: "task",
