@@ -173,7 +173,7 @@ export default {
       vital: "Constant Keyword",
       clean: "Clear Screen Function Keyword",
       id: "Identifier",
-    
+      access: "String Accessor Operator",
       arithOper: "Arithmetic Operator",
       unary: "Unary Operator",
       append: "Arithmetic / Append Operator",
@@ -270,8 +270,9 @@ export default {
               }
               else if(streamToken !== "whitespace" && streamToken !== "newline"){
                 let message, expectationList;
-                if(tokenStream[index]["token"] !== "dot" && (tokenStream[index]["token"] === tokenStream[index+1]["token"] || tokenStream[index+1]["token"] === "litInt" || tokenStream[index+1]["token"] === "litDec"))
-                  message = "Limit exceeded";
+                if(tokenStream[index]["token"] === "litInt" && (tokenStream[index+1]["token"] === "litInt" || tokenStream[index+1]["token"] === "litDec")) message = "Limit exceeded";
+                else if(tokenStream[index]["token"] === "litDec" && tokenStream[index+1]["token"] === "litInt") message = "Limit exceeded";
+                else if(tokenStream[index]["token"] === "id" && (tokenStream[index+1]["token"] === "id" || tokenStream[index+1]["token"] === "litInt")) message = "Limit exceeded";
                 else{
                   let i = 0;
                   const delimiters = delims[streamToken];
