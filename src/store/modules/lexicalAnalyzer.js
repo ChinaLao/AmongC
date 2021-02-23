@@ -135,6 +135,65 @@ export default {
       negative: "id",
       dot: "id",
       task: "whitespace",
+    },
+    tokenDescription: {
+      litStr: "String Literal",
+      negaLitInt: "Integer Literal",
+      litInt: "Integer Literal",
+      litDec: "Decimal Literal",
+      litBool: "Boolean Literal",
+      start: "Start of Main Function Keyword",
+      int: "Integer Data Type Keyword",
+      dec: "Decimal Data Type Keyword",
+      str: "String Data Type Keyword",
+      bool: "Boolean Data Type Keyword",
+      empty: "Null Data Type Keyword",
+      struct: "Struct Keyword",
+      shoot: "Output Keyword",
+      scan: "Input Keyword",
+      if: "If Keyword",
+      else: "Else Keyword",
+      elf: "Else If Keyword",
+      stateSwitch: "Switch Keyword",
+      vote: "Case Keyword",
+      default: "Default Keyword",
+      for: "For Loop Keyword",
+      while: "While Loop Keyword",
+      do: "Do-While Loop Keyword",
+      kill: "Break Control Keyword",
+      continue: "Continue Control Keyword",
+      true:  "True Keyword",
+      false: "False Keyword",
+      return: "Return Keyword",
+      end: "End of Main Function Keyword",
+      and: "And Logical Keyword",
+      or: "Or Logical Keyword",
+      vital: "Constant Keyword",
+      clean: "Clear Screen Function Keyword",
+      id: "Identifier",
+    
+      arithOper: "Arithmetic Operator",
+      unary: "Unary Operator",
+      append: "Arithmetic / Append Operator",
+      appendAssign: "Assignment with Arithmetic Operator",
+      assignOper: "Assignment with Arithmetic / Append Operator",
+      relationOper: "Relational Operator",
+      comparison: "Relational Operator",
+      equal: "Assignment Operator",
+      not: "Negation Operator",
+      colon: "Case Operator",
+      terminator: "Terminator Operator",
+      comma: "Separator Operator",
+      openBrace: "Start Operator of a Statement Block",
+      closeBrace: "End Operator of a Statement Block",
+      openParen: "Start Operator of an Expression",
+      closeParen: "End Operator of an Expression",
+      openBracket: "Start Operator of an Array Size / String Access",
+      closeBracket: "End Operator of an Array Size / String Access",
+      singleComment: "Single Comment Operator",
+      negative: "Negative Operator",
+      dot: "Struct Element Accessor Operator",
+      task: "Function Keyword",
     }
   },
   getters: {
@@ -162,6 +221,7 @@ export default {
         const totoo = [];
         const parser = moo.compile(state.lexRules);
         let reader = parser.reset(code);
+        const tokenDescription = state.tokenDescription;
 
         let token = " ";
         try{
@@ -239,6 +299,9 @@ export default {
           commit("SET_ERROR", error);
           commit("CHANGE_ERROR", true);
         }
+        totoo.forEach(token => {
+          token.description = tokenDescription[token["token"]];
+        });
         commit("SET_LEXEME", totoo);
     },
     async SYNTAX({ state, commit }) {
@@ -255,6 +318,7 @@ export default {
           token: "EOF",
           line: lexemeLast["line"]+1,
           col: 1,
+          description: "End of File",
         });
         lexeme.forEach((lex, index) => {
           try {

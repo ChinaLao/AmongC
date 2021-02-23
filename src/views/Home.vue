@@ -138,6 +138,11 @@ export default {
         value: "token",
       },
       {
+        text: "Description",
+        sortable: false,
+        value: "description",
+      },
+      {
         text: "Line",
         sortable: false,
         value: "line",
