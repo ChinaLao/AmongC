@@ -128,27 +128,31 @@ export default {
     lexemeTableHeaders: [
       {
         text: "Lexeme",
-        align: "start",
+        align: "center",
         sortable: false,
         value: "word",
       },
       {
         text: "Token",
+        align: "center",
         sortable: false,
         value: "token",
       },
       {
         text: "Description",
+        align: "center",
         sortable: false,
         value: "description",
       },
       {
         text: "Line",
+        align: "center",
         sortable: false,
         value: "line",
       },
       {
         text: "Column",
+        align: "center",
         sortable: false,
         value: "col"
       },
@@ -162,9 +166,15 @@ export default {
       },
       {
         text: "Error Message",
-        align: "start",
+        align: "center",
         sortable: false,
         value: "msg",
+      },
+      {
+        text: "Expected",
+        align: "center",
+        sortable: false,
+        value: "exp",
       },
       {
         text: "Line",

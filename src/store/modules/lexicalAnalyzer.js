@@ -242,7 +242,8 @@ export default {
             type: "lex-error",
             msg: "Invalid Keyword",
             line: token.line,
-            col: token.col+1
+            col: token.col+1,
+            exp: "-"
           });
           commit("CHANGE_ERROR", true);
           console.log(error);
@@ -266,17 +267,21 @@ export default {
                 totoo.push(tokenStream[index]);
               }
               else if(streamToken !== "whitespace" && streamToken !== "newline"){
-                let message;
+                let message, expectationList;
                 if(tokenStream[index]["token"] !== "dot" && (tokenStream[index]["token"] === tokenStream[index+1]["token"] || tokenStream[index+1]["token"] === "litInt" || tokenStream[index+1]["token"] === "litDec"))
                   message = "Limit exceeded";
-                else
-                  message = "Invalid delimiter";
+                else{
+                  const expectations = delims[streamToken].join(" / ");
+                  message = `Invalid delimiter`;
+                  expectationList = `${expectations}` //here
+                }
                 
                 const error = {
                   type: "lex-error",
                   msg: message,
                   line: tokenStream[index].line,
-                  col: tokenStream[index].col
+                  col: tokenStream[index].col,
+                  exp: expectationList
                 };
                 commit("SET_ERROR", error);
                 commit("CHANGE_ERROR", true);
@@ -294,7 +299,8 @@ export default {
             type: "programmer-error",
             msg: `Missing delimiter rule`,
             line: tokenStream[index].line,
-            col: tokenStream[index].col
+            col: tokenStream[index].col,
+            exp: "-"
           };
           commit("SET_ERROR", error);
           commit("CHANGE_ERROR", true);
@@ -330,9 +336,10 @@ export default {
           } catch (err) {
             const errors = {
               type: "syn-error",
-              msg: `Unexpected token: ${lexeme[index].word} (${lexeme[index].token})`,
+              msg: `Unexpected token: ${lexeme[index].token} (${lexeme[index].word})`,
               line: lexeme[index].line,
               col: lexeme[index].col,
+              exp: "-"
             };
             commit("SET_ERROR", errors);
             synError = true;
@@ -340,14 +347,6 @@ export default {
           console.log("loop ", index);
           index++;
         }
-        // try {
-        //   parser.feed(state.lexeme);
-        //   console.log(parser.results.length);
-        //   console.log(parser.results);
-        // } catch (err) {
-        //   console.log(err.message);
-  
-        // }
       }
     },
   },
