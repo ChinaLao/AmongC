@@ -273,7 +273,18 @@ export default {
                 if(tokenStream[index]["token"] !== "dot" && (tokenStream[index]["token"] === tokenStream[index+1]["token"] || tokenStream[index+1]["token"] === "litInt" || tokenStream[index+1]["token"] === "litDec"))
                   message = "Limit exceeded";
                 else{
-                  const expectations = delims[streamToken].join(" / ");
+                  let i = 0;
+                  const delimiters = delims[streamToken];
+                  let expectations = "";
+
+                  if(typeof(delimiters) === "string") expectations = delimiters;
+                  else
+                    while(i < delimiters.length && i < 3){
+                      expectations += delimiters[i];
+                      if(i < delimiters.length && i < 2) expectations += " / ";
+                      i++;
+                    }
+
                   message = `Invalid delimiter`;
                   expectationList = `${expectations}` //here
                 }
