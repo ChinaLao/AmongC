@@ -320,22 +320,26 @@ export default {
           col: 1,
           description: "End of File",
         });
-        lexeme.forEach((lex, index) => {
+        let index = 0;
+        let synError = false;
+        while(index < lexeme.length && !synError) {
           try {
-            console.log(lex.word, lex.token);
-            parser.feed(lex.token);
+            console.log(lexeme[index].word, lexeme[index].token);
+            parser.feed(lexeme[index].token);
             console.log(parser.entries, parser.results);
           } catch (err) {
             const errors = {
               type: "syn-error",
-              msg: `Unexpected token: ${lex.word}`,
-              line: lex.line,
-              col: lex.col,
+              msg: `Unexpected token: ${lexeme[index].word} (${lexeme[index].token})`,
+              line: lexeme[index].line,
+              col: lexeme[index].col,
             };
             commit("SET_ERROR", errors);
+            synError = true;
           }
           console.log("loop ", index);
-        });
+          index++;
+        }
         // try {
         //   parser.feed(state.lexeme);
         //   console.log(parser.results.length);
