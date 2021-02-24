@@ -307,13 +307,16 @@ recur_output ->
     |   null
 
 in_statement -> #id, array element, structure
-        %scan %open_paren %id recur_id %close_paren %terminator
+        %scan %open_paren in_choice %close_paren %terminator
 
-#added %dot %id recur_id; added recur_id to ending of productions
+#this is new
+in_choice ->
+        %id id_array recur_id 
+    |   struct_statement recur_id 
+
+#updated based on in_choice
 recur_id ->
-        assign_array id_choice recur_id
-    |   %comma %id recur_id
-    |   %dot %id recur_id
+        %comma in_choice
     |   null
 
 id_choice ->
@@ -324,13 +327,13 @@ id_choice ->
 digit_choice ->
         notter digit_notter
 
-#added string_access
+#added string_access #removed it na why kasi meron
 digit_notter ->
         %int_literal
     |   %dec_literal
-    |   negation %id id_array string_access
-    |   function_call_statement string_access 
-    |   struct_statement string_access
+    |   negation %id id_array 
+    |   function_call_statement 
+    |   struct_statement 
 
 compute_choice -> 
         digit_choice %arith_oper compute_choice recur_compute
@@ -352,6 +355,7 @@ additional_compute ->
 extra_compute ->
         %arith_oper compute_choice
 
+#this is new
 iterate_statement_condition ->
         unary_choice iterate_unary
     |   unary unary_choice iterate_statement_extra
@@ -404,7 +408,7 @@ for_choice ->
     |   notter for_notter 
     
 #added string_access
-for_notter ->
+for_notter -> #this is new
         literal
     |   negation %id %id_array string_access
     |   function_call_statement string_access
@@ -419,10 +423,12 @@ for_initial_extra ->
         %comma for_initial
     |   null
 
+#this is new
 iterate_statement_extra ->
         %comma iterate_statement
     |   null
 
+#removed str_literal; added id_array
 iterate_choice ->
         %int_literal
     |   %dec_literal
@@ -430,6 +436,7 @@ iterate_choice ->
     |   struct_statement 
     |   %id id_array 
 
+#this is new
 unary_choice ->
         %id id_array
     |   struct_statement
@@ -439,6 +446,7 @@ iterate_statement ->
     |   unary unary_choice iterate_statement_extra
     |   null
 
+#this is new
 iterate_unary ->
         unary iterate_statement_extra
     |   %assign_oper iterate_choice iterate_statement_extra
@@ -478,12 +486,12 @@ else_choice ->
     |   null
 
 #added literal string access
-switch_choice ->
+switch_choice -> #this is new
         notter switch_notter
     |   %str_literal %access %open_paren array_size %close_paren
 
 #added string_access
-switch_notter ->
+switch_notter -> #this is new
         %id id_array string_access
     |   function_call_statement string_access
     |   struct_statement string_access
@@ -518,7 +526,7 @@ struct_declare ->
 recur_declare ->
         %comma parameter_define
 
-first_struct ->
+first_struct -> #this is new
         data_type %id parameter_define %terminator recur_struct
 
 recur_struct -> 
@@ -535,24 +543,24 @@ assign_struct ->
 struct_statement ->
         %id struct_choice element
 
-#added string_access
+#added string_access #DOUBLE CHECK MO TONG CFG MO, BUTI NA LANG LEX ERROR HAY NAKO KA 
 struct_choice ->
         %open_bracket array_size %close_bracket string_access extra_struct
     |   null
 
-#added string_access
+#added string_access #DOUBLE CHECK MO TONG CFG MO, BUTI NA LANG LEX ERROR HAY NAKO KA 
 extra_struct ->
         %open_bracket array_size %close_bracket string_access
     |   null
 
-#added string_access
+#added string_access #DOUBLE CHECK MO TONG CFG MO, BUTI NA LANG LEX ERROR HAY NAKO KA
 element_choice ->
         %open_bracket array_size %close_bracket string_access element_option
     |   null
 
-#added string_access
+#added string_access #DOUBLE CHECK MO TONG CFG MO, BUTI NA LANG LEX ERROR HAY NAKO KA
 element_option ->
-        %open_bracket array_size string_access %close_bracket
+        %open_bracket array_size %close_bracket string_access
     |   null
 
 element ->
@@ -579,13 +587,14 @@ array_parameter ->
 
 parameter -> 
         data_type %id array_parameter recur_parameter
-    |   %id %id array_parameter recur_parameter
+    |   %id %id array_parameter recur_parameter #this is new
     |   null
 
 recur_parameter ->
         %comma recur_parameter_again
     |   null
 
+#this is new
 recur_parameter_again ->
         data_type %id array_parameter recur_parameter
     |   %id %id array_parameter recur_parameter
