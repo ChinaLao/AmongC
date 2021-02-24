@@ -116,7 +116,7 @@ literal ->
     |   %bool_literal
 
 string_access ->
-        %access %open_paren array_size %close_paren
+        %access %open_bracket array_size %close_bracket
     |   null
 
 vital_define -> 
@@ -488,7 +488,7 @@ else_choice ->
 #added literal string access
 switch_choice -> #this is new
         notter switch_notter
-    |   %str_literal %access %open_paren array_size %close_paren
+    |   %str_literal %access %open_bracket array_size %close_bracket
 
 #added string_access
 switch_notter -> #this is new

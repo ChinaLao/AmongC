@@ -141,7 +141,7 @@ export default {
       negative: "id",
       dot: "id",
       task: "whitespace",
-      access: "openParen",
+      access: "openBracket",
     },
     tokenDescription: {
       litStr: "String Literal",
