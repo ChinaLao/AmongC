@@ -94,7 +94,7 @@
               <h2 class="error--text">Errors</h2>
               <v-data-table
                 :headers="errorTableHeaders"
-                :items="lexeme"
+                :items="error"
                 :items-per-page="-1"
                 height="120"
                 class="errorOutput elevation-1"
@@ -124,43 +124,85 @@ export default {
   },
   data: () => ({
     code: null,
-    error: [],
     runClicked: false,
     lexemeTableHeaders: [
       {
         text: "Lexeme",
-        align: "start",
+        align: "center",
         sortable: false,
         value: "word",
       },
       {
         text: "Token",
+        align: "center",
         sortable: false,
         value: "token",
       },
       {
+        text: "Description",
+        align: "center",
+        sortable: false,
+        value: "description",
+      },
+      {
         text: "Line",
+        align: "center",
         sortable: false,
         value: "line",
+      },
+      {
+        text: "Column",
+        align: "center",
+        sortable: false,
+        value: "col"
       },
     ],
     errorTableHeaders: [
       {
-        text: "Lexeme",
-        align: "start",
+        text: "Error Type",
+        align: "center",
         sortable: false,
-        value: "token",
+        value: "type",
       },
+      {
+        text: "Error Message",
+        align: "center",
+        sortable: false,
+        value: "msg",
+      },
+      {
+        text: "Expected",
+        align: "center",
+        sortable: false,
+        value: "exp",
+      },
+      {
+        text: "Line",
+        align: "center",
+        sortable: false,
+        value: "line",
+      },
+      {
+        text: "Column",
+        align: "center",
+        sortable: false,
+        value: "col",
+      }
     ],
   }),
   methods: {
     highlighter(code) {
       return highlight(code, languages.js);
     },
-    run() {
+    async run() {
       this.runClicked = true;
-      this.$store.dispatch("lexical/GET_LEXEME", this.code);
+      this.clearOutput();
+      // this.$store.dispatch("lexical/GET_LEXEME", this.code);
+      // await this.$store.dispatch("syntax/GET_SYNTAX", this.code);
+      await this.$store.dispatch("lexicalAnalyzer/LEXICAL", this.code);
+      await this.$store.dispatch("lexicalAnalyzer/SYNTAX");
       console.log(this.lexeme);
+      // await this.$store.dispatch("syntax/TEMPORARY_SYNTAX", this.code);
       this.runClicked = false;
     },
     stop() {
@@ -168,12 +210,21 @@ export default {
     },
     clearCode() {
       this.code = "";
-      this.$store.dispatch("lexical/CLEAR");
+      this.clearOutput();
+    },
+    clearOutput() {
+      this.$store.commit("lexicalAnalyzer/CLEAR_OUTPUTS");
+      // this.$store.commit("syntax/CLEAR");
     },
   },
   computed: {
     lexeme() {
-      return this.$store.getters["lexical/LEXEME"];
+      return this.$store.getters["lexicalAnalyzer/LEXEME"];
+      // return this.$store.getters["syntax/LEXEME"];
+    },
+    error() {
+      return this.$store.getters["lexicalAnalyzer/ERROR"];
+      // return this.$store.getters["syntax/ERROR"];
     },
   },
 };
