@@ -301,8 +301,6 @@ export default {
             }
             index++;
           }
-
-          console.log(tokenStream, final);
         }catch(err){
           const error = {
             type: "programmer-error",
@@ -337,6 +335,7 @@ export default {
         while(index < lexeme.length && !synError) {
           try {
             parser.feed(lexeme[index].token);
+            console.log(lexeme[index].token, index);
           } catch (err) {
             const errors = {
               type: "syn-error",
