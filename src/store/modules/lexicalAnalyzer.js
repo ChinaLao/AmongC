@@ -277,7 +277,7 @@ export default {
                   else
                     while(i < delimiters.length && i < 3){
                       expectations += delimiters[i];
-                      if(i < delimiters.length && i < 2) expectations += " / ";
+                      if(i < delimiters.length-1 && i < 2) expectations += " / ";
                       i++;
                     }
 
