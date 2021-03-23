@@ -1,7 +1,3 @@
-import { Store } from "vuex";
-
-const JisonLex = require("jison-lex");
-// const Parser = require("jison").Parser;
 const nearley = require("nearley");
 const grammar = require("./grammar.js");
 
@@ -13,7 +9,7 @@ export default {
     lexeme: [],
     error: [],
     tokenStream: [],
-    mayError: false,
+    foundError: false,
     lexRules: {
       
       id: {match: /[a-z][a-zA-Z0-9]{0,14}/, type: moo.keywords({
@@ -70,7 +66,6 @@ export default {
       openBracket: "[",
       closeBracket: "]",
       colon: ":",
-      //sharp: "#",
       unary: ["++", "--"],
       appendAssign: "+=", //added for string append
       assignOper: ["-=", "**=", "*=", "//=", "/=", "%="],
@@ -216,16 +211,16 @@ export default {
     },
     CLEAR_OUTPUTS(state) {
         state.error = state.lexeme = [];
-        state.mayError = false;
+        state.foundError = false;
     },
     CHANGE_ERROR(state, payload){
-      state.mayError = payload;
+      state.foundError = payload;
     }
   },
   actions: {
     async LEXICAL({ state, commit }, code){ 
         const tokenStream = [];
-        const totoo = [];
+        const final = [];
         const parser = moo.compile(state.lexRules);
         let reader = parser.reset(code);
         const tokenDescription = state.tokenDescription;
@@ -256,23 +251,18 @@ export default {
           console.log(error);
         }
         try{
-          let index = 0; // int num;
+          let index = 0;
           while(index < tokenStream.length){
-            console.log(index, tokenStream.length);
             if(index+1 < tokenStream.length)
             {
-              const testStream = tokenStream[index+1]; // space
-              const token = testStream.token; // whitespace
-              const streamToken = tokenStream[index].token; // int
-              const delims = state.delims; // rules
-              console.log(index, tokenStream.length, delims[streamToken], token, streamToken);
+              const testStream = tokenStream[index+1]; 
+              const token = testStream.token; 
+              const streamToken = tokenStream[index].token; 
+              const delims = state.delims; 
               if(streamToken !== "whitespace" && 
                   streamToken !== "newline" && 
                   delims[streamToken].includes(token)
-              ){
-                console.log(index, tokenStream.length, "ey");
-                totoo.push(tokenStream[index]);
-              }
+              ) final.push(tokenStream[index]);
               else if(streamToken !== "whitespace" && streamToken !== "newline"){
                 let message, expectationList;
                 if(tokenStream[index]["token"] === "litInt" && (tokenStream[index+1]["token"] === "litInt" || tokenStream[index+1]["token"] === "litDec")) message = "Limit exceeded";
@@ -292,7 +282,7 @@ export default {
                     }
 
                   message = `Invalid delimiter`;
-                  expectationList = `${expectations}` //here
+                  expectationList = `${expectations}`
                 }
                 
                 const error = {
@@ -307,12 +297,12 @@ export default {
                 break;
               } 
             } else if(tokenStream[index] !== "" && tokenStream[index]["token"] !== "whitespace" && tokenStream[index]["token"] !== "newline"){
-              totoo.push(tokenStream[index]);
+              final.push(tokenStream[index]);
             }
             index++;
           }
 
-          console.log(tokenStream, totoo);
+          console.log(tokenStream, final);
         }catch(err){
           const error = {
             type: "programmer-error",
@@ -324,20 +314,17 @@ export default {
           commit("SET_ERROR", error);
           commit("CHANGE_ERROR", true);
         }
-        totoo.forEach(token => {
+        final.forEach(token => {
           token.description = tokenDescription[token["token"]];
         });
-        commit("SET_LEXEME", totoo);
+        commit("SET_LEXEME", final);
     },
     async SYNTAX({ state, commit }) {
-      if(!state.mayError)
+      if(!state.foundError)
       {
-        console.log("a");
         const parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar));
-        console.log("b");
         const lexeme = state.lexeme;
         const lexemeLast = lexeme[lexeme.length-1];
-        console.log("c");
         lexeme.push({
           word: "EOF",
           token: "EOF",
@@ -349,9 +336,7 @@ export default {
         let synError = false;
         while(index < lexeme.length && !synError) {
           try {
-            console.log(lexeme[index].word, lexeme[index].token);
             parser.feed(lexeme[index].token);
-            console.log(parser.entries, parser.results);
           } catch (err) {
             const errors = {
               type: "syn-error",
@@ -363,7 +348,6 @@ export default {
             commit("SET_ERROR", errors);
             synError = true;
           }
-          console.log("loop ", index);
           index++;
         }
       }

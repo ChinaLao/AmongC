@@ -2,15 +2,6 @@
     const moo = require("moo");
 
     const lexer = moo.compile({
-        
-        //unary: ["++", "--"],
-        //appendAssign: "+=", //added for string append
-        //assignOper: ["-=", "**=", "*=", "//=", "/=", "%="],
-        //comparison: ["==", "!="],
-        //relationOper: [">=", "<=", ">", "<"],
-        //equal: "=",
-        //append: "+",
-        //arithOper: [ "-", "**", "*", "//", "/", "%"],
 
         //special characters
         assign_oper: ["appendAssign", "assignOper"], 
@@ -30,10 +21,6 @@
         comma: "comma",
         dot: "dot",
         colon: "colon",
-        //space: [" ", "\t"],
-        //quote: "quote",
-       // sharp: "sharp",
-        //  \": /^[\\"]$/,
         negative: "negative",
         
         //unit keywords
@@ -65,7 +52,6 @@
         clean: "clean",
         logical_oper: ["and","or"],
 
-        //multicharacter construct
 
         str_literal: "litStr",
         singleComment: "singleComment",
@@ -126,11 +112,9 @@ recur_vital ->
         %comma %id %equal literal recur_vital
     |   null
 
-#removed struct_define
 declare_choice -> 
         variable 
     |   array 
-    # |   struct_define 
     |   null
 
 recur_assign -> 
@@ -142,12 +126,10 @@ assign_choice ->
         recur_assign %equal variable_choice 
     |   assign_array recur_assign %equal variable_choice 
     |   assign_struct recur_assign %equal variable_choice
-    # |   %terminator #added terminator for id = id = id;
 
 data_declare -> 
         data_type %id declare_choice %terminator 
 
-#removed %id at the start
 assign_statement ->
         assign_choice %terminator 
 
@@ -155,7 +137,6 @@ variable_array ->
         assign_array
     |   null
 
-#temporarily removed id from the start of variable_array
 variable_choice ->
         %id string_access variable_array
     |   literal
@@ -211,13 +192,6 @@ assign_array ->
 array ->
          %open_bracket array_size %close_bracket array_define_first recur_variable
 
-# array_choice -> BAKA DI KA NA KAILANGAN
-#         for_choice
-#     |   iterate_statement
-#     |   null
-
-#changed array_choice to condition
-#added string_access
 array_define_first ->
         %equal %open_brace condition additional_literal_1D %close_brace
     |   %open_bracket array_size %close_bracket string_access array_define_second
@@ -243,49 +217,37 @@ main_statement ->
 statement ->
         statement_choice
     |   %open_brace function_statement %close_brace
-    # |   null
 
 function_statement -> 
         statement_choice function_statement
     |   null
 
-#added %id id_start_statement; removed three production sets
 statement_choice ->
         data_declare
-    # |   assign_statement //
     |   out_statement 
     |   in_statement 
     |   loop_statement 
     |   if_statement 
     |   switch_statement 
     |   %id id_start_statement
-    |   unary %id %terminator #added terminator
-    # |   iterate_statement %terminator //
+    |   unary %id %terminator
     |   return_statement
-    # |   function_call_statement %terminator
     |   control_statement 
     |   %clean %open_paren %close_paren %terminator
     |   comment
 
-#this is new
 id_start_statement ->
         %id struct_define_choice
     |   assign_statement
     |   iterate_statement_choice %terminator
     |   function_call_statement_choice %terminator
     
-
-# %id parameter_define %terminator
-
-#this is new
 struct_define_choice ->
         parameter_define %terminator
 
-#this is new
 function_call_statement_choice ->
         %open_paren function_call %close_paren
 
-#this is new
 iterate_statement_choice ->
         unary 
     |   %assign_oper iterate_choice
@@ -294,7 +256,6 @@ iterate_statement_choice ->
 control_statement ->
         %control %terminator
     |   %kill %terminator
-    # |   null
 
 out_statement ->
         %shoot %open_paren output %close_paren %terminator
@@ -306,15 +267,13 @@ recur_output ->
         %comma output
     |   null
 
-in_statement -> #id, array element, structure
+in_statement ->
         %scan %open_paren in_choice %close_paren %terminator
 
-#this is new
 in_choice ->
         %id id_array recur_id 
     |   struct_statement recur_id 
 
-#updated based on in_choice
 recur_id ->
         %comma in_choice
     |   null
@@ -323,11 +282,9 @@ id_choice ->
         %dot %id assign_array
     |   null
 
-#added id production set 
 digit_choice ->
         notter digit_notter
 
-#added string_access #removed it na why kasi meron
 digit_notter ->
         %int_literal
     |   %dec_literal
@@ -355,7 +312,6 @@ additional_compute ->
 extra_compute ->
         %arith_oper compute_choice
 
-#this is new
 iterate_statement_condition ->
         unary_choice iterate_unary
     |   unary unary_choice iterate_statement_extra
@@ -373,12 +329,10 @@ oper_choice ->
         %relation_oper
     |   %logical_oper
 
-#this is new
 notter ->
         %not
     |   null
 
-#changed condtion_choice to condition_extra to add parenthesis
 condition_extra ->
         condition_choice
     |   %open_paren condition_choice %close_paren
@@ -407,8 +361,7 @@ for_choice ->
         compute_choice
     |   notter for_notter 
     
-#added string_access
-for_notter -> #this is new
+for_notter -> 
         literal
     |   negation %id %id_array string_access
     |   function_call_statement string_access
@@ -423,12 +376,10 @@ for_initial_extra ->
         %comma for_initial
     |   null
 
-#this is new
 iterate_statement_extra ->
         %comma iterate_statement
     |   null
 
-#removed str_literal; added id_array
 iterate_choice ->
         %int_literal
     |   %dec_literal
@@ -436,7 +387,6 @@ iterate_choice ->
     |   struct_statement 
     |   %id id_array 
 
-#this is new
 unary_choice ->
         %id id_array
     |   struct_statement
@@ -446,7 +396,6 @@ iterate_statement ->
     |   unary unary_choice iterate_statement_extra
     |   null
 
-#this is new
 iterate_unary ->
         unary iterate_statement_extra
     |   %assign_oper iterate_choice iterate_statement_extra
@@ -459,14 +408,9 @@ for_condition_extra ->
         %comma for_condition
     |   null
 
-#changed for_choice to for_choice extra to add parenthesis
 for_choice_extra ->
         for_choice
     |   %open_paren for_choice %close_paren
-
-# for_condition -> 
-#         for_choice_extra oper_choice for_choice_extra recur_for_condition for_condition_extra
-#     |   null
 
 for_condition ->
         condition for_condition_extra
@@ -485,13 +429,11 @@ else_choice ->
     |   %elf %open_paren condition %close_paren statement else_choice
     |   null
 
-#added literal string access
-switch_choice -> #this is new
+switch_choice -> 
         notter switch_notter
     |   %str_literal %access %open_bracket array_size %close_bracket
 
-#added string_access
-switch_notter -> #this is new
+switch_notter ->
         %id id_array string_access
     |   function_call_statement string_access
     |   struct_statement string_access
@@ -510,7 +452,6 @@ vote ->
 return_statement ->
         %stateReturn return_first_choice %terminator
 
-#this is new
 return_first_choice ->
         return_choice
     |   %open_paren return_choice %close_paren
@@ -526,14 +467,13 @@ struct_declare ->
 recur_declare ->
         %comma parameter_define
 
-first_struct -> #this is new
+first_struct -> 
         data_type %id parameter_define %terminator recur_struct
 
 recur_struct -> 
         data_type %id parameter_define %terminator recur_struct
     |   null
 
-#removed id
 struct_define ->
         %id parameter_define %terminator
 
@@ -543,22 +483,18 @@ assign_struct ->
 struct_statement ->
         %id struct_choice element
 
-#added string_access #DOUBLE CHECK MO TONG CFG MO, BUTI NA LANG LEX ERROR HAY NAKO KA 
 struct_choice ->
         %open_bracket array_size %close_bracket string_access extra_struct
     |   null
 
-#added string_access #DOUBLE CHECK MO TONG CFG MO, BUTI NA LANG LEX ERROR HAY NAKO KA 
 extra_struct ->
         %open_bracket array_size %close_bracket string_access
     |   null
 
-#added string_access #DOUBLE CHECK MO TONG CFG MO, BUTI NA LANG LEX ERROR HAY NAKO KA
 element_choice ->
         %open_bracket array_size %close_bracket string_access element_option
     |   null
 
-#added string_access #DOUBLE CHECK MO TONG CFG MO, BUTI NA LANG LEX ERROR HAY NAKO KA
 element_option ->
         %open_bracket array_size %close_bracket string_access
     |   null
@@ -587,25 +523,22 @@ array_parameter ->
 
 parameter -> 
         data_type %id array_parameter recur_parameter
-    |   %id %id array_parameter recur_parameter #this is new
+    |   %id %id array_parameter recur_parameter 
     |   null
 
 recur_parameter ->
         %comma recur_parameter_again
     |   null
 
-#this is new
 recur_parameter_again ->
         data_type %id array_parameter recur_parameter
     |   %id %id array_parameter recur_parameter
     
 
-#this is new
 id_array ->
         %open_bracket array_size %close_bracket id_array_2D
     |   null
 
-#this is new
 id_array_2D ->
         %open_bracket array_size %close_bracket id_array_2D
     |   null
@@ -638,4 +571,3 @@ oper ->
 
 comment ->
         %singleComment
-    # |   null       

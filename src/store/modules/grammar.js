@@ -6,15 +6,6 @@ function id(x) { return x[0]; }
     const moo = require("moo");
 
     const lexer = moo.compile({
-        
-        //unary: ["++", "--"],
-        //appendAssign: "+=", //added for string append
-        //assignOper: ["-=", "**=", "*=", "//=", "/=", "%="],
-        //comparison: ["==", "!="],
-        //relationOper: [">=", "<=", ">", "<"],
-        //equal: "=",
-        //append: "+",
-        //arithOper: [ "-", "**", "*", "//", "/", "%"],
 
         //special characters
         assign_oper: ["appendAssign", "assignOper"], 
@@ -34,10 +25,6 @@ function id(x) { return x[0]; }
         comma: "comma",
         dot: "dot",
         colon: "colon",
-        //space: [" ", "\t"],
-        //quote: "quote",
-       // sharp: "sharp",
-        //  \": /^[\\"]$/,
         negative: "negative",
         
         //unit keywords
@@ -69,7 +56,6 @@ function id(x) { return x[0]; }
         clean: "clean",
         logical_oper: ["and","or"],
 
-        //multicharacter construct
 
         str_literal: "litStr",
         singleComment: "singleComment",
