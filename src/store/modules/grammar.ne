@@ -138,7 +138,7 @@ variable_array ->
     |   null
 
 variable_choice ->
-        %id string_access variable_array
+        %id variable_array string_access
     |   literal
     |   function_call_statement string_access
     |   struct_statement string_access
@@ -320,7 +320,7 @@ condition_choice ->
         notter condition_notter
     
 condition_notter ->
-        negation %id 
+        negation %id string_access
     |   literal
     |   compute_choice
     |   iterate_statement_condition
