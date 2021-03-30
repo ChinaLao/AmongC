@@ -349,7 +349,7 @@ export default {
           }
           index++;
         }
-        console.log(parser.result);
+        console.log(parser.results);
       }
     },
   },
