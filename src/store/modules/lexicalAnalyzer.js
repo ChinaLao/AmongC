@@ -133,7 +133,7 @@ export default {
       openBracket: ["openParen", "litInt", "id", "whitespace", "unary", "closeBracket"],
       closeBracket: ["dot", "append", "arithOper", "appendAssign", "assignOper", "unary", "openBracket", "closeBracket", "terminator", "comma", "comparison", "relationOper", "closeBrace", "equal", "whitespace", "closeParen", "colon", "access"],
       singleComment: "newline",
-      negative: "id",
+      negative: ["id", "openParen"],
       dot: "id",
       task: "whitespace",
       access: "openBracket",
@@ -349,6 +349,7 @@ export default {
           }
           index++;
         }
+        console.log(parser.result);
       }
     },
   },
