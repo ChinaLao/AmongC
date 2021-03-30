@@ -117,33 +117,49 @@ declare_choice ->
     |   array 
     |   null
 
+#recur_assign -> 
+  #      %equal %id recur_assign
+  #  |   assign_choice
+  #  |   null
+
+#assign_choice -> 
+  #      recur_assign %equal variable_choice 
+  #  |   assign_array recur_assign %equal variable_choice 
+  #  |   assign_struct recur_assign %equal variable_choice
+
+#created new recur_assign, assign_choice
 recur_assign -> 
-        %equal %id recur_assign
-    |   assign_choice
+        %equal %id assign_struct recur_assign
     |   null
 
+#added string_access
 assign_choice -> 
-        recur_assign %equal variable_choice 
-    |   assign_array recur_assign %equal variable_choice 
-    |   assign_struct recur_assign %equal variable_choice
-
+        assign_struct recur_assign string_access %equal variable_choice
+       
 data_declare -> 
         data_type %id declare_choice %terminator 
 
 assign_statement ->
         assign_choice %terminator 
 
+#BAKA DI NA TO KAILANGAN
 variable_array ->
         assign_array
     |   null
 
+choice ->
+        struct_statement
+    |   function_call_statement
+    |   first_compute_choice #added this for computes with id at the start
+    |   first_condition_choice #added this for conditions with id at the start
+    |   null
+
 variable_choice ->
-        %id variable_array string_access
-    |   literal
-    |   function_call_statement string_access
-    |   struct_statement string_access
-    |   compute_choice
-    |   condition
+        #%id variable_array string_access
+        literal
+    |   %id choice string_access
+    |   compute_choice #changed compute_choice to compute_choice_less
+    |   condition #changed condition to condition_less
 
 variable ->
         %equal variable_choice recur_variable
@@ -166,14 +182,20 @@ array_unary ->
 struct_unary ->
         %assign_oper iterate_choice
     |   id_array unary
-    
+
+#added this to remove ambiguity with id
+struct_size_choice ->
+        id_array
+    |   function_call_statement_choice
+    |   first_compute_choice #added this for computes with id at the start
+    |   struct_unary
+
+#added struct_size_choice
 struct_size ->
-        %id id_array 
+        %id struct_size_choice
     |   %posi_int_literal
-    |   function_call_statement 
-    |   compute_choice
+    |   compute_choice_less #changed compute_choice to compute_choice_less
     |   unary %id id_array 
-    |   %id struct_unary
 
 assign_struct_2D ->
         %open_bracket struct_size %close_bracket
@@ -285,12 +307,17 @@ id_choice ->
 digit_choice ->
         notter digit_notter
 
+#added this to remove ambiguity PERO PARANG MERON PA RIN E
+digit_another_choice ->
+        #id_array
+        function_call_statement_choice
+    |   struct_statement_choice
+
+#moved function_call_statement, struct_statement to digit_another_choice
 digit_notter ->
         %int_literal
     |   %dec_literal
-    |   negation %id id_array 
-    |   function_call_statement 
-    |   struct_statement 
+    |   negation %id digit_another_choice #this is still an ambiguity
 
 compute_choice -> 
         digit_choice %arith_oper compute_choice recur_compute
@@ -316,14 +343,64 @@ iterate_statement_condition ->
         unary_choice iterate_unary
     |   unary unary_choice iterate_statement_extra
 
+iterate_statement_condition_less ->
+        struct_statement_choice iterate_unary
+    |   unary unary_choice iterate_statement_extra
+
 condition_choice ->
         notter condition_notter
-    
+
+#added this to remove ambiguity
+condition_notter_choice ->
+        string_access
+    |   first_compute_choice #added this for computes with id at the start
+
+#added condition_notter_choice
 condition_notter ->
-        negation %id string_access
+        negation %id condition_notter_choice
     |   literal
-    |   compute_choice
+    |   iterate_statement_condition_less
+    |   compute_choice_less #changed compute_choice to compute_choice_less
+
+#added this for computes that have id at the start
+first_compute_choice -> 
+        %arith_oper compute_choice recur_compute
+
+digit_choice_less ->
+        notter digit_notter
+
+digit_notter_less ->
+        %int_literal
+    |   %dec_literal
+
+compute_choice_less -> 
+        digit_choice_less %arith_oper compute_choice recur_compute
+    |   negation %open_paren digit_choice additional_compute %close_paren recur_compute
+    #|   compute_less
+
+compute_less ->
+        digit_choice_less
+    |   %open_paren digit_choice %close_paren
+
+first_condition_choice ->
+    oper_choice condition recur_condition
+
+condition_choice_less ->
+        notter condition_notter
+
+condition_notter_less ->
+        literal
     |   iterate_statement_condition
+    |   compute_choice_less
+
+condition_extra_less ->
+        condition_choice_less
+    |   %open_paren condition_choice %close_paren
+
+condition_less -> 
+        condition_extra_less oper_choice condition recur_condition
+    |   notter %open_paren condition_extra additional_condition %close_paren recur_condition
+    |   condition_extra_less
 
 oper_choice ->
         %relation_oper
@@ -360,12 +437,17 @@ for_int ->
 for_choice -> 
         compute_choice
     |   notter for_notter 
-    
+
+#added this to remove ambiguity
+for_notter_choice ->
+        #id_array
+        function_call_statement_choice
+    |   struct_statement_choice
+
+#added for_notter_choice
 for_notter -> 
         literal
-    |   negation %id %id_array string_access
-    |   function_call_statement string_access
-    |   struct_statement string_access
+    |   negation %id for_notter_choice string_access
     |   iterate_statement
 
 for_initial ->
@@ -380,16 +462,26 @@ iterate_statement_extra ->
         %comma iterate_statement
     |   null
 
+#added this to remove ambiguity
+iterate_choice_choice ->
+        #id_array 
+        function_call_statement_choice
+    |   struct_statement_choice
+
+#added iterate_choice_choice
 iterate_choice ->
         %int_literal
     |   %dec_literal
-    |   function_call_statement 
-    |   struct_statement 
-    |   %id id_array 
+    |   %id iterate_choice_choice
+
+#BAKA PWEDENG WALA NA TO
+unary_choice_choice ->
+        struct_statement_choice
+    |   null
 
 unary_choice ->
-        %id id_array
-    |   struct_statement
+        %id struct_statement_choice
+    #|   struct_statement_choice
 
 iterate_statement ->
         unary_choice iterate_unary
@@ -433,10 +525,15 @@ switch_choice ->
         notter switch_notter
     |   %str_literal %access %open_bracket array_size %close_bracket
 
+#added this to remove ambiguity
+switch_notter_choice ->
+        #id_array
+        function_call_statement_choice
+    |   struct_statement_choice
+
+#added switch_notter_choice
 switch_notter ->
-        %id id_array string_access
-    |   function_call_statement string_access
-    |   struct_statement string_access
+        %id switch_notter_choice string_access
 
 switch_statement ->
         %stateSwitch %open_paren switch_choice %close_paren %open_brace %vote vote_choice %colon function_statement %kill %terminator vote %stateDefault %colon function_statement %close_brace
@@ -458,7 +555,6 @@ return_first_choice ->
 
 return_choice -> 
         variable_choice
-    |   %id
     |   null
 
 struct_declare ->
@@ -479,24 +575,28 @@ struct_define ->
 
 assign_struct ->
         struct_choice element
-    
+
 struct_statement ->
         %id struct_choice element
 
+struct_statement_choice ->
+        struct_choice element
+
+#temporarily removed string_access from struct_choice, extra_struct, element_choice, element_option (think about this)
 struct_choice ->
-        %open_bracket array_size %close_bracket string_access extra_struct
+        %open_bracket array_size %close_bracket extra_struct
     |   null
 
 extra_struct ->
-        %open_bracket array_size %close_bracket string_access
+        %open_bracket array_size %close_bracket
     |   null
 
 element_choice ->
-        %open_bracket array_size %close_bracket string_access element_option
+        %open_bracket array_size %close_bracket element_option
     |   null
 
 element_option ->
-        %open_bracket array_size %close_bracket string_access
+        %open_bracket array_size %close_bracket
     |   null
 
 element ->
@@ -543,13 +643,20 @@ id_array_2D ->
         %open_bracket array_size %close_bracket id_array_2D
     |   null
 
+#added this to remove ambiguity
+function_variables_choice ->
+        #id_array
+        function_call_statement_choice
+    |   struct_statement_choice
+    |   first_compute_choice #added this for computes with id at the start
+    |   first_condition_choice #added this for conditions with id at the start
+
+#added function_variables_choice
 function_variables ->
-        %id id_array
+        %id function_variables_choice
     |   literal
-    |   function_call_statement
-    |   struct_statement
-    |   compute_choice
-    |   condition
+    |   compute_choice_less #changed compute_choice to compute_choice_less
+    |   condition_less #changed condition to condition_less
 
 function_call_statement ->
         %id %open_paren function_call %close_paren
