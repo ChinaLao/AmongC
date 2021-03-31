@@ -1,5 +1,6 @@
 @{%
     const moo = require("moo");
+    //const IndentationLexer = require("moo-indentation-lexer")
 
     const lexer = moo.compile({
 
@@ -55,8 +56,8 @@
 
         str_literal: "litStr",
         singleComment: "singleComment",
-        int_literal: ["litInt", "negaLitInt"],
         posi_int_literal: "litInt",
+        nega_int_literal: "negaLitInt",
         dec_literal: "litDec",
         access: "access",
         
@@ -71,9 +72,10 @@
 program -> 
         global %IN main_statement %OUT function %eof
 
+#changed comment to %singleComment
 global -> 
         global_choice global
-    |   comment global 
+    |   %singleComment global 
     |   null
 
 global_choice -> 
@@ -95,14 +97,19 @@ negation ->
         %negative
     |   null
 
+int_literal ->
+        %posi_int_literal
+    |   %nega_int_literal
+
 literal -> 
-        %int_literal 
+        int_literal 
     |   %dec_literal 
     |   %str_literal string_access
     |   %bool_literal
 
+#changed array_size to struct_size
 string_access ->
-        %access %open_bracket array_size %close_bracket
+        %access %open_bracket struct_size %close_bracket
     |   null
 
 vital_define -> 
@@ -143,9 +150,9 @@ assign_statement ->
         assign_choice %terminator 
 
 #BAKA DI NA TO KAILANGAN
-variable_array ->
-        assign_array
-    |   null
+# variable_array ->
+#         assign_array
+#     |   null
 
 choice ->
         struct_statement
@@ -170,18 +177,20 @@ recur_variable ->
         %comma %id declare_choice
     |   null
 
-array_size ->
-        struct_size 
-    |   struct_statement array_unary
-    |   unary struct_statement
+#DI KA NA ATA KAILAGAN HOHO
+# array_size ->
+#         struct_size 
+#     #|   struct_statement array_unary
+#     #|   unary struct_statement
 
-array_unary ->
-        unary
-    |   null
+# array_unary ->
+#         unary
+#     |   null
 
+#changed unary to %unary_oper
 struct_unary ->
         %assign_oper iterate_choice
-    |   id_array unary
+    |   id_array %unary_oper
 
 #added this to remove ambiguity with id
 struct_size_choice ->
@@ -191,11 +200,12 @@ struct_size_choice ->
     |   struct_unary
 
 #added struct_size_choice
+#changed unary to %unary_oper
 struct_size ->
         %id struct_size_choice
     |   %posi_int_literal
     |   compute_choice_less #changed compute_choice to compute_choice_less
-    |   unary %id id_array 
+    |   %unary_oper %id id_array 
 
 assign_struct_2D ->
         %open_bracket struct_size %close_bracket
@@ -204,19 +214,23 @@ assign_struct_2D ->
 assign_struct_size ->
         %open_bracket struct_size %close_bracket assign_struct_2D
 
+#changed array_size to struct_size
 assign_array_2D ->
-        %open_bracket array_size %close_bracket 
+        %open_bracket struct_size %close_bracket 
     |   null
 
+#changed array_size to struct_size
 assign_array ->
-         %open_bracket array_size %close_bracket assign_array_2D
+         %open_bracket struct_size %close_bracket assign_array_2D
 
+#changed array_size to struct_size
 array ->
-         %open_bracket array_size %close_bracket array_define_first recur_variable
+         %open_bracket struct_size %close_bracket array_define_first recur_variable
 
+#changed array_size to struct_size
 array_define_first ->
         %equal %open_brace condition additional_literal_1D %close_brace
-    |   %open_bracket array_size %close_bracket string_access array_define_second
+    |   %open_bracket struct_size %close_bracket string_access array_define_second
     |   null
 
 array_define_second ->
@@ -231,9 +245,10 @@ additional_literal_2D ->
         %comma %open_brace condition additional_literal_1D %close_brace additional_literal_2D
     |   null
 
+#changed comment to %singleComment
 main_statement ->
         statement_choice main_statement
-    |   comment main_statement
+    |   %singleComment main_statement
     |   null
 
 statement ->
@@ -244,6 +259,8 @@ function_statement ->
         statement_choice function_statement
     |   null
 
+#changed comment to %singleComment
+#changed unary to %unary_oper
 statement_choice ->
         data_declare
     |   out_statement 
@@ -252,11 +269,11 @@ statement_choice ->
     |   if_statement 
     |   switch_statement 
     |   %id id_start_statement
-    |   unary %id %terminator
+    |   %unary_oper %id %terminator
     |   return_statement
     |   control_statement 
     |   %clean %open_paren %close_paren %terminator
-    |   comment
+    |   %singleComment
 
 id_start_statement ->
         %id struct_define_choice
@@ -270,8 +287,9 @@ struct_define_choice ->
 function_call_statement_choice ->
         %open_paren function_call %close_paren
 
+#changed unary to %unary_oper
 iterate_statement_choice ->
-        unary 
+        %unary_oper
     |   %assign_oper iterate_choice
     |   null
 
@@ -315,9 +333,9 @@ digit_another_choice ->
 
 #moved function_call_statement, struct_statement to digit_another_choice
 digit_notter ->
-        %int_literal
+        int_literal
     |   %dec_literal
-    |   negation %id digit_another_choice #this is still an ambiguity
+    |   negation %id digit_another_choice #this is still an ambiguity (di ba hindi na????)
 
 compute_choice -> 
         digit_choice %arith_oper compute_choice recur_compute
@@ -339,13 +357,15 @@ additional_compute ->
 extra_compute ->
         %arith_oper compute_choice
 
+#changed unary to %unary_oper
 iterate_statement_condition ->
         unary_choice iterate_unary
-    |   unary unary_choice iterate_statement_extra
+    |   %unary_oper unary_choice iterate_statement_extra
 
+#changed unary to %unary_oper
 iterate_statement_condition_less ->
         struct_statement_choice iterate_unary
-    |   unary unary_choice iterate_statement_extra
+    |   %unary_oper unary_choice iterate_statement_extra
 
 condition_choice ->
         notter condition_notter
@@ -370,7 +390,7 @@ digit_choice_less ->
         notter digit_notter
 
 digit_notter_less ->
-        %int_literal
+        int_literal
     |   %dec_literal
 
 compute_choice_less -> 
@@ -438,16 +458,11 @@ for_choice ->
         compute_choice
     |   notter for_notter 
 
-#added this to remove ambiguity
-for_notter_choice ->
-        #id_array
-        function_call_statement_choice
-    |   struct_statement_choice
 
-#added for_notter_choice
+#changed for_notter_choice (deleted) to digit_another_choice
 for_notter -> 
         literal
-    |   negation %id for_notter_choice string_access
+    |   negation %id digit_another_choice string_access
     |   iterate_statement
 
 for_initial ->
@@ -462,22 +477,11 @@ iterate_statement_extra ->
         %comma iterate_statement
     |   null
 
-#added this to remove ambiguity
-iterate_choice_choice ->
-        #id_array 
-        function_call_statement_choice
-    |   struct_statement_choice
-
-#added iterate_choice_choice
+#changed iterate_choice_choice (deleted) to digit_another_choice
 iterate_choice ->
-        %int_literal
+        int_literal
     |   %dec_literal
-    |   %id iterate_choice_choice
-
-#BAKA PWEDENG WALA NA TO
-unary_choice_choice ->
-        struct_statement_choice
-    |   null
+    |   %id digit_another_choice
 
 unary_choice ->
         %id struct_statement_choice
@@ -488,8 +492,9 @@ iterate_statement ->
     |   unary unary_choice iterate_statement_extra
     |   null
 
+#changed unary to %unary_oper
 iterate_unary ->
-        unary iterate_statement_extra
+        %unary_oper iterate_statement_extra
     |   %assign_oper iterate_choice iterate_statement_extra
 
 recur_for_condition ->
@@ -521,25 +526,20 @@ else_choice ->
     |   %elf %open_paren condition %close_paren statement else_choice
     |   null
 
+#changed array_size to struct_size
 switch_choice -> 
         notter switch_notter
-    |   %str_literal %access %open_bracket array_size %close_bracket
+    |   %str_literal %access %open_bracket struct_size %close_bracket
 
-#added this to remove ambiguity
-switch_notter_choice ->
-        #id_array
-        function_call_statement_choice
-    |   struct_statement_choice
-
-#added switch_notter_choice
+#changed switch_notter_choice (deleted) to digit_another_choice
 switch_notter ->
-        %id switch_notter_choice string_access
+        %id digit_another_choice string_access
 
 switch_statement ->
         %stateSwitch %open_paren switch_choice %close_paren %open_brace %vote vote_choice %colon function_statement %kill %terminator vote %stateDefault %colon function_statement %close_brace
 
 vote_choice ->
-        %int_literal
+        int_literal
     |   %str_literal string_access
 
 vote ->
@@ -583,20 +583,24 @@ struct_statement_choice ->
         struct_choice element
 
 #temporarily removed string_access from struct_choice, extra_struct, element_choice, element_option (think about this)
+#changed array_size to struct_size
 struct_choice ->
-        %open_bracket array_size %close_bracket extra_struct
+        %open_bracket struct_size %close_bracket extra_struct
     |   null
 
+#changed array_size to struct_size
 extra_struct ->
-        %open_bracket array_size %close_bracket
+        %open_bracket struct_size %close_bracket
     |   null
 
+#changed array_size to struct_size
 element_choice ->
-        %open_bracket array_size %close_bracket element_option
+        %open_bracket struct_size %close_bracket element_option
     |   null
 
+#changed array_size to struct_size
 element_option ->
-        %open_bracket array_size %close_bracket
+        %open_bracket struct_size %close_bracket
     |   null
 
 element ->
@@ -612,9 +616,10 @@ parameter_define ->
     |   assign_struct_size recur_define
     |   null
 
+#changed comment to %singleComment
 function ->
         %task function_data_type %id %open_paren parameter %close_paren %open_brace function_statement %close_brace function
-    |   comment function
+    |   %singleComment function
     |   null
 
 array_parameter ->
@@ -634,13 +639,14 @@ recur_parameter_again ->
         data_type %id array_parameter recur_parameter
     |   %id %id array_parameter recur_parameter
     
-
+#changed array_size to struct_size
 id_array ->
-        %open_bracket array_size %close_bracket id_array_2D
+        %open_bracket struct_size %close_bracket id_array_2D
     |   null
 
+#changed array_size to struct_size
 id_array_2D ->
-        %open_bracket array_size %close_bracket id_array_2D
+        %open_bracket struct_size %close_bracket id_array_2D
     |   null
 
 #added this to remove ambiguity
@@ -669,12 +675,15 @@ additional_call ->
         %comma function_variables additional_call
     |   null
 
-unary ->
-        %unary_oper
+#TANGGALIN NAKITA AH
+# unary ->
+#         %unary_oper
 
+#changed array_size to struct_size
 oper ->
-        %arith_oper array_size oper
+        %arith_oper struct_size oper
     |   null
 
-comment ->
-        %singleComment
+#TANGGALIN NAKITA AH
+# comment ->
+#         %singleComment
