@@ -121,7 +121,7 @@ export default {
       assignOper: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "id", "whitespace"],
       relationOper: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "id", "whitespace", "not"],
       comparison: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "litBool", "litStr", "id", "whitespace","not"],
-      equal: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "litStr", "litBool", "id", "whitespace", "openBrace", "not"],
+      equal: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "litStr", "litBool", "id", "whitespace", "openBrace", "not", "unary"],
       not: ["negative", "openParen", "id", "whitespace", "litInt", "negaLitInt", "litDec", "litStr", "litBool", "unary"],
       colon: ["whitespace", "newline"],
       terminator: ["unary", "id", "openParen", "closeParen", "terminator", "whitespace", "newline", "singleComment", "not"],
@@ -335,6 +335,7 @@ export default {
         while(index < lexeme.length && !synError) {
           try {
             parser.feed(lexeme[index].token);
+            console.log(parser.results);
             console.log(lexeme[index].token, index);
           } catch (err) {
             const errors = {
@@ -349,6 +350,25 @@ export default {
           }
           index++;
         }
+        // const lexemeStream = lexeme.map(lex => lex.token).join("");
+        // try {
+        //   parser.feed(lexemeStream);
+        //   console.log(parser.results);
+        //   //console.log(lexeme[index].token, index);
+        // } catch (err) {
+        //   const errors = {
+        //     type: "syn-error",
+        //     msg: `Unexpected token: `,
+        //     // ${lexeme[index].token} (${lexeme[index].word})`,
+        //     line: 1,
+        //     // lexeme[index].line,
+        //     col: 2,
+        //     // lexeme[index].col,
+        //     exp: "-"
+        //   };
+        //   commit("SET_ERROR", errors);
+        //   synError = true;
+        // }
         console.log(parser.results);
       }
       
