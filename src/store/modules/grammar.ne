@@ -72,16 +72,39 @@
 program -> 
         global %IN main_statement %OUT function %eof
 
-#changed comment to %singleComment
+#changed comment to %singleComment; moved it to global_choice
 global -> 
         global_choice global
-    |   %singleComment global 
+    #|   %singleComment global 
     |   null
 
 global_choice -> 
         vital_define 
     |   data_declare
     |   struct_declare
+    |   %singleComment
+
+vital_define -> 
+        %vital data_type %id %equal literal recur_vital %terminator
+
+#temporarily moved %id to declare_choice
+data_declare -> 
+        data_type %id declare_choice %terminator 
+
+struct_declare ->
+        %struct %id %open_brace first_struct %close_brace
+
+#changed comment to %singleComment; it's on statement_choice
+main_statement ->
+        statement_choice main_statement
+    #|   %singleComment main_statement
+    |   null
+
+#changed comment to %singleComment
+function ->
+        %task function_data_type %id %open_paren parameter %close_paren %open_brace function_statement %close_brace function
+    |   %singleComment function
+    |   null
 
 data_type -> 
         %int 
@@ -112,14 +135,16 @@ string_access ->
         %access %open_bracket struct_size %close_bracket
     |   null
 
-vital_define -> 
-        %vital data_type %id %equal literal recur_vital %terminator
-
 recur_vital -> 
         %comma %id %equal literal recur_vital
     |   null
 
+# declare_choice_choice ->
+#         variable 
+#     |   array 
+
 declare_choice -> 
+        # %id declare_choice_choice
         variable 
     |   array 
     |   null
@@ -143,9 +168,6 @@ recur_assign ->
 assign_choice -> 
         assign_struct recur_assign string_access %equal variable_choice
        
-data_declare -> 
-        data_type %id declare_choice %terminator 
-
 assign_statement ->
         assign_choice %terminator 
 
@@ -154,27 +176,38 @@ assign_statement ->
 #         assign_array
 #     |   null
 
+iterate_choice ->
+        iterate_unary
+    |   string_access
+   # |   null
+
 choice ->
-        struct_statement
-    |   function_call_statement
+        struct_statement_choice iterate_choice
+    |   function_call_statement_choice iterate_choice
+   # |   iterate_choice
     |   first_compute_choice #added this for computes with id at the start
     |   first_condition_choice #added this for conditions with id at the start
-    |   null
+   # |   null
 
+#ambiguity (wala na ata)
 variable_choice ->
         #%id variable_array string_access
-        literal
-    |   %id choice string_access
-    |   compute_choice #changed compute_choice to compute_choice_less
-    |   condition #changed condition to condition_less
+    #     %str_literal string_access
+    # |   %bool_literal
+        %id choice
+   # |   compute_choice_less #changed compute_choice to compute_choice_less
+     | condition_less #changed condition to condition_less
 
-variable ->
+variable -> 
         %equal variable_choice recur_variable
-    |   recur_variable
-    |   null
+    |   %comma %id recur_variable
+    #|   recur_variable
+    #|   null
 
 recur_variable ->
-        %comma %id declare_choice
+        array
+     |  %equal variable_choice recur_variable
+    |   %comma %id recur_variable
     |   null
 
 #DI KA NA ATA KAILAGAN HOHO
@@ -223,19 +256,23 @@ assign_array_2D ->
 assign_array ->
          %open_bracket struct_size %close_bracket assign_array_2D
 
+array_recur_choice ->
+        %comma declare_choice
+    |   null
+
 #changed array_size to struct_size
 array ->
-         %open_bracket struct_size %close_bracket array_define_first recur_variable
+        %open_bracket struct_size %close_bracket array_define_first recur_variable
 
 #changed array_size to struct_size
 array_define_first ->
         %equal %open_brace condition additional_literal_1D %close_brace
-    |   %open_bracket struct_size %close_bracket string_access array_define_second
+    |   %open_bracket struct_size %close_bracket array_define_second
     |   null
 
 array_define_second ->
         %equal %open_brace %open_brace condition additional_literal_1D %close_brace additional_literal_2D %close_brace
-    |   null
+    #|   null (di ko alam bakit dapat wala to, i am so confused but it fixed it)
 
 additional_literal_1D ->
         %comma condition additional_literal_1D
@@ -243,12 +280,6 @@ additional_literal_1D ->
 
 additional_literal_2D ->
         %comma %open_brace condition additional_literal_1D %close_brace additional_literal_2D
-    |   null
-
-#changed comment to %singleComment
-main_statement ->
-        statement_choice main_statement
-    |   %singleComment main_statement
     |   null
 
 statement ->
@@ -304,15 +335,20 @@ output ->
         variable_choice recur_output
 
 recur_output ->
-        %comma output
+        %comma variable_choice recur_output
     |   null
 
 in_statement ->
         %scan %open_paren in_choice %close_paren %terminator
 
+in_choice_choice ->
+        id_array 
+    |   struct_statement_choice 
+
+#added in_choice_choice
 in_choice ->
-        %id id_array recur_id 
-    |   struct_statement recur_id 
+        %id in_choice_choice recur_id
+    #|   struct_statement recur_id 
 
 recur_id ->
         %comma in_choice
@@ -387,11 +423,15 @@ first_compute_choice ->
         %arith_oper compute_choice recur_compute
 
 digit_choice_less ->
-        notter digit_notter
+        notter digit_notter_less
 
 digit_notter_less ->
         int_literal
     |   %dec_literal
+
+compute_choice_less_less -> 
+        %arith_oper compute_choice recur_compute
+    |   negation %open_paren digit_choice additional_compute %close_paren recur_compute
 
 compute_choice_less -> 
         digit_choice_less %arith_oper compute_choice recur_compute
@@ -406,21 +446,37 @@ first_condition_choice ->
     oper_choice condition recur_condition
 
 condition_choice_less ->
-        notter condition_notter
+        notter condition_notter_less
 
+choice_choice ->
+    compute_choice_less_less
+    | null
+
+#listed all literals to remove ambiguity of their next 
 condition_notter_less ->
-        literal
-    |   iterate_statement_condition
-    |   compute_choice_less
+     #   literal
+        %str_literal string_access
+    |   %bool_literal
+     |   int_literal choice_choice
+      |  %dec_literal choice_choice
+    #|   iterate_statement_condition
+    |   %unary_oper unary_choice 
+    #iterate_statement_extra #ambiguity on iterate_statement_extra (dugtong to sa taas pero baka di na)
+    #|   compute_choice_less_less
 
 condition_extra_less ->
         condition_choice_less
     |   %open_paren condition_choice %close_paren
 
+condition_less_choice ->
+        oper_choice condition recur_condition
+    |   null
+
+#changed oper_choice condition recur_condition to condition_less_choice
 condition_less -> 
-        condition_extra_less oper_choice condition recur_condition
+        condition_extra_less condition_less_choice
     |   notter %open_paren condition_extra additional_condition %close_paren recur_condition
-    |   condition_extra_less
+    #|   condition_extra_less
 
 oper_choice ->
         %relation_oper
@@ -461,9 +517,9 @@ for_choice ->
 
 #changed for_notter_choice (deleted) to digit_another_choice
 for_notter -> 
-        literal
-    |   negation %id digit_another_choice string_access
-    |   iterate_statement
+        #literal
+       #negation %id digit_another_choice string_access
+       iterate_statement
 
 for_initial ->
         for_int %id %equal for_choice for_initial_extra
@@ -489,7 +545,7 @@ unary_choice ->
 
 iterate_statement ->
         unary_choice iterate_unary
-    |   unary unary_choice iterate_statement_extra
+    |   %unary_oper unary_choice iterate_statement_extra
     |   null
 
 #changed unary to %unary_oper
@@ -557,8 +613,6 @@ return_choice ->
         variable_choice
     |   null
 
-struct_declare ->
-        %struct %id %open_brace first_struct %close_brace
 
 recur_declare ->
         %comma parameter_define
@@ -608,18 +662,11 @@ element ->
     |   null
 
 recur_define ->
-        %comma %id parameter_define
+        %comma %id assign_struct_size recur_define
     |   null
 
 parameter_define ->
-        recur_define
-    |   assign_struct_size recur_define
-    |   null
-
-#changed comment to %singleComment
-function ->
-        %task function_data_type %id %open_paren parameter %close_paren %open_brace function_statement %close_brace function
-    |   %singleComment function
+        assign_struct_size recur_define
     |   null
 
 array_parameter ->
@@ -642,12 +689,12 @@ recur_parameter_again ->
 #changed array_size to struct_size
 id_array ->
         %open_bracket struct_size %close_bracket id_array_2D
-    |   null
+    #|   null (bakit ba pinapatanggal yung null?)
 
 #changed array_size to struct_size
 id_array_2D ->
         %open_bracket struct_size %close_bracket id_array_2D
-    |   null
+    #|   null (may automatic null na ba to???)
 
 #added this to remove ambiguity
 function_variables_choice ->
