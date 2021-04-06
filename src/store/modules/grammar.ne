@@ -182,9 +182,15 @@ iterate_choice ->
     |   %access %open_bracket struct_size %close_bracket
    # |   null
 
+choice_choice_choice ->
+        first_compute_choice
+    |   first_condition_choice
+    |   iterate_choice
+    |   null
+
 choice ->
-        struct_new #iterate_choice
-    |   function_call_statement_choice #iterate_choice
+        struct_new choice_choice_choice #iterate_choice
+    |   function_call_statement_choice choice_choice_choice #iterate_choice
     |   iterate_choice #(di ka na kailangan)
     |   first_compute_choice #added this for computes with id at the start
     |   first_condition_choice #added this for conditions with id at the start
@@ -376,7 +382,8 @@ digit_choice ->
 digit_another_choice ->
         #id_array
         function_call_statement_choice
-    |   struct_statement_choice
+    |   struct_new
+    |   null
 
 #moved function_call_statement, struct_statement to digit_another_choice
 digit_notter ->
