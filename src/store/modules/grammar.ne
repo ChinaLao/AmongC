@@ -200,6 +200,11 @@ variable_choice ->
         %id choice
     #|  compute_choice_less #changed compute_choice to compute_choice_less
     |  condition_less #changed condition to condition_less
+    |  notter negation %open_paren variable_choice_choice
+
+variable_choice_choice ->
+        condition %close_paren oper_condition
+    |   compute_choice %close_paren oper_compute
 
 variable -> 
         %equal variable_choice recur_variable
