@@ -292,7 +292,8 @@ export default {
                   col: tokenStream[index].col,
                   exp: expectationList
                 };
-                commit("SET_ERROR", error);
+                if(!state.foundError)
+                  commit("SET_ERROR", error);
                 commit("CHANGE_ERROR", true);
                 break;
               } 
@@ -309,7 +310,8 @@ export default {
             col: tokenStream[index].col,
             exp: "-"
           };
-          commit("SET_ERROR", error);
+          if(!state.foundError)
+            commit("SET_ERROR", error);
           commit("CHANGE_ERROR", true);
         }
         final.forEach(token => {
