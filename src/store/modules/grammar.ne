@@ -180,18 +180,30 @@ iterate_choice ->
         %unary_oper
     |   %assign_oper iterate_choice
     |   %access %open_bracket struct_size %close_bracket
-   # |   null
+    #|   null
+
+iterate_first_choice ->
+        iterate_choice
+    |   null
 
 choice_choice_choice ->
         first_compute_choice
     |   first_condition_choice
-    |   iterate_choice
+    #|   iterate_choice
+    |   null
+
+first_choice ->
+        struct_new
+    |   function_call_statement_choice
     |   null
 
 choice ->
-        struct_new choice_choice_choice #iterate_choice
-    |   function_call_statement_choice choice_choice_choice #iterate_choice
-    |   iterate_choice #(di ka na kailangan)
+        struct_new iterate_first_choice choice_choice_choice
+    |    function_call_statement_choice iterate_first_choice choice_choice_choice
+    |   iterate_choice choice_choice_choice
+    #     struct_new choice_choice_choice #iterate_choice
+    # |   function_call_statement_choice choice_choice_choice #iterate_choice
+     #   first_choice iterate_choice choice_choice_choice #(di ka na kailangan)
     |   first_compute_choice #added this for computes with id at the start
     |   first_condition_choice #added this for conditions with id at the start
     |   null
@@ -203,14 +215,20 @@ variable_choice ->
        # literal
     # |   %str_literal access
     # |   %bool_literal
-        %id choice
+        notter variable_choice_choice
+       # %id choice
     #|  compute_choice_less #changed compute_choice to compute_choice_less
-    |  condition_less #changed condition to condition_less
-    |  notter negation %open_paren variable_choice_choice
+    #|  condition_choice_less oper_condition #changed condition_less to condition_choice_less oper_condition
+    #|  notter negation %open_paren variable_choice_choice
+   # |   condition_less
+
+
 
 variable_choice_choice ->
-        condition %close_paren oper_condition
-    |   compute_choice %close_paren oper_compute
+        %id choice
+    |   condition_less_choice_choice
+    #     condition %close_paren oper_condition
+    # |   compute_choice %close_paren oper_compute
 
 variable -> 
         %equal variable_choice recur_variable
@@ -426,8 +444,8 @@ oper_compute ->
 first_compute_choice -> 
         %arith_oper compute_choice
 
-digit_choice_less ->
-        notter digit_notter_less
+digit_choice_less -> #removed notter
+        digit_notter_less
 
 digit_notter_less ->
         int_literal
@@ -456,7 +474,7 @@ iterate_statement_condition_less ->
     |   %unary_oper unary_choice iterate_statement_extra
 
 condition_choice ->
-        notter condition_notter
+        condition_notter
 
 #added this to remove ambiguity
 # condition_notter_choice ->
@@ -505,9 +523,12 @@ condition_notter ->
 # extra_condition ->
 #         oper_choice condition
 
-condition ->
+condition -> #moved conditional, and notter %open_paren... to conditional_choice
+        notter conditional_choice
+       
+conditional_choice -> #added this to remove ambiguity with notter
         conditional 
-    |   notter %open_paren condition %close_paren oper_condition
+    |   %open_paren condition %close_paren oper_condition
 
 conditional ->
         condition_choice oper_condition
@@ -519,8 +540,8 @@ oper_condition ->
 first_condition_choice ->
     oper_choice condition
 
-condition_choice_less ->
-        notter condition_notter_less
+condition_choice_less -> #removed notter
+        condition_notter_less
 
 choice_choice ->
     compute_choice_less_less
@@ -547,9 +568,14 @@ condition_notter_less ->
 #     |   null
 
 #changed oper_choice condition recur_condition to condition_less_choice
-condition_less -> 
-        condition_choice_less oper_condition
-    |   notter %open_paren condition %close_paren oper_condition
+condition_less -> #moved condition_choice.... and %open_paren... to condition_less_choice_choice
+        notter condition_less_choice_choice
+        
+condition_less_choice_choice -> #added this to remove ambiguity with notter
+        condition_notter_less oper_condition
+    |   %open_paren condition %close_paren oper_condition
+    #|   %id oper_condition
+
 
 oper_choice ->
         %relation_oper
