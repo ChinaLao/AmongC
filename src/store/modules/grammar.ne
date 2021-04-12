@@ -208,25 +208,33 @@ choice ->
     |   first_condition_choice #added this for conditions with id at the start
     |   null
 
+
 #ambiguity (wala na ata)
-variable_choice ->
-       # compute_choice
-        #%id variable_array string_access
-       # literal
-    # |   %str_literal access
-    # |   %bool_literal
-        notter variable_choice_choice
+# variable_choice ->
+#        # compute_choice
+#         #%id variable_array string_access
+#        # literal
+#     # |   %str_literal access
+#     # |   %bool_literal
+#         variable_choice_choice
        # %id choice
     #|  compute_choice_less #changed compute_choice to compute_choice_less
     #|  condition_choice_less oper_condition #changed condition_less to condition_choice_less oper_condition
     #|  notter negation %open_paren variable_choice_choice
    # |   condition_less
 
+ 
+ variable_next ->
+        compute_choice %close_paren oper_compute
+    |   condition %close_paren oper_condition
 
-
-variable_choice_choice ->
+variable_choice ->
         %id choice
-    |   condition_less_choice_choice
+  # |   condition_less_choice_choice
+    |   condition_notter_less oper_condition
+    |   %not %open_paren condition %close_paren oper_condition
+    |   %negative %open_paren compute_choice %close_paren oper_compute
+    |   %open_paren variable_next
     #     condition %close_paren oper_condition
     # |   compute_choice %close_paren oper_compute
 
@@ -573,7 +581,7 @@ condition_less -> #moved condition_choice.... and %open_paren... to condition_le
         
 condition_less_choice_choice -> #added this to remove ambiguity with notter
         condition_notter_less oper_condition
-    |   %open_paren condition %close_paren oper_condition
+    |   notter %open_paren condition %close_paren oper_condition
     #|   %id oper_condition
 
 
