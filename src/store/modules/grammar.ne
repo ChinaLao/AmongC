@@ -186,28 +186,10 @@ iterate_first_choice ->
         iterate_choice
     |   null
 
-choice_choice_choice ->
-        first_compute_choice
-    |   first_condition_choice
-    #|   iterate_choice
-    |   null
-
 first_choice ->
         struct_new
     |   function_call_statement_choice
     |   null
-
-choice ->
-        struct_new iterate_first_choice choice_choice_choice
-    |    function_call_statement_choice iterate_first_choice choice_choice_choice
-    |   iterate_choice choice_choice_choice
-    #     struct_new choice_choice_choice #iterate_choice
-    # |   function_call_statement_choice choice_choice_choice #iterate_choice
-     #   first_choice iterate_choice choice_choice_choice #(di ka na kailangan)
-    |   first_compute_choice #added this for computes with id at the start
-    |   first_condition_choice #added this for conditions with id at the start
-    |   null
-
 
 #ambiguity (wala na ata)
 # variable_choice ->
@@ -223,18 +205,51 @@ choice ->
     #|  notter negation %open_paren variable_choice_choice
    # |   condition_less
 
- 
- variable_next ->
-        compute_choice %close_paren oper_compute
-    |   condition %close_paren oper_condition
+choice_choice_choice ->
+        first_compute_choice
+    |   first_condition_choice
+    #|   iterate_choice
+    |   null
+
+variable_next_choice ->
+        oper_choice condition
+    |   null
+
+variable_next ->
+        oper_condition
+    |   oper_compute
+    #|   null
+
+variable_next_null ->
+    oper_choice condition
+|   %arith_oper compute_choice
+|   null
+
+
+new_choice -> #added this to remove ambiguity with notter
+        conditional 
+    |   %open_paren condition %close_paren variable_next
+
+choice ->
+        struct_new iterate_first_choice choice_choice_choice
+    |   function_call_statement_choice iterate_first_choice choice_choice_choice
+    |   iterate_choice choice_choice_choice
+    #     struct_new choice_choice_choice #iterate_choice
+    # |   function_call_statement_choice choice_choice_choice #iterate_choice
+     #   first_choice iterate_choice choice_choice_choice #(di ka na kailangan)
+    |   first_compute_choice #variable_next_choice #added this for computes with id at the start
+    |   first_condition_choice #variable_next_choice #added this for conditions with id at the start
+    |   null
 
 variable_choice ->
-        %id choice
+        %id choice #variable_next_choice
   # |   condition_less_choice_choice
     |   condition_notter_less oper_condition
     |   %not %open_paren condition %close_paren oper_condition
     |   %negative %open_paren compute_choice %close_paren oper_compute
-    |   %open_paren variable_next
+    |   %open_paren new_choice %close_paren variable_next_null
+    #|   condition
+    #|   compute_choice
     #     condition %close_paren oper_condition
     # |   compute_choice %close_paren oper_compute
 
@@ -448,9 +463,13 @@ oper_compute ->
         %arith_oper compute_choice
     |   null
 
+close ->
+        %close_paren
+    |   null
+
 #added this for computes that have id at the start
 first_compute_choice -> 
-        %arith_oper compute_choice
+        %arith_oper compute_choice variable_next_choice #close
 
 digit_choice_less -> #removed notter
         digit_notter_less
@@ -491,26 +510,6 @@ condition_choice ->
 #     |   first_condition_choice
 #     |   null
 
-condition_notter_choice ->
-        struct_new #iterate_choice
-    |   function_call_statement_choice #iterate_choice
-    |   iterate_choice #(di ka na kailangan)
-    |   first_compute_choice #added this for computes with id at the start
-    |   null
-
-#added condition_notter_choice
-condition_notter ->
-        negation %id condition_notter_choice #condition_notter_choice #may problem pa to kasi pwedeng i-negate yung string access
-    #|   literal
-    |   %str_literal string_access
-    |   %bool_literal
-    |   int_literal oper_compute
-    |   %dec_literal oper_compute
-    #|   iterate_statement_condition
-    |   %unary_oper unary_choice 
-    #|   %unary_oper unary_choice iterate_statement_extra
-    #|   compute_choice_less #changed compute_choice to compute_choice_less
-
 # condition_extra ->
 #         condition_choice
 #     |   %open_paren condition_choice %close_paren
@@ -531,6 +530,26 @@ condition_notter ->
 # extra_condition ->
 #         oper_choice condition
 
+condition_notter_choice ->
+        struct_new #iterate_choice
+    |   function_call_statement_choice #iterate_choice
+    |   iterate_choice #(di ka na kailangan)
+    |   first_compute_choice #added this for computes with id at the start
+    |   null
+
+#added condition_notter_choice
+condition_notter ->
+        negation %id condition_notter_choice #condition_notter_choice #may problem pa to kasi pwedeng i-negate yung string access
+    #|   literal
+    |   %str_literal string_access
+    |   %bool_literal
+    |   int_literal oper_compute
+    |   %dec_literal oper_compute
+    #|   iterate_statement_condition
+    |   %unary_oper unary_choice 
+    #|   %unary_oper unary_choice iterate_statement_extra
+    #|   compute_choice_less #changed compute_choice to compute_choice_less
+
 condition -> #moved conditional, and notter %open_paren... to conditional_choice
         notter conditional_choice
        
@@ -546,7 +565,7 @@ oper_condition ->
     |   null
 
 first_condition_choice ->
-    oper_choice condition
+    oper_choice condition #variable_next_choice
 
 condition_choice_less -> #removed notter
         condition_notter_less
@@ -690,15 +709,16 @@ vote ->
     |   null
 
 return_statement ->
-        %stateReturn return_first_choice %terminator
+        %stateReturn variable_choice %terminator
 
 return_first_choice ->
-        return_choice
-    |   %open_paren return_choice %close_paren
+        variable_choice
+    #|   %open_paren %id %close_paren
+    #|   null
 
 return_choice -> 
         variable_choice
-    |   null
+    #|   null
 
 recur_declare ->
         %comma parameter_define
