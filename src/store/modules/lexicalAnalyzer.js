@@ -48,7 +48,7 @@ export default {
       whitespace: /[ \t]+/,
 
       litStr: /[\\"](?:(?:[\\][\\" | \\n | \\t | \\r | \\b | \\])*[^\\"]*)*[\\"]/,
-      singleComment: /^#.+/,
+      singleComment: /#.+/,
       litDec: /[~]?[0-9]{1,9}[.][0-9]{1,5}/,
       negaLitInt: /[~][0-9]{1,9}/,
       litInt: /[0-9]{1,9}/,
