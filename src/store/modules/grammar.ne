@@ -161,12 +161,12 @@ declare_choice ->
 
 #created new recur_assign, assign_choice
 recur_assign -> 
-        %equal %id assign_struct recur_assign
+        %equal %id struct_choice recur_assign
     |   null
 
 #added string_access
-assign_choice -> 
-        assign_struct recur_assign string_access %equal variable_choice
+assign_choice -> #temporarily changed assign_struct to struct_choice
+        struct_choice string_access recur_assign %equal variable_choice
        
 assign_statement ->
         assign_choice %terminator 
@@ -176,9 +176,13 @@ assign_statement ->
 #         assign_array
 #     |   null
 
+iterate_intdec ->
+        int_literal
+    |   %dec_literal
+
 iterate_choice ->
         %unary_oper
-    |   %assign_oper iterate_choice
+    |   %assign_oper iterate_intdec
     |   %access %open_bracket struct_size %close_bracket
     #|   null
 
@@ -253,16 +257,16 @@ variable_choice ->
     #     condition %close_paren oper_condition
     # |   compute_choice %close_paren oper_compute
 
-variable -> 
+variable -> #changed recur_variable to declare_choice
         %equal variable_choice recur_variable
-    |   %comma %id recur_variable
+    |   %comma %id declare_choice
     #|   recur_variable
     #|   null
 
-recur_variable ->
-        array
-     |  %equal variable_choice recur_variable
-    |   %comma %id recur_variable
+recur_variable -> #changed recur_variable to declare_choice, removed array
+        #array
+      %equal variable_choice recur_variable
+    |   %comma %id declare_choice
     |   null
 
 #DI KA NA ATA KAILAGAN HOHO
@@ -276,8 +280,8 @@ recur_variable ->
 #     |   null
 
 #changed unary to %unary_oper
-struct_unary ->
-        %assign_oper iterate_choice
+struct_unary -> #changed iterate_choice to iterate_intdec
+        %assign_oper iterate_intdec
     |   id_array %unary_oper
 
 #added this to remove ambiguity with id
@@ -301,6 +305,7 @@ assign_struct_2D ->
 
 assign_struct_size ->
         %open_bracket struct_size %close_bracket assign_struct_2D
+    |   null
 
 #changed array_size to struct_size
 assign_array_2D ->
@@ -315,9 +320,14 @@ array_recur_choice ->
         %comma declare_choice
     |   null
 
+#added this for array
+recur_array ->
+        %comma %id declare_choice
+    |   null
+
 #changed array_size to struct_size
-array ->
-        %open_bracket struct_size %close_bracket array_define_first recur_variable
+array -> #changed recur_variable to recur_array
+        %open_bracket struct_size %close_bracket array_define_first recur_array
 
 #changed array_size to struct_size
 array_define_first ->
@@ -374,9 +384,9 @@ function_call_statement_choice ->
         %open_paren function_call %close_paren
 
 #changed unary to %unary_oper
-iterate_statement_choice ->
+iterate_statement_choice -> #changed interate_choice to iterate_intdec
         %unary_oper
-    |   %assign_oper iterate_choice
+    |   %assign_oper iterate_intdec
     |   null
 
 control_statement ->
@@ -654,9 +664,9 @@ iterate_statement ->
     |   null
 
 #changed unary to %unary_oper
-iterate_unary ->
+iterate_unary -> #changed iterate_choice to iterate_intdec
         %unary_oper iterate_statement_extra
-    |   %assign_oper iterate_choice iterate_statement_extra
+    |   %assign_oper iterate_intdec iterate_statement_extra
 
 recur_for_condition ->
         %logical_oper for_condition
@@ -754,7 +764,8 @@ struct_choice ->
 
 #changed array_size to struct_size
 extra_struct ->
-        %open_bracket struct_size %close_bracket
+        %open_bracket struct_size %close_bracket #element
+    #|   element
     |   null
 
 #changed array_size to struct_size
@@ -773,11 +784,13 @@ element ->
 
 recur_define ->
         %comma %id assign_struct_size recur_define
+    #|   recur_define
     |   null
 
 parameter_define ->
         assign_struct_size recur_define
-    |   null
+    #|   recur_define
+    #|   null
 
 array_parameter ->
         %open_bracket %close_bracket
@@ -825,12 +838,12 @@ function_variables ->
 function_call_statement ->
         %id %open_paren function_call %close_paren
 
-function_call ->
-        function_variables additional_call
+function_call -> #temporarily changed function_variables to variable_choice
+        variable_choice additional_call
     |   null
 
-additional_call ->
-        %comma function_variables additional_call
+additional_call -> #temporarily changed function_variables to variable_choice
+        %comma variable_choice additional_call
     |   null
 
 #TANGGALIN NAKITA AH
