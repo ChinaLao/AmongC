@@ -337,6 +337,7 @@ export default {
                       if(i < delimiters.length-1 && i < 2) expectations += " / ";
                       i++;
                     }
+                  if (delimiters.length > 3) expectations += " etc..."
 
                   message = `Invalid delimiter: ${tokenStream[index+1].token}`;
                   expectationList = `${expectations}`
