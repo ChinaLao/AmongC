@@ -78,6 +78,63 @@ export default {
       negative: "~",
       access: "@",
     },
+    lex: {
+      litStr: "strLit",
+      negaLitInt: "intLit",
+      litInt: "intLit",
+      litDec: "decLit",
+      litBool: "boolLit",
+      start: "IN",
+      int: "int",
+      dec: "dec",
+      str: "str",
+      bool: "bool",
+      empty: "empty",
+      struct: "struct",
+      shoot: "shoot",
+      scan: "scan",
+      if: "if",
+      else: "else",
+      elf: "elf",
+      stateSwitch: "switch",
+      vote: "vote",
+      default: "default",
+      for: "for",
+      while: "while",
+      do: "do",
+      kill: "kill",
+      control: "continue",
+      return: "return",
+      end: "OUT",
+      and: "and",
+      or: "or",
+      vital: "vital",
+      clean: "clean",
+      id: "id",
+      access: "access",
+      arithOper: "operator",
+      unary: "unary",
+      append: "operator",
+      appendAssign: "assignment",
+      assignOper: "assignment",
+      relationOper: "relation",
+      comparison: "relation",
+      equal: "assignment",
+      not: "negate",
+      colon: "colon",
+      terminator: "terminator",
+      comma: "separator",
+      openBrace: "openBrace",
+      closeBrace: "closeBrace",
+      openParen: "openParenthesis",
+      closeParen: "closeParenthesis",
+      openBracket: "openBracket",
+      closeBracket: "closeBracket",
+      singleComment: "comment",
+      negative: "negative",
+      dot: "dot",
+      task: "task",
+    },
     delims: {
       litStr: ["appendAssign", "comma", "terminator", "closeParen", "closeBrace", "access", "colon", "append", "whitespace"],
       negaLitInt: ["arithOper", "relationOper", "closeParen", "colon", "comparison", "closeBrace", "comma", "terminator", "whitespace", "append"],
@@ -229,6 +286,9 @@ export default {
               tokenStream.push({
                 word: token.value,
                 token: token.type,
+                lex: token.type !== "whitespace" && token.type !== "newline"
+                  ? state.lex[token.type]
+                  : token.type,
                 line: token.line,
                 col: token.col,
               });
@@ -238,7 +298,7 @@ export default {
         catch(error){
           commit("SET_ERROR", {
             type: "lex-error",
-            msg: "Invalid Keyword",
+            msg: `Invalid Keyword After: ${token.value}`,
             line: token.line,
             col: token.col+1,
             exp: "-"
@@ -246,38 +306,39 @@ export default {
           commit("CHANGE_ERROR", true);
           console.log(error);
         }
+        let index = 0;
         try{
-          let index = 0;
           while(index < tokenStream.length){
             if(index+1 < tokenStream.length)
             {
-              const testStream = tokenStream[index+1]; 
-              const token = testStream.token; 
-              const streamToken = tokenStream[index].token; 
-              const delims = state.delims; 
-              if(streamToken !== "whitespace" && 
-                  streamToken !== "newline" && 
-                  delims[streamToken].includes(token)
+              const nextToken = tokenStream[index+1].token; 
+              const currentToken = tokenStream[index].token; 
+              const delims = state.delims;
+              if(currentToken !== "whitespace" && 
+                  currentToken !== "newline" && 
+                  delims[currentToken].includes(nextToken)
               ) final.push(tokenStream[index]);
-              else if(streamToken !== "whitespace" && streamToken !== "newline"){
+              else if(currentToken !== "whitespace" && currentToken !== "newline"){
                 let message, expectationList;
                 if(tokenStream[index]["token"] === "litInt" && (tokenStream[index+1]["token"] === "litInt" || tokenStream[index+1]["token"] === "litDec")) message = "Limit exceeded";
                 else if(tokenStream[index]["token"] === "litDec" && tokenStream[index+1]["token"] === "litInt") message = "Limit exceeded";
                 else if(tokenStream[index]["token"] === "id" && (tokenStream[index+1]["token"] === "id" || tokenStream[index+1]["token"] === "litInt")) message = "Limit exceeded";
                 else{
                   let i = 0;
-                  const delimiters = delims[streamToken];
+                  const delimiters = delims[currentToken];
                   let expectations = "";
-
-                  if(typeof(delimiters) === "string") expectations = delimiters;
+                  if(typeof(delimiters) === "string") 
+                    if(delimiters !== "whitespace" && delimiters !== "newline") expectations = state.lex[delimiters];
+                    else expectations = delimiters;
                   else
                     while(i < delimiters.length && i < 3){
-                      expectations += delimiters[i];
+                      if(delimiters[i] !== "whitespace" && delimiters[i] !== "newline") expectations += state.lex[delimiters[i]];
+                      else expectations += delimiters[i];
                       if(i < delimiters.length-1 && i < 2) expectations += " / ";
                       i++;
                     }
 
-                  message = `Invalid delimiter`;
+                  message = `Invalid delimiter: ${tokenStream[index+1].token}`;
                   expectationList = `${expectations}`
                 }
                 
@@ -324,6 +385,7 @@ export default {
         lexeme.push({
           word: "EOF",
           token: "EOF",
+          lex: "EOF",
           line: lexemeLast["line"]+1,
           col: 1,
           description: "End of File",
@@ -338,7 +400,7 @@ export default {
           } catch (err) {
             const errors = {
               type: "syn-error",
-              msg: `Unexpected token: ${lexeme[index].token} (${lexeme[index].word})`,
+              msg: `Unexpected token: ${lexeme[index].lex} (${lexeme[index].word})`,
               line: lexeme[index].line,
               col: lexeme[index].col,
               exp: "-"

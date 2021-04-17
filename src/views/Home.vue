@@ -136,7 +136,7 @@ export default {
         text: "Token",
         align: "center",
         sortable: false,
-        value: "token",
+        value: "lex",
       },
       {
         text: "Description",
