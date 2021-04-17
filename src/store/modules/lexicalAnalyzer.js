@@ -104,7 +104,7 @@ export default {
       do: ["openBrace", "whitespace", "newline"],
       kill: "terminator",
       control: "terminator",
-      return: ["terminator", "openParen", "whitespace", "closeBrace"],
+      return: ["terminator", "openParen", "whitespace"],
       end: ["whitespace", "newline"],
       and: "whitespace",
       or: "whitespace",
