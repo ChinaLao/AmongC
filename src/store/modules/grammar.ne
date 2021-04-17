@@ -180,15 +180,6 @@ iterate_intdec ->
         int_literal
     |   %dec_literal
 
-iterate_choice ->
-        %unary_oper
-    |   %assign_oper iterate_intdec
-    |   %access %open_bracket struct_size %close_bracket
-    #|   null
-
-iterate_first_choice ->
-        iterate_choice
-    |   null
 
 first_choice ->
         struct_new
@@ -209,12 +200,6 @@ first_choice ->
     #|  notter negation %open_paren variable_choice_choice
    # |   condition_less
 
-choice_choice_choice ->
-        first_compute_choice
-    |   first_condition_choice
-    #|   iterate_choice
-    |   null
-
 variable_next_choice ->
         oper_choice condition
     |   null
@@ -229,10 +214,25 @@ variable_next_null ->
 |   %arith_oper compute_choice
 |   null
 
-
 new_choice -> #added this to remove ambiguity with notter
         conditional 
     |   %open_paren condition %close_paren variable_next
+
+iterate_choice ->
+        %unary_oper
+    |   %assign_oper iterate_intdec
+    |   %access %open_bracket struct_size %close_bracket
+    #|   null
+
+iterate_first_choice ->
+        iterate_choice
+    |   null
+
+choice_choice_choice ->
+        first_compute_choice
+    |   first_condition_choice
+    #|   iterate_choice
+    |   null
 
 choice ->
         struct_new iterate_first_choice choice_choice_choice
@@ -245,12 +245,26 @@ choice ->
     |   first_condition_choice #variable_next_choice #added this for conditions with id at the start
     |   null
 
+choice_less -> 
+        struct_new choice_choice_choice
+    |   function_call_statement_choice choice_choice_choice
+    #     struct_new choice_choice_choice #iterate_choice
+    # |   function_call_statement_choice choice_choice_choice #iterate_choice
+     #   first_choice iterate_choice choice_choice_choice #(di ka na kailangan)
+    |   first_compute_choice #variable_next_choice #added this for computes with id at the start
+    |   first_condition_choice #variable_next_choice #added this for conditions with id at the start
+    |   null
+
+negative_choice ->
+        %open_paren compute_choice %close_paren oper_compute
+    |   %id choice_less
+
 variable_choice ->
         %id choice #variable_next_choice
   # |   condition_less_choice_choice
     |   condition_notter_less oper_condition
     |   %not %open_paren condition %close_paren oper_condition
-    |   %negative %open_paren compute_choice %close_paren oper_compute
+    |   %negative negative_choice
     |   %open_paren new_choice %close_paren variable_next_null
     #|   condition
     #|   compute_choice
