@@ -407,25 +407,6 @@ export default {
           }
           index++;
         }
-        // const lexemeStream = lexeme.map(lex => lex.token).join("");
-        // try {
-        //   parser.feed(lexemeStream);
-        //   console.log(parser.results);
-        //   //console.log(lexeme[index].token, index);
-        // } catch (err) {
-        //   const errors = {
-        //     type: "syn-error",
-        //     msg: `Unexpected token: `,
-        //     // ${lexeme[index].token} (${lexeme[index].word})`,
-        //     line: 1,
-        //     // lexeme[index].line,
-        //     col: 2,
-        //     // lexeme[index].col,
-        //     exp: "-"
-        //   };
-        //   commit("SET_ERROR", errors);
-        //   synError = true;
-        // }
         console.log(parser.results);
       }
       
