@@ -54,7 +54,7 @@ export default {
       litInt: /[0-9]{1,9}/,
       
       
-      
+      quote: '"',
       terminator: ";",
       comma: ",",
       dot: ".",
@@ -134,6 +134,7 @@ export default {
       negative: "negative",
       dot: "dot",
       task: "task",
+      quote: "",
     },
     delims: {
       litStr: ["appendAssign", "comma", "terminator", "closeParen", "closeBrace", "access", "colon", "append", "whitespace"],
@@ -192,6 +193,7 @@ export default {
       dot: "id",
       task: "whitespace",
       access: "openBracket",
+      quote: "",
     },
     tokenDescription: {
       litStr: "String Literal",
@@ -249,6 +251,7 @@ export default {
       negative: "Negative Operator",
       dot: "Struct Element Accessor Operator",
       task: "Function Keyword",
+      quote: "",
     }
   },
   getters: {
@@ -309,21 +312,27 @@ export default {
         let index = 0;
         try{
           while(index < tokenStream.length){
+            const current = tokenStream[index];
+            const next = tokenStream[index+1]
+            const nextToken = next ? next.token : ""; 
+            const currentToken = current.token; 
             if(index+1 < tokenStream.length)
             {
-              const nextToken = tokenStream[index+1].token; 
-              const currentToken = tokenStream[index].token; 
               const delims = state.delims;
               if(currentToken !== "whitespace" && 
                   currentToken !== "newline" && 
+                  currentToken !== "quote" &&
                   delims[currentToken].includes(nextToken)
-              ) final.push(tokenStream[index]);
+              ) final.push(current);
               else if(currentToken !== "whitespace" && currentToken !== "newline"){
-                let message, expectationList;
-                if(tokenStream[index]["token"] === "litInt" && (tokenStream[index+1]["token"] === "litInt" || tokenStream[index+1]["token"] === "litDec")) message = "Limit exceeded";
-                else if(tokenStream[index]["token"] === "litDec" && tokenStream[index+1]["token"] === "litInt") message = "Limit exceeded";
-                else if(tokenStream[index]["token"] === "id" && (tokenStream[index+1]["token"] === "id" || tokenStream[index+1]["token"] === "litInt")) message = "Limit exceeded";
-                else{
+                let message, expectationList = "-", type = "lex-error";
+                if(currentToken === "litInt" && (nextToken === "litInt" || nextToken === "litDec")) message = "Limit exceeded";
+                else if(currentToken === "litDec" && nextToken === "litInt") message = "Limit exceeded";
+                else if(currentToken === "id" && (nextToken === "id" || nextToken === "litInt")) message = "Limit exceeded";
+                else if(currentToken === "quote"){ 
+                  message = "Missing closing quote";
+                  type = "syn-error";
+                }else{
                   let i = 0;
                   const delimiters = delims[currentToken];
                   let expectations = "";
@@ -337,17 +346,17 @@ export default {
                       if(i < delimiters.length-1 && i < 2) expectations += " / ";
                       i++;
                     }
-                  if (delimiters.length > 3) expectations += " etc..."
+                  if (delimiters.length > 3 && typeof(delimiters) !== "string") expectations += " etc..."
 
-                  message = `Invalid delimiter: ${tokenStream[index+1].token}`;
+                  message = `Invalid delimiter: ${nextToken}`;
                   expectationList = `${expectations}`
                 }
-                
+
                 const error = {
-                  type: "lex-error",
+                  type: type,
                   msg: message,
-                  line: tokenStream[index].line,
-                  col: tokenStream[index].col,
+                  line: current.line,
+                  col: current.col,
                   exp: expectationList
                 };
                 if(!state.foundError)
@@ -355,12 +364,13 @@ export default {
                 commit("CHANGE_ERROR", true);
                 break;
               } 
-            } else if(tokenStream[index] !== "" && tokenStream[index]["token"] !== "whitespace" && tokenStream[index]["token"] !== "newline"){
-              final.push(tokenStream[index]);
+            } else if(currentToken !== "" && currentToken !== "whitespace" && currentToken !== "newline"){
+              final.push(current);
             }
             index++;
           }
         }catch(err){
+          console.log(err);
           const error = {
             type: "programmer-error",
             msg: `Missing delimiter rule`,
