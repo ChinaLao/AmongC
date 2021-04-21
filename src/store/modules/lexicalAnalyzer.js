@@ -339,7 +339,10 @@ export default {
                   else if(currentToken === "quote"){
                     message = "Missing closing quote";
                     type = "syn-error";
-                  }else message = `Invalid delimiter: ${nextToken}`;
+                  }else{
+                   message = `Invalid delimiter: ${nextToken}`;
+                   final.push(current);
+                  }
 
                   const error = {
                     type: type,
