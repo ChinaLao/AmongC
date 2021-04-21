@@ -346,9 +346,15 @@ export default {
                     message = "Missing closing quote";
                     type = "syn-error";
                   }else{
-                   message = `Invalid delimiter: ${nextToken}`;
-                   expectations =  await dispatch('GET_EXPECTATIONS', delims[currentToken])
-                   final.push(current);
+                    const nextWord = nextToken !== "whitespace" && nextToken !== "newline"
+                      ? next.word
+                      : nextToken;
+                    const currentWord = currentToken !== "whitespace" && currentToken !== "newline"
+                      ? current.word
+                      : currentToken;
+                    message = `Invalid delimiter: ${nextWord}\nafter: ${currentWord}`;
+                    expectations =  await dispatch('GET_EXPECTATIONS', delims[currentToken])
+                    final.push(current);
                   }
 
                   const error = {
