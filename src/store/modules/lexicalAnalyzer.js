@@ -274,7 +274,7 @@ export default {
     }
   },
   actions: {
-    async LEXICAL({ state, commit }, code){ 
+    async LEXICAL({ state, commit, dispatch }, code){ 
         const tokenStream = [];
         const final = [];
         const parser = moo.compile(state.lexRules);
@@ -299,12 +299,16 @@ export default {
           }
         }
         catch(error){
+          const delims = state.delims;
+          const beforeErrorToken = token.type !== "whitespace" && token.type !== "newline"
+            ? token.value
+            : token.type;
           commit("SET_ERROR", {
             type: "lex-error",
-            msg: `Invalid Keyword After: ${token.value}`,
+            msg: `Invalid Keyword After: ${beforeErrorToken}`,
             line: token.line,
             col: token.col+1,
-            exp: "-"
+            exp: await dispatch('GET_EXPECTATIONS', delims[token.type])
           });
           commit("CHANGE_ERROR", true);
           console.log(error);
@@ -325,39 +329,21 @@ export default {
                   delims[currentToken].includes(nextToken)
               ) final.push(current);
               else if(currentToken !== "whitespace" && currentToken !== "newline"){
-                let message, expectationList = "-", type = "lex-error";
+                let message, type = "lex-error";
                 if(currentToken === "litInt" && (nextToken === "litInt" || nextToken === "litDec")) message = "Limit exceeded";
                 else if(currentToken === "litDec" && nextToken === "litInt") message = "Limit exceeded";
                 else if(currentToken === "id" && (nextToken === "id" || nextToken === "litInt")) message = "Limit exceeded";
                 else if(currentToken === "quote"){ 
                   message = "Missing closing quote";
                   type = "syn-error";
-                }else{
-                  let i = 0;
-                  const delimiters = delims[currentToken];
-                  let expectations = "";
-                  if(typeof(delimiters) === "string") 
-                    if(delimiters !== "whitespace" && delimiters !== "newline") expectations = state.lex[delimiters];
-                    else expectations = delimiters;
-                  else
-                    while(i < delimiters.length && i < 3){
-                      if(delimiters[i] !== "whitespace" && delimiters[i] !== "newline") expectations += state.lex[delimiters[i]];
-                      else expectations += delimiters[i];
-                      if(i < delimiters.length-1 && i < 2) expectations += " / ";
-                      i++;
-                    }
-                  if (delimiters.length > 3 && typeof(delimiters) !== "string") expectations += " etc..."
-
-                  message = `Invalid delimiter: ${nextToken}`;
-                  expectationList = `${expectations}`
-                }
+                }else message = `Invalid delimiter: ${nextToken}`;
 
                 const error = {
                   type: type,
                   msg: message,
                   line: current.line,
                   col: current.col,
-                  exp: expectationList
+                  exp: await dispatch('GET_EXPECTATIONS', delims[currentToken])
                 };
                 if(!state.foundError)
                   commit("SET_ERROR", error);
@@ -443,6 +429,25 @@ export default {
         console.log(parser.results);
       }
       
+    },
+    async GET_EXPECTATIONS({ state }, delimiters){
+      let i = 0;
+      let expectations = "";
+      if(typeof(delimiters) === "string")
+        expectations = delimiters !== "whitespace" && delimiters !== "newline"
+          ? state.lex[delimiters]
+          : delimiters;
+      else{
+        while(i < delimiters.length && i < 3){
+          expectations +=  delimiters[i] !== "whitespace" && delimiters[i] !== "newline"
+            ? state.lex[delimiters[i]]
+            : delimiters[i];
+          if(i < delimiters.length-1 && i < 2) expectations += " / ";
+          i++;
+        }
+        if (delimiters.length > 3) expectations += " etc..."
+      }
+      return expectations;
     },
   },
 };
