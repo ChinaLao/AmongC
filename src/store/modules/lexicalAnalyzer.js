@@ -332,15 +332,22 @@ export default {
                     delims[currentToken].includes(nextToken)
                 ) final.push(current);
                 else if(currentToken !== "whitespace" && currentToken !== "newline"){
-                  let message, type = "lex-error";
-                  if(currentToken === "litInt" && (nextToken === "litInt" || nextToken === "litDec")) message = "Limit exceeded";
-                  else if(currentToken === "litDec" && nextToken === "litInt") message = "Limit exceeded";
-                  else if(currentToken === "id" && (nextToken === "id" || nextToken === "litInt")) message = "Limit exceeded";
-                  else if(currentToken === "quote"){
+                  let message, type = "lex-error", expectations = "-";
+                  if(currentToken === "litInt" && (nextToken === "litInt" || nextToken === "litDec")){
+                    message = "Limit exceeded";
+                    expectations = "Integer should not exceed 9 place values"
+                  }else if(currentToken === "litDec" && nextToken === "litInt"){
+                    message = "Limit exceeded";
+                    expectations = "Decimal should not exceed 5 place values"
+                  }else if(currentToken === "id" && (nextToken === "id" || nextToken === "litInt")){
+                    message = "Limit exceeded";
+                    expectations = "Identifier should not exceed 15 characters"
+                  }else if(currentToken === "quote"){
                     message = "Missing closing quote";
                     type = "syn-error";
                   }else{
                    message = `Invalid delimiter: ${nextToken}`;
+                   expectations =  await dispatch('GET_EXPECTATIONS', delims[currentToken])
                    final.push(current);
                   }
 
@@ -349,7 +356,7 @@ export default {
                     msg: message,
                     line: current.line,
                     col: current.col,
-                    exp: await dispatch('GET_EXPECTATIONS', delims[currentToken])
+                    exp: expectations
                   };
                   if(!state.foundError)
                     commit("SET_ERROR", error);
