@@ -102,7 +102,7 @@ main_statement ->
 
 #changed comment to %singleComment
 function ->
-        %task function_data_type %id %open_paren parameter %close_paren %open_brace function_statement %close_brace function
+        %task function_data_type %id %open_paren parameter %close_paren %open_brace in_function_statement %close_brace function
     |   %singleComment function
     |   null
 
@@ -259,12 +259,30 @@ negative_choice ->
         %open_paren compute_choice %close_paren oper_compute
     |   %id choice_less
 
+not_many ->
+        %not not_again
+    
+not_again ->
+        %not not_again
+    |   null
+
+not_choice ->
+        %open_paren condition %close_paren oper_condition
+    |   %id choice
+
+negative_many ->
+        %negative negative_again
+
+negative_again ->
+        %negative negative_again
+    |   null
+
 variable_choice ->
         %id choice #variable_next_choice
   # |   condition_less_choice_choice
     |   condition_notter_less oper_condition
-    |   %not %open_paren condition %close_paren oper_condition
-    |   %negative negative_choice
+    |   not_many not_choice #repeated !!!
+    |   negative_many negative_choice #repeated ~~~
     |   %open_paren new_choice %close_paren variable_next_null
     #|   condition
     #|   compute_choice
@@ -372,6 +390,26 @@ function_statement ->
 #changed comment to %singleComment
 #changed unary to %unary_oper
 statement_choice ->
+        data_declare
+    |   out_statement 
+    |   in_statement 
+    |   loop_statement 
+    |   if_statement 
+    |   switch_statement 
+    |   %id id_start_statement
+    |   %unary_oper %id %terminator #kulang to
+    #|   return_statement #removed for main functio
+    |   control_statement 
+    |   %clean %open_paren %close_paren %terminator
+    |   %singleComment
+
+in_function_statement -> 
+        function_statement_choice in_function_statement
+    |   null
+
+#changed comment to %singleComment
+#changed unary to %unary_oper
+function_statement_choice ->
         data_declare
     |   out_statement 
     |   in_statement 
@@ -732,17 +770,30 @@ vote ->
         %vote vote_choice %colon function_statement %kill %terminator vote
     |   null
 
+return_next_choice ->
+        new_choice %close_paren variable_next_null
+    |   %close_paren 
+
+return_choice ->
+        %id choice #variable_next_choice
+  # |   condition_less_choice_choice
+    |   condition_notter_less oper_condition
+    |   not_many not_choice #repeated !!!
+    |   negative_many negative_choice #repeated ~~~
+    |   %open_paren return_next_choice
+    |   null
+
 return_statement ->
-        %stateReturn variable_choice %terminator
+        %stateReturn return_choice %terminator
 
 return_first_choice ->
         variable_choice
     #|   %open_paren %id %close_paren
     #|   null
 
-return_choice -> 
-        variable_choice
-    #|   null
+# return_choice -> 
+#         variable_choice
+#     #|   null
 
 recur_declare ->
         %comma parameter_define
