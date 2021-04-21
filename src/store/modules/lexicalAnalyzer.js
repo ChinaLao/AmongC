@@ -47,7 +47,7 @@ export default {
       newline: {match: /\n|\r\n|\r/, lineBreaks: true},
       whitespace: /[ \t]+/,
 
-      litStr: /[\\"](?:(?:[\\][\\" | \\n | \\t | \\r | \\b | \\])*[^\\"]*)*[\\"]/,
+      litStr: /[\\"].+[\\"]/,
       singleComment: /#.+/,
       litDec: /[~]?[0-9]{1,9}[.][0-9]{1,5}/,
       negaLitInt: /[~][0-9]{1,9}/,
@@ -308,65 +308,76 @@ export default {
             msg: `Invalid Keyword After: ${beforeErrorToken}`,
             line: token.line,
             col: token.col+1,
-            exp: await dispatch('GET_EXPECTATIONS', delims[token.type])
+            exp: token.type !== "whitespace" && token.type !== "newline" 
+              ? await dispatch('GET_EXPECTATIONS', delims[token.type])
+              : "-"
           });
           commit("CHANGE_ERROR", true);
           console.log(error);
         }
-        let index = 0;
-        try{
-          while(index < tokenStream.length){
-            const current = tokenStream[index];
-            const next = tokenStream[index+1]
-            const nextToken = next ? next.token : ""; 
-            const currentToken = current.token; 
-            if(index+1 < tokenStream.length)
-            {
-              const delims = state.delims;
-              if(currentToken !== "whitespace" && 
-                  currentToken !== "newline" && 
-                  currentToken !== "quote" &&
-                  delims[currentToken].includes(nextToken)
-              ) final.push(current);
-              else if(currentToken !== "whitespace" && currentToken !== "newline"){
-                let message, type = "lex-error";
-                if(currentToken === "litInt" && (nextToken === "litInt" || nextToken === "litDec")) message = "Limit exceeded";
-                else if(currentToken === "litDec" && nextToken === "litInt") message = "Limit exceeded";
-                else if(currentToken === "id" && (nextToken === "id" || nextToken === "litInt")) message = "Limit exceeded";
-                else if(currentToken === "quote"){ 
-                  message = "Missing closing quote";
-                  type = "syn-error";
-                }else message = `Invalid delimiter: ${nextToken}`;
+        if(!state.foundError){
+          let index = 0;
+          try{
+            while(index < tokenStream.length){
+              const current = tokenStream[index];
+              const next = tokenStream[index+1]
+              const nextToken = next ? next.token : "";
+              const currentToken = current.token;
+              if(index+1 < tokenStream.length)
+              {
+                const delims = state.delims;
+                if(currentToken !== "whitespace" &&
+                    currentToken !== "newline" &&
+                    currentToken !== "quote" &&
+                    delims[currentToken].includes(nextToken)
+                ) final.push(current);
+                else if(currentToken !== "whitespace" && currentToken !== "newline"){
+                  let message, type = "lex-error";
+                  if(currentToken === "litInt" && (nextToken === "litInt" || nextToken === "litDec")) message = "Limit exceeded";
+                  else if(currentToken === "litDec" && nextToken === "litInt") message = "Limit exceeded";
+                  else if(currentToken === "id" && (nextToken === "id" || nextToken === "litInt")) message = "Limit exceeded";
+                  else if(currentToken === "quote"){
+                    message = "Missing closing quote";
+                    type = "syn-error";
+                  }else message = `Invalid delimiter: ${nextToken}`;
 
-                const error = {
-                  type: type,
-                  msg: message,
-                  line: current.line,
-                  col: current.col,
-                  exp: await dispatch('GET_EXPECTATIONS', delims[currentToken])
-                };
-                if(!state.foundError)
-                  commit("SET_ERROR", error);
-                commit("CHANGE_ERROR", true);
-                break;
-              } 
-            } else if(currentToken !== "" && currentToken !== "whitespace" && currentToken !== "newline"){
-              final.push(current);
+                  const error = {
+                    type: type,
+                    msg: message,
+                    line: current.line,
+                    col: current.col,
+                    exp: await dispatch('GET_EXPECTATIONS', delims[currentToken])
+                  };
+                  if(!state.foundError)
+                    commit("SET_ERROR", error);
+                  commit("CHANGE_ERROR", true);
+                  break;
+                }
+              } else if(currentToken !== "" && currentToken !== "whitespace" && currentToken !== "newline"){
+                final.push(current);
+              }
+              index++;
             }
-            index++;
+          }catch(err){
+            console.log(err);
+            const error = {
+              type: "programmer-error",
+              msg: `Missing delimiter rule`,
+              line: tokenStream[index].line,
+              col: tokenStream[index].col,
+              exp: "-"
+            };
+            if(!state.foundError)
+              commit("SET_ERROR", error);
+            commit("CHANGE_ERROR", true);
           }
-        }catch(err){
-          console.log(err);
-          const error = {
-            type: "programmer-error",
-            msg: `Missing delimiter rule`,
-            line: tokenStream[index].line,
-            col: tokenStream[index].col,
-            exp: "-"
-          };
-          if(!state.foundError)
-            commit("SET_ERROR", error);
-          commit("CHANGE_ERROR", true);
+        }
+        else{
+          tokenStream.forEach(token => {
+            console.log(token);
+            if(token.token !== "whitespace" && token.token !== "newline")
+              final.push(token)
+          });
         }
         final.forEach(token => {
           token.description = tokenDescription[token["token"]];
