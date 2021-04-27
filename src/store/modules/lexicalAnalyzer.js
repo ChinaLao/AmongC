@@ -189,7 +189,7 @@ export default {
       openBracket: ["openParen", "litInt", "id", "whitespace", "unary", "closeBracket"],
       closeBracket: ["dot", "append", "arithOper", "appendAssign", "assignOper", "unary", "openBracket", "closeBracket", "terminator", "comma", "comparison", "relationOper", "closeBrace", "equal", "whitespace", "closeParen", "colon", "access"],
       singleComment: "newline",
-      negative: ["id", "openParen"],
+      negative: ["id", "openParen", "negative"],
       dot: "id",
       task: "whitespace",
       access: "openBracket",
