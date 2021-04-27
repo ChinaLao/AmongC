@@ -282,7 +282,7 @@ variable_choice ->
   # |   condition_less_choice_choice
     |   condition_notter_less oper_condition
     |   not_many not_choice #repeated !!!
-    |   negative_many negative_choice #repeated ~~~
+    |   %negative negative_choice 
     |   %open_paren new_choice %close_paren variable_next_null
     #|   condition
     #|   compute_choice
@@ -779,7 +779,7 @@ return_choice ->
   # |   condition_less_choice_choice
     |   condition_notter_less oper_condition
     |   not_many not_choice #repeated !!!
-    |   negative_many negative_choice #repeated ~~~
+    |   %negative negative_choice 
     |   %open_paren return_next_choice
     |   null
 
