@@ -47,7 +47,7 @@ export default {
       newline: {match: /\n|\r\n|\r/, lineBreaks: true},
       whitespace: /[ \t]+/,
 
-      litStr: /[\\"].+[\\"]/,
+      litStr: /[\\"].*[\\"]/,
       singleComment: /#.*/,
       litDec: /[~]?[0-9]{1,9}[.][0-9]{1,5}/,
       negaLitInt: /[~][0-9]{1,9}/,
