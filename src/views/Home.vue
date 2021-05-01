@@ -102,6 +102,7 @@
                 height="200"
                 class="background lexOutput elevation-1"
                 dark
+                dense
               ></v-data-table>
             </v-row>
             <v-row>
@@ -243,6 +244,7 @@ export default {
   background: #080728;
   color: #ffff;
   height: 43.5vh;
+  width: 43vw;
   font-family: Consolas;
   font-size: 14px;
   line-height: 1.5;
@@ -253,6 +255,7 @@ export default {
   background: #080728;
   color: #ffff;
   height: 28vh;
+  width: 43vw;
   font-family: Consolas;
   font-size: 14px;
   line-height: 1.5;
@@ -262,6 +265,7 @@ export default {
 .lexOutput {
   border: 2px solid #080728;
   height: 40vh;
+  width: 43vw;
   font-family: Consolas;
   font-size: 14px;
   line-height: 1.5;
@@ -271,6 +275,7 @@ export default {
 .errorOutput {
   border: 2px solid #080728;
   height: 27.5vh;
+  width: 43vw;
   font-family: Consolas;
   font-size: 14px;
   line-height: 1.5;
