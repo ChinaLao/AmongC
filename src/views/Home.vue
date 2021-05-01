@@ -76,7 +76,7 @@
         <!-- inputs and outputs -->
         <v-row align="center">
           <v-col>
-            <v-row class="mb-2">
+            <v-row>
               <prism-editor
                 class="background my-editor pt-8"
                 v-model="code"
@@ -84,10 +84,11 @@
                 line-numbers
               ></prism-editor>
             </v-row>
-            <v-row class="mt-2">
+            <v-row>
+              <h2 class="success--text">Output</h2>
               <prism-editor
                 class="background semOutput pt-8"
-                v-model="semOutput"
+                v-model="semantics"
                 :highlight="highlighter"
                 readonly
               ></prism-editor>
@@ -238,6 +239,9 @@ export default {
     error() {
       return this.$store.getters["lexicalAnalyzer/ERROR"];
     },
+    semantics(){
+      return this.$store.getters["lexicalAnalyzer/SEMANTICS"]
+    }
   },
 };
 </script>
@@ -246,7 +250,7 @@ export default {
 .my-editor {
   background: #080728;
   color: #ffff;
-  height: 43.5vh;
+  height: 40vh;
   width: 43vw;
   font-family: Consolas;
   font-size: 14px;
@@ -257,7 +261,7 @@ export default {
 .semOutput {
   background: #080728;
   color: #ffff;
-  height: 28vh;
+  height: 27.5vh;
   width: 43vw;
   font-family: Consolas;
   font-size: 14px;
