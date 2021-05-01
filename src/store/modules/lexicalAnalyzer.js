@@ -431,15 +431,6 @@ export default {
       {
         const parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar));
         const lexeme = state.lexeme;
-        const lexemeLast = lexeme[lexeme.length-1];
-        lexeme.push({
-          word: "EOF",
-          token: "EOF",
-          lex: "EOF",
-          line: lexemeLast["line"]+1,
-          col: 1,
-          description: "End of File",
-        });
         let index = 0;
         let synError = false;
         while(index < lexeme.length && !synError) {
