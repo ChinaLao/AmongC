@@ -4,7 +4,7 @@
     <v-main>
       <v-container>
         <v-row class="my-1">
-          <v-col cols="6">
+          <v-col>
             <v-row>
               <h2 class="primary--text">Editor</h2>
               <v-tooltip bottom>
@@ -63,14 +63,14 @@
               </v-tooltip>
             </v-row>
           </v-col>
-          <v-col cols="5" class="ml-2">
+          <v-col class="ml-2">
             <v-row>
               <h2>Lexeme Table</h2>
             </v-row>
           </v-col>
         </v-row>
         <v-row align="center">
-          <v-col cols="6">
+          <v-col>
             <v-row>
               <prism-editor
                 class="my-editor pt-8"
@@ -80,7 +80,7 @@
               ></prism-editor>
             </v-row>
           </v-col>
-          <v-col cols="5" class="ml-2">
+          <v-col class="ml-2">
             <v-row>
               <v-data-table
                 :headers="lexemeTableHeaders"
