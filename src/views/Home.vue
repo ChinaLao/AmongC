@@ -258,7 +258,7 @@ export default {
   background: #080728;
   color: #ffff;
   height: 40vh;
-  width: 43vw;
+  width: 100%;
   font-family: Consolas;
   font-size: 14px;
   line-height: 1.5;
@@ -269,7 +269,7 @@ export default {
   background: #080728;
   color: #ffff;
   height: 27.5vh;
-  width: 43vw;
+  width: 100%;
   font-family: Consolas;
   font-size: 14px;
   line-height: 1.5;
@@ -279,7 +279,7 @@ export default {
 .lexOutput {
   border: 2px solid #080728;
   height: 40vh;
-  width: 43vw;
+  width: 100%;
   font-family: Consolas;
   font-size: 14px;
   line-height: 1.5;
@@ -289,7 +289,7 @@ export default {
 .errorOutput {
   border: 2px solid #080728;
   height: 27.5vh;
-  width: 43vw;
+  width: 100%;
   font-family: Consolas;
   font-size: 14px;
   line-height: 1.5;
