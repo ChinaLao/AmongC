@@ -47,7 +47,7 @@ export default {
       newline: {match: /\n|\r\n|\r/, lineBreaks: true},
       whitespace: /[ \t]+/,
 
-      litStr: /[\\"].*[\\"]/,
+      litStr: /["].*["]/,
       singleComment: /#.*/,
       litDec: /[~]?[0-9]{1,9}[.][0-9]{1,5}/,
       negaLitInt: /[~][0-9]{1,9}/,
@@ -326,7 +326,7 @@ export default {
             const currentToken = current.token;
             const nextToken = next ? next.token : "";
             const delims = state.delims;
-            console.log(currentToken, next);
+            console.log(currentToken, next, currentToken !== "invalid");
             if(nextToken !== "EOF")
             {
               if(currentToken !== "whitespace" &&
@@ -381,7 +381,6 @@ export default {
                   });
               }
             } else if(currentToken !== "" && currentToken !== "whitespace" && currentToken !== "newline"){
-              console.log(currentToken, nextToken, delims[currentToken].includes(nextToken))
               if(currentToken === "invalid"){
                 errors.push({
                   type: "lex-error",
@@ -390,9 +389,21 @@ export default {
                   col: current.col,
                   exp: "-"
                 });
-              }
-              else if(delims[currentToken].includes(nextToken)){
+              }else if(delims[currentToken].includes(nextToken)){
                 final.push(current);
+              }else{
+                const nextWord = next.word;
+                const currentWord = currentToken !== "whitespace" && currentToken !== "newline"
+                  ? current.word
+                  : currentToken;
+                console.log(nextWord, currentWord);
+                errors.push({
+                  type: "lex-error",
+                  msg: `Invalid delimiter: ${nextWord} after: ${currentWord}`,
+                  line: current.line,
+                  col: current.col,
+                  exp: await dispatch('GET_EXPECTATIONS', delims[currentToken])
+                });
               }
             }
             index++;
