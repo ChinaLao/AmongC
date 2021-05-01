@@ -136,7 +136,7 @@ export default {
         text: "Token",
         align: "center",
         sortable: false,
-        value: "token",
+        value: "lex",
       },
       {
         text: "Description",
@@ -197,12 +197,8 @@ export default {
     async run() {
       this.runClicked = true;
       this.clearOutput();
-      // this.$store.dispatch("lexical/GET_LEXEME", this.code);
-      // await this.$store.dispatch("syntax/GET_SYNTAX", this.code);
       await this.$store.dispatch("lexicalAnalyzer/LEXICAL", this.code);
       await this.$store.dispatch("lexicalAnalyzer/SYNTAX");
-      console.log(this.lexeme);
-      // await this.$store.dispatch("syntax/TEMPORARY_SYNTAX", this.code);
       this.runClicked = false;
     },
     stop() {
@@ -214,17 +210,14 @@ export default {
     },
     clearOutput() {
       this.$store.commit("lexicalAnalyzer/CLEAR_OUTPUTS");
-      // this.$store.commit("syntax/CLEAR");
     },
   },
   computed: {
     lexeme() {
       return this.$store.getters["lexicalAnalyzer/LEXEME"];
-      // return this.$store.getters["syntax/LEXEME"];
     },
     error() {
       return this.$store.getters["lexicalAnalyzer/ERROR"];
-      // return this.$store.getters["syntax/ERROR"];
     },
   },
 };
