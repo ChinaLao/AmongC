@@ -164,7 +164,7 @@ export default {
       kill: "terminator",
       control: "terminator",
       return: ["terminator", "openParen", "whitespace"],
-      end: ["whitespace", "newline"],
+      end: ["whitespace", "newline", "EOF"],
       and: "whitespace",
       or: "whitespace",
       vital: "whitespace",
@@ -184,7 +184,7 @@ export default {
       terminator: ["unary", "id", "openParen", "closeParen", "terminator", "whitespace", "newline", "singleComment", "not"],
       comma: ["unary", "not", "openBrace", "openParen", "litStr", "litInt", "negaLitInt", "litDec", "litBool", "id", "whitespace", "negative", "int", "dec", "str", "bool"],
       openBrace: ["unary", "litStr", "not", "negative", "openParen", "openBrace", "closeBrace", "litInt", "negaLitInt", "litDec", "litBool", "id", "whitespace", "newline", "singleComment"],
-      closeBrace: ["comma", "terminator", "closeBrace", "singleComment", "whitespace", "newline", "while"],
+      closeBrace: ["comma", "terminator", "closeBrace", "singleComment", "whitespace", "newline", "while", "EOF"],
       openParen: ["negative", "litStr", "closeParen", "not", "openParen", "terminator", "litInt", "negaLitInt", "litDec", "litBool", "id", "whitespace", "int", "dec", "str", "bool", "unary"],
       closeParen: ["comma", "terminator", "arithOper", "append", "comparison", "closeParen", "closeBracket", "closeBrace", "relationOper", "whitespace", "openBrace", "newline", "access", "colon"],
       openBracket: ["openParen", "litInt", "id", "whitespace", "unary", "closeBracket"],
@@ -195,6 +195,7 @@ export default {
       task: "whitespace",
       access: "openBracket",
       quote: "",
+      EOF: ""
     },
     tokenDescription: {
       litStr: "String Literal",
@@ -253,6 +254,7 @@ export default {
       dot: "Struct Element Accessor Operator",
       task: "Function Keyword",
       quote: "",
+      EOF: "End of File"
     }
   },
   getters: {
@@ -307,6 +309,14 @@ export default {
             console.log(error);
           }
         }
+        const last = tokenStream[tokenStream.length-1];
+        tokenStream.push({
+          word: "EOF",
+          token: "EOF",
+          lex: "EOF",
+          line: last.line+1,
+          col: 1
+        })
         let index = 0;
         console.log(tokenStream);
         while(index < tokenStream.length){
@@ -315,10 +325,10 @@ export default {
             const next = tokenStream[index+1]
             const currentToken = current.token;
             const nextToken = next ? next.token : "";
-            console.log(tokenStream[index], currentToken);
-            if(index+1 < tokenStream.length)
+            const delims = state.delims;
+            console.log(currentToken, next);
+            if(nextToken !== "EOF")
             {
-              const delims = state.delims;
               if(currentToken !== "whitespace" &&
                   currentToken !== "newline" &&
                   currentToken !== "invalid" &&
@@ -350,8 +360,6 @@ export default {
                   expectations = currentToken !== "invalid"
                     ? await dispatch('GET_EXPECTATIONS', delims[currentToken])
                     : "-"
-                  if(currentToken !== "invalid")
-                    final.push(current);
                 }
 
                 if(currentToken === "invalid")
@@ -362,8 +370,18 @@ export default {
                     col: current.col,
                     exp: "-"
                   });
+                
+                else
+                  errors.push({
+                    type: type,
+                    msg: message,
+                    line: next.line,
+                    col: next.col,
+                    exp: expectations
+                  });
               }
             } else if(currentToken !== "" && currentToken !== "whitespace" && currentToken !== "newline"){
+              console.log(currentToken, nextToken, delims[currentToken].includes(nextToken))
               if(currentToken === "invalid"){
                 errors.push({
                   type: "lex-error",
@@ -373,8 +391,9 @@ export default {
                   exp: "-"
                 });
               }
-              else
+              else if(delims[currentToken].includes(nextToken)){
                 final.push(current);
+              }
             }
             index++;
           }catch(err){
