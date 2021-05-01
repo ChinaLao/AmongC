@@ -144,6 +144,7 @@ export default {
   },
   data: () => ({
     code: null,
+    semantics: null,
     runClicked: false,
     lexemeTableHeaders: [
       {
@@ -217,8 +218,16 @@ export default {
     async run() {
       this.runClicked = true;
       this.clearOutput();
+      this.semantics = "Checking Lexical...";
       await this.$store.dispatch("lexicalAnalyzer/LEXICAL", this.code);
-      await this.$store.dispatch("lexicalAnalyzer/SYNTAX");
+      if(this.error.length <= 0){
+        this.semantics += "\nNo Lexical Error";
+        this.semantics += "\n\nChecking Syntax...";
+        await this.$store.dispatch("lexicalAnalyzer/SYNTAX");
+        if(this.error.length <= 0) this.semantics += "\nNo Syntax Error";
+        else this.semantics += "\nSyntax Error Found";
+      }
+      else this.semantics += "\nLexical Error Found";
       this.runClicked = false;
     },
     stop() {
@@ -229,6 +238,7 @@ export default {
       this.clearOutput();
     },
     clearOutput() {
+      this.semantics = null;
       this.$store.commit("lexicalAnalyzer/CLEAR_OUTPUTS");
     },
   },
@@ -239,9 +249,6 @@ export default {
     error() {
       return this.$store.getters["lexicalAnalyzer/ERROR"];
     },
-    semantics(){
-      return this.$store.getters["lexicalAnalyzer/SEMANTICS"]
-    }
   },
 };
 </script>
