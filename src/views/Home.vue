@@ -1,14 +1,14 @@
 <template>
   <v-app>
     <Header />
-    <v-main>
+    <v-main class="secondary" dark>
       <v-container>
         <!-- top -->
         <v-row class="my-1">
           <!-- buttons -->
           <v-col>
             <v-row>
-              <h2 class="primary--text">Editor</h2>
+              <h2 class="white--text">Editor</h2>
               <v-tooltip bottom>
                 <template v-slot:activator="{ on, attrs }">
                   <v-btn
@@ -34,7 +34,7 @@
                     plain
                     fab
                     small
-                    color="error lighten-2"
+                    color="error"
                     :disabled="!runClicked"
                     @click="stop()"
                     v-bind="attrs"
@@ -52,7 +52,7 @@
                     plain
                     fab
                     small
-                    color="error lighten-2"
+                    color="error"
                     :disabled="!code || code === '' || runClicked"
                     @click="clearCode()"
                     v-bind="attrs"
@@ -68,7 +68,7 @@
           <!-- title of lexeme table -->
           <v-col class="ml-2">
             <v-row>
-              <h2>Lexeme Table</h2>
+              <h2 class="white--text">Lexeme Table</h2>
             </v-row>
           </v-col>
         </v-row>
@@ -78,7 +78,7 @@
           <v-col>
             <v-row class="mb-2">
               <prism-editor
-                class="my-editor pt-8"
+                class="background my-editor pt-8"
                 v-model="code"
                 :highlight="highlighter"
                 line-numbers
@@ -86,7 +86,7 @@
             </v-row>
             <v-row class="mt-2">
               <prism-editor
-                class="semOutput pt-8"
+                class="background semOutput pt-8"
                 v-model="semOutput"
                 :highlight="highlighter"
                 readonly
@@ -100,7 +100,8 @@
                 :items="lexeme"
                 :items-per-page="-1"
                 height="200"
-                class="lexOutput elevation-1"
+                class="background lexOutput elevation-1"
+                dark
               ></v-data-table>
             </v-row>
             <v-row>
@@ -110,14 +111,15 @@
                 :items="error"
                 :items-per-page="-1"
                 height="120"
-                class="errorOutput elevation-1"
+                class="background errorOutput elevation-1"
+                dark
               ></v-data-table>
             </v-row>
           </v-col>
         </v-row>
       </v-container>
     </v-main>
-    <v-footer class="center">Among C Compiler &copy; 2021</v-footer>
+    <v-footer class="primary center" dark>Among C Compiler &copy; 2021</v-footer>
   </v-app>
 </template>
 
