@@ -3,7 +3,9 @@
     <Header />
     <v-main>
       <v-container>
+        <!-- top -->
         <v-row class="my-1">
+          <!-- buttons -->
           <v-col>
             <v-row>
               <h2 class="primary--text">Editor</h2>
@@ -63,20 +65,31 @@
               </v-tooltip>
             </v-row>
           </v-col>
+          <!-- title of lexeme table -->
           <v-col class="ml-2">
             <v-row>
               <h2>Lexeme Table</h2>
             </v-row>
           </v-col>
         </v-row>
+
+        <!-- inputs and outputs -->
         <v-row align="center">
           <v-col>
-            <v-row>
+            <v-row class="mb-2">
               <prism-editor
                 class="my-editor pt-8"
                 v-model="code"
                 :highlight="highlighter"
                 line-numbers
+              ></prism-editor>
+            </v-row>
+            <v-row class="mt-2">
+              <prism-editor
+                class="semOutput pt-8"
+                v-model="semOutput"
+                :highlight="highlighter"
+                readonly
               ></prism-editor>
             </v-row>
           </v-col>
@@ -87,7 +100,7 @@
                 :items="lexeme"
                 :items-per-page="-1"
                 height="200"
-                class="output elevation-1"
+                class="lexOutput elevation-1"
               ></v-data-table>
             </v-row>
             <v-row>
@@ -227,14 +240,24 @@ export default {
 .my-editor {
   background: #080728;
   color: #ffff;
-  height: 72vh;
+  height: 43.5vh;
   font-family: Consolas;
   font-size: 14px;
   line-height: 1.5;
   padding: 5px;
 }
 
-.output {
+.semOutput {
+  background: #080728;
+  color: #ffff;
+  height: 28vh;
+  font-family: Consolas;
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 5px;
+}
+
+.lexOutput {
   border: 2px solid #080728;
   height: 40vh;
   font-family: Consolas;
