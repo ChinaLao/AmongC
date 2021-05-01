@@ -439,13 +439,14 @@ export default {
             console.log(parser.results);
             console.log(lexeme[index].token, index);
           } catch (err) {
-            const errors = {
+            const errors = [];
+            errors.push({
               type: "syn-error",
               msg: `Unexpected token: ${lexeme[index].lex} (${lexeme[index].word})`,
               line: lexeme[index].line,
               col: lexeme[index].col,
               exp: "-"
-            };
+            });
             commit("SET_ERROR", errors);
             synError = true;
           }
