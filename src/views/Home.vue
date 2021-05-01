@@ -99,10 +99,11 @@
                 :headers="lexemeTableHeaders"
                 :items="lexeme"
                 :items-per-page="-1"
-                height="200"
+                height="270"
                 class="background lexOutput elevation-1"
                 dark
-                dense
+                hide-default-footer
+                fixed-header
               ></v-data-table>
             </v-row>
             <v-row>
@@ -111,9 +112,11 @@
                 :headers="errorTableHeaders"
                 :items="error"
                 :items-per-page="-1"
-                height="120"
+                height="180"
                 class="background errorOutput elevation-1"
                 dark
+                hide-default-footer
+                fixed-header
               ></v-data-table>
             </v-row>
           </v-col>
