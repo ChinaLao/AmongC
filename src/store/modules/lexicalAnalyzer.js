@@ -54,7 +54,7 @@ export default {
       litInt: /[0-9]{1,9}/,
       
       
-      quote: '"',
+      quote: /["].*/,
       terminator: ";",
       comma: ",",
       dot: ".",
@@ -329,13 +329,14 @@ export default {
             console.log(currentToken, next, currentToken !== "invalid");
             if(nextToken !== "EOF")
             {
+              let missingQuote = false;
               if(currentToken !== "whitespace" &&
                   currentToken !== "newline" &&
                   currentToken !== "invalid" &&
                   delims[currentToken].includes(nextToken)
               ) final.push(current);
               else if(currentToken !== "whitespace" && currentToken !== "newline"){
-                let message, type = "lex-error", expectations = "-";
+                let message, expectations = "-";
                 if(currentToken === "litInt" && (nextToken === "litInt" || nextToken === "litDec")){
                   message = "Limit exceeded";
                   expectations = "Integer should not exceed 9 place values"
@@ -346,8 +347,7 @@ export default {
                   message = "Limit exceeded";
                   expectations = "Identifier should not exceed 15 characters"
                 }else if(currentToken === "quote"){
-                  message = "Missing closing quote";
-                  type = "syn-error";
+                  missingQuote = true;
                 }else{
                   const nextWord = nextToken !== "whitespace" && nextToken !== "newline"
                     ? next.word
@@ -355,16 +355,16 @@ export default {
                   const currentWord = currentToken !== "whitespace" && currentToken !== "newline"
                     ? current.word
                     : currentToken;
-                  console.log(nextWord, currentWord)
+
                   message = `Invalid delimiter: ${nextWord} after: ${currentWord}`;
                   expectations = currentToken !== "invalid"
                     ? await dispatch('GET_EXPECTATIONS', delims[currentToken])
                     : "-"
                 }
 
-                if(currentToken === "invalid")
+                if(missingQuote || currentToken === "invalid")
                   errors.push({
-                    type: type,
+                    type: "lex-error",
                     msg: `Invalid Keyword: ${current.word}`,
                     line: current.line,
                     col: current.col,
@@ -373,7 +373,7 @@ export default {
                 
                 else
                   errors.push({
-                    type: type,
+                    type: "lex-error",
                     msg: message,
                     line: next.line,
                     col: next.col,
