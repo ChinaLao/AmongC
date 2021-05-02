@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <Header />
-    <v-main class="secondary" dark>
+    <v-main class="bg" dark>
       <v-container>
         <!-- top -->
         <v-row class="my-1">
@@ -298,5 +298,12 @@ export default {
 
 .prism-editor__textarea:focus {
   outline: none;
+}
+
+.bg {
+  background-image: url("../assets/background.gif");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 </style>
