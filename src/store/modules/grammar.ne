@@ -491,7 +491,8 @@ in_statement ->
 
 in_choice_choice ->
        # id_array 
-       struct_new
+        struct_new string_access
+    |   %access %open_bracket struct_size %close_bracket
     |   null
 
 #added in_choice_choice
