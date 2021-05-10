@@ -391,6 +391,7 @@ function_statement ->
 #changed unary to %unary_oper
 statement_choice ->
         data_declare
+    |   vital_define
     |   out_statement 
     |   in_statement 
     |   loop_statement 
@@ -419,6 +420,7 @@ in_function_statement ->
 #changed unary to %unary_oper
 function_statement_choice ->
         data_declare
+    |   vital_define
     |   out_statement 
     |   in_statement 
     |   function_loop_statement 
@@ -441,7 +443,7 @@ id_start_statement ->
 #added this for function
 function_loop_statement ->
         %loopFor %open_paren for_initial %terminator for_condition %terminator iterate_statement %close_paren statement_in_function
-    |   %loopWhile %open_paren condition %close_paren statement_in_function
+    |   %loopWhile %open_paren variable_choice %close_paren statement_in_function #changed condition to variable_choice
     |   %loopDo statement_in_function %loopWhile %open_paren condition %close_paren %terminator
 
 #added this for function
@@ -449,9 +451,9 @@ function_if_statement -> #bakit variable_choice to??? yung iba condition ha
         %stateIf %open_paren variable_choice %close_paren statement_in_function function_else_choice
 
 #added this for function
-function_else_choice ->
+function_else_choice -> 
         %stateElse statement_in_function
-    |   %elf %open_paren condition %close_paren statement_in_function else_choice
+    |   %elf %open_paren variable_choice %close_paren statement_in_function else_choice #changed condition to variable_choice
     |   null
 
 #added this for function
@@ -759,20 +761,20 @@ for_choice_extra ->
     |   %open_paren for_choice %close_paren
 
 for_condition ->
-        condition for_condition_extra
+        variable_choice for_condition_extra #changed condition to variable_choice
     |   null
 
 loop_statement ->
         %loopFor %open_paren for_initial %terminator for_condition %terminator iterate_statement %close_paren statement
-    |   %loopWhile %open_paren condition %close_paren statement
-    |   %loopDo statement %loopWhile %open_paren condition %close_paren %terminator
+    |   %loopWhile %open_paren variable_choice %close_paren statement #changed condition to variable_choice
+    |   %loopDo statement %loopWhile %open_paren variable_choice %close_paren %terminator
 
-if_statement -> #bakit variable_choice to??? yung iba condition ha
+if_statement ->
         %stateIf %open_paren variable_choice %close_paren statement else_choice
 
 else_choice ->
         %stateElse statement
-    |   %elf %open_paren condition %close_paren statement else_choice
+    |   %elf %open_paren variable_choice %close_paren statement else_choice #changed condition to variable_choice
     |   null
 
 #changed array_size to struct_size
