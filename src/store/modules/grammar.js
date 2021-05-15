@@ -9,13 +9,13 @@ function id(x) { return x[0]; }
     const lexer = moo.compile({
 
         //special characters
-        assign_oper: ["appendAssign", "assignOper"], 
-        arith_oper: ["arithOper", "append"],
-        relation_oper: ["relationOper", "comparison"],
+        assign_oper: ["appendAssign", "minusEqual", "multiplyEqual", "divideEqual", "exponentEqual", "floorEqual", "moduloEqual"], 
+        arith_oper: ["minus", "multiply", "divide", "exponent", "floor", "modulo", "append"],
+        relation_oper: ["greater", "lesser", "greaterEqual", "lesserEqual", "isEqual", "isNotEqual"],
         
         equal: "equal",
         not: "not",
-        unary_oper: "unary",
+        unary_oper: ["increment", "decrement"],
         open_paren: "openParen",
         close_paren: "closeParen",
         open_bracket: "openBracket",
