@@ -79,6 +79,26 @@ export default {
       access: "@",
       invalid: /./
     },
+    groups: [
+      ["dataTypes", "int", "dec", "str", "bool", "empty"],
+      ["literals", "litStr", "negaLitInt", "litInt", "litDec", "litBool"],
+      ["mainFunc", "start", "end"],
+      ["conditionals", "if", "else", "elf", "stateSwitch", "vote", "default"],
+      ["loops", "for", "while", "do"],
+      ["controls", "kill", "continue"],
+      ["keywords", "struct", "return", "vital", "clean", "task"],
+      ["inputOutput", "shoot", "scan"],
+      ["logicals", "and", "or"],
+      ["symbols", "access", "equal", "not", "colon", "terminator", "comma", "openBrace", "closeBrace", "openParen", "closeParen", "openBracket", "closeBracket", "negative", "dot"],
+      ["arithOper", "arithOper"],
+      ["unary", "unary"],
+      ["append", "append"],
+      ["assignOper", "assignOper"],
+      ["appendAssign", "appendAssign"],
+      ["comparison", "comparison"],
+      ["relationOper", "relationOper"],
+      ["others", "id", "singleComment", "quote", "EOF"]
+    ],
   },
   getters: {
     LEXEME: (state) => state.lexeme,
@@ -102,8 +122,18 @@ export default {
     }
   },
   actions: {
-    async LEXICAL({ state, commit, dispatch }, code){ 
-        const results = {
+    async LEXICAL({ state, commit, dispatch }, code){
+      const results = {
+        dataTypes: {
+          int: {lex: "int"},
+          dec: {lex: "dec"},
+          str: {lex: "str"},
+          bool: {lex: "bool"},
+          empty: {lex: "empty"},
+          delims: "whitespace",
+          description: "Data Type Keyword",
+        },
+        literals: {
           litStr: {
             lex: "strLit",
             delims: ["appendAssign", "comma", "terminator", "closeParen", "closeBrace", "access", "colon", "append", "whitespace"],
@@ -129,51 +159,20 @@ export default {
             delims: ["closeBrace", "closeParen", "comma", "terminator", "whitespace"],
             description: "Boolean Literal",
           },
+        },
+        mainFunc: {
           start: {
             lex: "IN",
             delims: ["newline", "whitespace"],
             description: "Start of Main Function Keyword",
           },
-          int: {
-            lex: "int",
-            delims: "whitespace",
-            description: "Integer Data Type Keyword",
+          end: {
+            lex: "OUT",
+            delims: ["whitespace", "newline", "EOF"],
+            description: "End of Main Function Keyword",
           },
-          dec: {
-            lex: "dec",
-            delims: "whitespace",
-            description: "Decimal Data Type Keyword",
-          },
-          str: {
-            lex: "str",
-            delims: "whitespace",
-            description: "String Data Type Keyword",
-          },
-          bool: {
-            lex: "bool",
-            delims: "whitespace",
-            description: "Boolean Data Type Keyword",
-          },
-          empty: {
-            lex: "empty",
-            delims: "whitespace",
-            description: "Null Data Type Keyword",
-          },
-          struct: {
-            lex: "struct",
-            delims: "whitespace",
-            description: "Struct Keyword",
-          },
-          shoot: {
-            lex: "shoot",
-            delims: "openParen",
-            description: "Output Keyword",
-          },
-          scan: {
-            lex: "scan",
-            delims: "openParen",
-            description: "Input Keyword",
-          },
+        },
+        conditionals: {
           if: {
             lex: "if",
             delims: ["whitespace", "openParen"],
@@ -204,6 +203,8 @@ export default {
             delims: ["colon", "whitespace"],
             description: "Default Keyword",
           },
+        },
+        loops: {
           for: {
             lex: "for",
             delims: ["openParen", "whitespace"],
@@ -219,35 +220,23 @@ export default {
             delims: ["openBrace", "whitespace", "newline"],
             description: "Do-While Loop Keyword",
           },
-          kill: {
-            lex: "kill",
-            delims: "terminator",
-            description: "Break Control Keyword",
-          },
-          control: {
-            lex: "continue",
-            delims: "terminator",
-            description: "Continue Control Keyword",
+        },
+        controls: {
+          kill: {lex: "kill"},
+          control: {lex: "continue"},
+          delims: "terminator",
+          description: "Control Keyword",
+        },
+        keywords: {
+          struct: {
+            lex: "struct",
+            delims: "whitespace",
+            description: "Struct Keyword",
           },
           return: {
             lex: "return",
             delims: ["terminator", "openParen", "whitespace"],
             description: "Return Keyword",
-          },
-          end: {
-            lex: "OUT",
-            delims: ["whitespace", "newline", "EOF"],
-            description: "End of Main Function Keyword",
-          },
-          and: {
-            lex: "and",
-            delims: "whitespace",
-            description: "And Logical Keyword",
-          },
-          or: {
-            lex: "or",
-            delims: "whitespace",
-            description: "Or Logical Keyword",
           },
           vital: {
             lex: "vital",
@@ -259,50 +248,35 @@ export default {
             delims: "openParen",
             description: "Clear Screen Function Keyword",
           },
-          id: {
-            lex: "id",
-            delims: ["openBracket", "openParen", "unary", "appendAssign", "assignOper", "relationOper", "equal", "append", "arithOper", "closeParen", "closeBracket", "whitespace", "comparison", "dot", "terminator", "comma", "openBrace", "closeBrace", "access"],
-            description: "Identifier",
+          task: {
+            lex: "task",
+            delims: "whitespace",
+            description: "Function Keyword",
           },
+        },
+        inputOutput: {
+          shoot: {
+            lex: "shoot",
+            delims: "openParen",
+            description: "Output Keyword",
+          },
+          scan: {
+            lex: "scan",
+            delims: "openParen",
+            description: "Input Keyword",
+          },
+        },
+        logicals: {
+          and: {lex: "and"},
+          or: {lex: "or"},
+          delims: "whitespace",
+          description: "Logical Keyword",
+        },
+        symbols: {
           access: {
             lex: "access",
             delims: "openBracket",
             description: "String Accessor Operator",
-          },
-          arithOper: {
-            lex: "operator",
-            delims: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "id", "whitespace"],
-            description: "Arithmetic Operator",
-          },
-          unary: {
-            lex: "unary",
-            delims: ["closeBracket", "closeParen", "closeBrace", "comma", "terminator", "id", "whitespace", "relationOper", "comparison"],
-            description: "Unary Operator",
-          },
-          append: {
-            lex: "operator",
-            delims: ["negative", "openParen", "litStr", "litInt", "negaLitInt", "litDec", "id", "whitespace"],
-            description: "Arithmetic / Append Operator",
-          },
-          appendAssign: {
-            lex: "assignment",
-            delims: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "id", "whitespace", "litStr"],
-            description: "Assignment with Arithmetic Operator",
-          },
-          assignOper: {
-            lex: "assignment",
-            delims: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "id", "whitespace"],
-            description: "Assignment with Arithmetic / Append Operator",
-          },
-          relationOper: {
-            lex: "relation",
-            delims: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "id", "whitespace", "not"],
-            description: "Relational Operator",
-          },
-          comparison: {
-            lex: "relation",
-            delims: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "litBool", "litStr", "id", "whitespace","not"],
-            description: "Relational Operator",
           },
           equal: {
             lex: "assignment",
@@ -359,11 +333,6 @@ export default {
             delims: ["dot", "append", "arithOper", "appendAssign", "assignOper", "unary", "openBracket", "closeBracket", "terminator", "comma", "comparison", "relationOper", "closeBrace", "equal", "whitespace", "closeParen", "colon", "access"],
             description: "End Operator of an Array Size / String Access",
           },
-          singleComment: {
-            lex: "comment",
-            delims: "newline",
-            description: "Single-line Comment",
-          },
           negative: {
             lex: "negative",
             delims: ["id", "openParen"],
@@ -374,10 +343,66 @@ export default {
             delims: "id",
             description: "Struct Element Accessor Operator",
           },
-          task: {
-            lex: "task",
-            delims: "whitespace",
-            description: "Function Keyword",
+        },
+        arithOper:{
+          arithOper: {
+            lex: "operator",
+            delims: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "id", "whitespace"],
+            description: "Arithmetic Operator",
+          },
+        },
+        unary: {
+          unary: {
+            lex: "unary",
+            delims: ["closeBracket", "closeParen", "closeBrace", "comma", "terminator", "id", "whitespace", "relationOper", "comparison"],
+            description: "Unary Operator",
+          },
+        },
+        append: {
+          append: {
+            lex: "operator",
+            delims: ["negative", "openParen", "litStr", "litInt", "negaLitInt", "litDec", "id", "whitespace"],
+            description: "Arithmetic / Append Operator",
+          },
+        },
+        assignOper: {
+          assignOper: {
+            lex: "assignment",
+            delims: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "id", "whitespace"],
+            description: "Assignment with Arithmetic / Append Operator",
+          },
+        },
+        appendAssign: {
+          appendAssign: {
+            lex: "assignment",
+            delims: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "id", "whitespace", "litStr"],
+            description: "Assignment with Arithmetic Operator",
+          },
+        },
+        comparison: {
+          comparison: {
+            lex: "relation",
+            delims: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "litBool", "litStr", "id", "whitespace","not"],
+            description: "Relational Operator",
+          },
+        },
+        relationOper: {
+          relationOper: {
+            lex: "relation",
+            delims: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "id", "whitespace", "not"],
+            description: "Relational Operator",
+          },
+        },
+        others: {
+          id: {
+            lex: "id",
+            delims: ["openBracket", "openParen", "unary", "appendAssign", "assignOper", "relationOper", "equal", "append", "arithOper", "closeParen", "closeBracket", "whitespace", "comparison", "dot", "terminator", "comma", "openBrace", "closeBrace", "access"],
+            description: "Identifier",
+          },
+          singleComment: {
+            lex: "comment",
+            delims: "newline",
+            description: "Single-line Comment",
           },
           quote: {
             lex: "",
@@ -388,107 +413,103 @@ export default {
             delims: "",
             description: "End of File",
           }
-        };
-        const tokenStream = [];
-        const final = [];
-        const parser = moo.compile(state.lexRules);
-        let reader = parser.reset(code);
-        const errors = [];
+        }
+      };
+      const tokenStream = [];
+      const final = [];
+      const parser = moo.compile(state.lexRules);
+      let reader = parser.reset(code);
+      const errors = [];
 
-        let token = " ";
+      let token = " ";
 
-        while(token){
-          console.log(token);
-          try{
-            token = reader.next();
-            if(token){
-              tokenStream.push({
-                word: token.value,
-                token: token.type,
-                lex: token.type !== "invalid" && token.type !== "whitespace" && token.type !== "newline"
-                  ? results[token.type].lex
-                  : token.type,
-                line: token.line,
-                col: token.col,
-              });
-            }  
-          }
-          catch(error){
-            console.log(error);
+      while(token){
+        console.log(token);
+        try{
+          token = reader.next();
+          if(token){
+            const group = token.type !== "invalid" && token.type !== "whitespace" && token.type !== "newline"
+              ? await dispatch('FIND_GROUP', token.type)
+              : null;
+            tokenStream.push({
+              word: token.value,
+              token: token.type,
+              lex: token.type !== "invalid" && token.type !== "whitespace" && token.type !== "newline" && group
+                ? results[group][token.type].lex
+                : token.type,
+              delims: group
+                ? results[group].delims !== undefined
+                  ? results[group].delims
+                  : results[group][token.type].delims
+                : "",
+              description: group
+                ? results[group].description !== undefined
+                  ? results[group].description
+                  : results[group][token.type].description
+                : "",
+              line: token.line,
+              col: token.col,
+            });
           }
         }
-        const last = tokenStream[tokenStream.length-1];
-        tokenStream.push({
-          word: "EOF",
-          token: "EOF",
-          lex: "EOF",
-          line: last.line+1,
-          col: 1
-        })
-        let index = 0;
-        console.log(tokenStream);
-        while(index < tokenStream.length){
-          try{
-            const current = tokenStream[index];
-            const next = tokenStream[index+1]
-            const currentToken = current.token;
-            const nextToken = next ? next.token : "";
-            console.log(currentToken, next, currentToken !== "invalid");
-            if(nextToken !== "EOF")
-            {
-              let missingQuote = false;
-              if(currentToken !== "whitespace" &&
-                  currentToken !== "newline" &&
-                  currentToken !== "invalid" &&
-                  results[currentToken].delims.includes(nextToken)
-              ) final.push(current);
-              else if(currentToken !== "whitespace" && currentToken !== "newline"){
-                let message, expectations = "-";
-                if(currentToken === "litInt" && (nextToken === "litInt" || nextToken === "litDec")){
-                  message = "Limit exceeded";
-                  expectations = "Integer should not exceed 9 place values"
-                }else if(currentToken === "litDec" && nextToken === "litInt"){
-                  message = "Limit exceeded";
-                  expectations = "Decimal should not exceed 5 place values"
-                }else if(currentToken === "id" && (nextToken === "id" || nextToken === "litInt")){
-                  message = "Limit exceeded";
-                  expectations = "Identifier should not exceed 15 characters"
-                }else if(currentToken === "quote"){
-                  missingQuote = true;
-                }else{
-                  const nextWord = nextToken !== "whitespace" && nextToken !== "newline"
-                    ? next.word
-                    : nextToken;
-                  const currentWord = currentToken !== "whitespace" && currentToken !== "newline"
-                    ? current.word
-                    : currentToken;
+        catch(error){
+          console.log(error);
+        }
+      }
+      const last = tokenStream[tokenStream.length-1];
+      tokenStream.push({
+        word: "EOF",
+        token: "EOF",
+        lex: "EOF",
+        line: last.line+1,
+        col: 1
+      })
+      let index = 0;
+      console.log(tokenStream);
+      while(index < tokenStream.length){
+        try{
+          const current = tokenStream[index];
+          const next = tokenStream[index+1]
+          const currentToken = current.token;
+          const nextToken = next ? next.token : "";
+          const currentDelims = current.delims;
+          console.log(currentToken, next, currentToken !== "invalid");
+          if(nextToken !== "EOF" && currentToken !== "EOF")
+          {
+            let missingQuote = false;
+            if(currentToken !== "whitespace" &&
+                currentToken !== "newline" &&
+                currentToken !== "invalid" && 
+                currentDelims && currentDelims.includes(nextToken)
+            ) final.push(current);
+            else if(currentToken !== "whitespace" && currentToken !== "newline"){
+              let message, expectations = "-";
+              if(currentToken === "litInt" && (nextToken === "litInt" || nextToken === "litDec")){
+                message = "Limit exceeded";
+                expectations = "Integer should not exceed 9 place values"
+              }else if(currentToken === "litDec" && nextToken === "litInt"){
+                message = "Limit exceeded";
+                expectations = "Decimal should not exceed 5 place values"
+              }else if(currentToken === "id" && (nextToken === "id" || nextToken === "litInt")){
+                message = "Limit exceeded";
+                expectations = "Identifier should not exceed 15 characters"
+              }else if(currentToken === "quote"){
+                missingQuote = true;
+              }else{
+                const nextWord = nextToken !== "whitespace" && nextToken !== "newline"
+                  ? next.word
+                  : nextToken;
+                const currentWord = currentToken !== "whitespace" && currentToken !== "newline"
+                  ? current.word
+                  : currentToken;
 
-                  message = `Invalid delimiter: ${nextWord} after: ${currentWord}`;
-                  expectations = currentToken !== "invalid"
-                    ? await dispatch('GET_EXPECTATIONS', results, results[currentToken].delims)
-                    : "-"
-                }
-
-                if(missingQuote || currentToken === "invalid")
-                  errors.push({
-                    type: "lex-error",
-                    msg: `Invalid Keyword: ${current.word}`,
-                    line: current.line,
-                    col: current.col,
-                    exp: "-"
-                  });
-                
-                else
-                  errors.push({
-                    type: "lex-error",
-                    msg: message,
-                    line: next.line,
-                    col: next.col,
-                    exp: expectations
-                  });
+                message = `Invalid delimiter: ${nextWord} after: ${currentWord}`;
+                expectations = currentToken !== "invalid"
+                  ? await dispatch('GET_EXPECTATIONS', results, currentDelims)
+                  : "-";
               }
-            } else if(currentToken !== "" && currentToken !== "whitespace" && currentToken !== "newline"){
-              if(currentToken === "invalid"){
+
+              if(missingQuote || currentToken === "invalid")
                 errors.push({
                   type: "lex-error",
                   msg: `Invalid Keyword: ${current.word}`,
@@ -496,42 +517,58 @@ export default {
                   col: current.col,
                   exp: "-"
                 });
-              }else if(results[currentToken].delims.includes(nextToken)){
-                final.push(current);
-              }else{
-                const nextWord = next.word;
-                const currentWord = currentToken !== "whitespace" && currentToken !== "newline"
-                  ? current.word
-                  : currentToken;
-                console.log(nextWord, currentWord);
+              
+              else
                 errors.push({
                   type: "lex-error",
-                  msg: `Invalid delimiter: ${nextWord} after: ${currentWord}`,
-                  line: current.line,
-                  col: current.col,
-                  exp: await dispatch('GET_EXPECTATIONS', results, results[currentToken].delims)
+                  msg: message,
+                  line: next.line,
+                  col: next.col,
+                  exp: expectations
                 });
-              }
             }
-            index++;
-          }catch(err){
-            console.log(err);
-            errors.push({
-              type: "programmer-error",
-              msg: `Missing delimiter rule`,
-              line: tokenStream[index].line,
-              col: tokenStream[index].col,
-              exp: "-"
-            });
+          } else if(currentToken !== "" && currentToken !== "whitespace" && currentToken !== "newline"){
+            if(currentToken === "invalid"){
+              errors.push({
+                type: "lex-error",
+                msg: `Invalid Keyword: ${current.word}`,
+                line: current.line,
+                col: current.col,
+                exp: "-"
+              });
+            }else if((currentDelims && currentDelims.includes(nextToken)) || currentToken === "EOF"){
+              final.push(current);
+            }else{
+              const nextWord = next.word;
+              const currentWord = currentToken !== "whitespace" && currentToken !== "newline"
+                ? current.word
+                : currentToken;
+              console.log(nextWord, currentWord);
+              errors.push({
+                type: "lex-error",
+                msg: `Invalid delimiter: ${nextWord} after: ${currentWord}`,
+                line: current.line,
+                col: current.col,
+                exp: await dispatch('GET_EXPECTATIONS', results, currentDelims)
+              });
+            }
           }
+          index++;
+        }catch(err){
+          console.log(err);
+          errors.push({
+            type: "programmer-error",
+            msg: `Missing delimiter rule`,
+            line: tokenStream[index].line,
+            col: tokenStream[index].col,
+            exp: "-"
+          });
         }
-        final.forEach(token => {
-          token.description = results[token["token"]].description;
-        });
-        console.log(errors);
-        commit("SET_LEXEME", final);
-        commit("SET_ERROR", errors);
-        if(errors.length > 0) commit("CHANGE_ERROR", true);
+      }
+      console.log(errors);
+      commit("SET_LEXEME", final);
+      commit("SET_ERROR", errors);
+      if(errors.length > 0) commit("CHANGE_ERROR", true);
     },
     async SYNTAX({ state, commit }) {
       if(!state.foundError)
@@ -568,12 +605,12 @@ export default {
       let expectations = "";
       if(typeof(delimiters) === "string")
         expectations = delimiters !== "whitespace" && delimiters !== "newline"
-          ? results[delimiters].lex
+          ? results[await dispatch('FIND_GROUP', delimiters)].lex
           : delimiters;
       else{
         while(i < delimiters.length && i < 3){
           expectations +=  delimiters[i] !== "whitespace" && delimiters[i] !== "newline"
-            ? results[delimiters[i]].lex
+            ? results[await dispatch('FIND_GROUP', delimiter[i])].lex
             : delimiters[i];
           if(i < delimiters.length-1 && i < 2) expectations += " / ";
           i++;
@@ -582,5 +619,14 @@ export default {
       }
       return expectations;
     },
+    async FIND_GROUP({ state }, token){
+      const groups = state.groups;
+      const found = groups.find(group => group.includes(token));
+      if (found) return found[0];
+    },
+    async FIND_DELIMS(group, token){
+      if(group.delims !== undefined) return group.delims;
+      else return token.delims;
+    }
   },
 };
