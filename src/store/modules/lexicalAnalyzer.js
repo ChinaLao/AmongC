@@ -79,183 +79,6 @@ export default {
       access: "@",
       invalid: /./
     },
-    lex: {
-      litStr: "strLit",
-      negaLitInt: "intLit",
-      litInt: "intLit",
-      litDec: "decLit",
-      litBool: "boolLit",
-      start: "IN",
-      int: "int",
-      dec: "dec",
-      str: "str",
-      bool: "bool",
-      empty: "empty",
-      struct: "struct",
-      shoot: "shoot",
-      scan: "scan",
-      if: "if",
-      else: "else",
-      elf: "elf",
-      stateSwitch: "switch",
-      vote: "vote",
-      default: "default",
-      for: "for",
-      while: "while",
-      do: "do",
-      kill: "kill",
-      control: "continue",
-      return: "return",
-      end: "OUT",
-      and: "and",
-      or: "or",
-      vital: "vital",
-      clean: "clean",
-      id: "id",
-      access: "access",
-      arithOper: "operator",
-      unary: "unary",
-      append: "operator",
-      appendAssign: "assignment",
-      assignOper: "assignment",
-      relationOper: "relation",
-      comparison: "relation",
-      equal: "assignment",
-      not: "negate",
-      colon: "colon",
-      terminator: "terminator",
-      comma: "separator",
-      openBrace: "openBrace",
-      closeBrace: "closeBrace",
-      openParen: "openParenthesis",
-      closeParen: "closeParenthesis",
-      openBracket: "openBracket",
-      closeBracket: "closeBracket",
-      singleComment: "comment",
-      negative: "negative",
-      dot: "dot",
-      task: "task",
-      quote: "",
-    },
-    delims: {
-      litStr: ["appendAssign", "comma", "terminator", "closeParen", "closeBrace", "access", "colon", "append", "whitespace"],
-      negaLitInt: ["arithOper", "relationOper", "closeParen", "colon", "comparison", "closeBrace", "comma", "terminator", "whitespace", "append"],
-      litInt: ["arithOper", "relationOper", "closeParen", "closeBracket", "colon", "comparison", "closeBrace", "comma", "terminator", "whitespace", "append"],
-      litDec: ["arithOper", "relationOper", "closeParen", "comparison", "closeBrace", "comma", "terminator", "whitespace", "append"],
-      litBool: ["closeBrace", "closeParen", "comma", "terminator", "whitespace"],
-      start: ["newline", "whitespace"],
-      int: "whitespace",
-      dec: "whitespace",
-      str: "whitespace",
-      bool: "whitespace",
-      empty: "whitespace",
-      struct: "whitespace",
-      shoot: "openParen",
-      scan: "openParen",
-      if: ["whitespace", "openParen"],
-      else: ["whitespace", "newline", "openBrace"],
-      elf: ["whitespace", "openParen"],
-      stateSwitch: ["openParen", "whitespace"],
-      vote: "whitespace",
-      default: ["colon", "whitespace"],
-      for: ["openParen", "whitespace"],
-      while: ["openParen", "whitespace"],
-      do: ["openBrace", "whitespace", "newline"],
-      kill: "terminator",
-      control: "terminator",
-      return: ["terminator", "openParen", "whitespace"],
-      end: ["whitespace", "newline", "EOF"],
-      and: "whitespace",
-      or: "whitespace",
-      vital: "whitespace",
-      clean: "openParen",
-      id: ["openBracket", "openParen", "unary", "appendAssign", "assignOper", "relationOper", "equal", "append", "arithOper", "closeParen", "closeBracket", "whitespace", "comparison", "dot", "terminator", "comma", "openBrace", "closeBrace", "access"],
-    
-      arithOper: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "id", "whitespace"],
-      unary: ["closeBracket", "closeParen", "closeBrace", "comma", "terminator", "id", "whitespace", "relationOper", "comparison"],
-      append: ["negative", "openParen", "litStr", "litInt", "negaLitInt", "litDec", "id", "whitespace"],
-      appendAssign: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "id", "whitespace", "litStr"],
-      assignOper: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "id", "whitespace"],
-      relationOper: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "id", "whitespace", "not"],
-      comparison: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "litBool", "litStr", "id", "whitespace","not"],
-      equal: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "litStr", "litBool", "id", "whitespace", "openBrace", "not", "unary"],
-      not: ["negative", "openParen", "id", "whitespace", "litInt", "negaLitInt", "litDec", "litStr", "litBool", "unary", "not"],
-      colon: ["whitespace", "newline"],
-      terminator: ["unary", "id", "openParen", "closeParen", "terminator", "whitespace", "newline", "singleComment", "not"],
-      comma: ["unary", "not", "openBrace", "openParen", "litStr", "litInt", "negaLitInt", "litDec", "litBool", "id", "whitespace", "negative", "int", "dec", "str", "bool"],
-      openBrace: ["unary", "litStr", "not", "negative", "openParen", "openBrace", "closeBrace", "litInt", "negaLitInt", "litDec", "litBool", "id", "whitespace", "newline", "singleComment"],
-      closeBrace: ["comma", "terminator", "closeBrace", "singleComment", "whitespace", "newline", "while", "EOF"],
-      openParen: ["negative", "litStr", "closeParen", "not", "openParen", "terminator", "litInt", "negaLitInt", "litDec", "litBool", "id", "whitespace", "int", "dec", "str", "bool", "unary"],
-      closeParen: ["comma", "terminator", "arithOper", "append", "comparison", "closeParen", "closeBracket", "closeBrace", "relationOper", "whitespace", "openBrace", "newline", "access", "colon"],
-      openBracket: ["openParen", "litInt", "id", "whitespace", "unary", "closeBracket"],
-      closeBracket: ["dot", "append", "arithOper", "appendAssign", "assignOper", "unary", "openBracket", "closeBracket", "terminator", "comma", "comparison", "relationOper", "closeBrace", "equal", "whitespace", "closeParen", "colon", "access"],
-      singleComment: "newline",
-      negative: ["id", "openParen"],
-      dot: "id",
-      task: "whitespace",
-      access: "openBracket",
-      quote: "",
-      EOF: ""
-    },
-    tokenDescription: {
-      litStr: "String Literal",
-      negaLitInt: "Integer Literal",
-      litInt: "Integer Literal",
-      litDec: "Decimal Literal",
-      litBool: "Boolean Literal",
-      start: "Start of Main Function Keyword",
-      int: "Integer Data Type Keyword",
-      dec: "Decimal Data Type Keyword",
-      str: "String Data Type Keyword",
-      bool: "Boolean Data Type Keyword",
-      empty: "Null Data Type Keyword",
-      struct: "Struct Keyword",
-      shoot: "Output Keyword",
-      scan: "Input Keyword",
-      if: "If Keyword",
-      else: "Else Keyword",
-      elf: "Else If Keyword",
-      stateSwitch: "Switch Keyword",
-      vote: "Case Keyword",
-      default: "Default Keyword",
-      for: "For Loop Keyword",
-      while: "While Loop Keyword",
-      do: "Do-While Loop Keyword",
-      kill: "Break Control Keyword",
-      control: "Continue Control Keyword",
-      return: "Return Keyword",
-      end: "End of Main Function Keyword",
-      and: "And Logical Keyword",
-      or: "Or Logical Keyword",
-      vital: "Constant Keyword",
-      clean: "Clear Screen Function Keyword",
-      id: "Identifier",
-      access: "String Accessor Operator",
-      arithOper: "Arithmetic Operator",
-      unary: "Unary Operator",
-      append: "Arithmetic / Append Operator",
-      appendAssign: "Assignment with Arithmetic Operator",
-      assignOper: "Assignment with Arithmetic / Append Operator",
-      relationOper: "Relational Operator",
-      comparison: "Relational Operator",
-      equal: "Assignment Operator",
-      not: "Negation Operator",
-      colon: "Case Operator",
-      terminator: "Terminator Operator",
-      comma: "Separator Operator",
-      openBrace: "Start Operator of a Statement Block",
-      closeBrace: "End Operator of a Statement Block",
-      openParen: "Start Operator of an Expression",
-      closeParen: "End Operator of an Expression",
-      openBracket: "Start Operator of an Array Size / String Access",
-      closeBracket: "End Operator of an Array Size / String Access",
-      singleComment: "Single Comment Operator",
-      negative: "Negative Operator",
-      dot: "Struct Element Accessor Operator",
-      task: "Function Keyword",
-      quote: "",
-      EOF: "End of File"
-    }
   },
   getters: {
     LEXEME: (state) => state.lexeme,
@@ -280,11 +103,296 @@ export default {
   },
   actions: {
     async LEXICAL({ state, commit, dispatch }, code){ 
+        const results = {
+          litStr: {
+            lex: "strLit",
+            delims: ["appendAssign", "comma", "terminator", "closeParen", "closeBrace", "access", "colon", "append", "whitespace"],
+            description: "String Literal",
+          },
+          negaLitInt: {
+            lex: "intLit",
+            delims: ["arithOper", "relationOper", "closeParen", "colon", "comparison", "closeBrace", "comma", "terminator", "whitespace", "append"],
+            description: "Integer Literal",
+          },
+          litInt: {
+            lex: "intLit",
+            delims: ["arithOper", "relationOper", "closeParen", "closeBracket", "colon", "comparison", "closeBrace", "comma", "terminator", "whitespace", "append"],
+            description: "Integer Literal",
+          },
+          litDec: {
+            lex: "decLit",
+            delims: ["arithOper", "relationOper", "closeParen", "comparison", "closeBrace", "comma", "terminator", "whitespace", "append"],
+            description: "Decimal Literal",
+          },
+          litBool: {
+            lex: "boolLit",
+            delims: ["closeBrace", "closeParen", "comma", "terminator", "whitespace"],
+            description: "Boolean Literal",
+          },
+          start: {
+            lex: "IN",
+            delims: ["newline", "whitespace"],
+            description: "Start of Main Function Keyword",
+          },
+          int: {
+            lex: "int",
+            delims: "whitespace",
+            description: "Integer Data Type Keyword",
+          },
+          dec: {
+            lex: "dec",
+            delims: "whitespace",
+            description: "Decimal Data Type Keyword",
+          },
+          str: {
+            lex: "str",
+            delims: "whitespace",
+            description: "String Data Type Keyword",
+          },
+          bool: {
+            lex: "bool",
+            delims: "whitespace",
+            description: "Boolean Data Type Keyword",
+          },
+          empty: {
+            lex: "empty",
+            delims: "whitespace",
+            description: "Null Data Type Keyword",
+          },
+          struct: {
+            lex: "struct",
+            delims: "whitespace",
+            description: "Struct Keyword",
+          },
+          shoot: {
+            lex: "shoot",
+            delims: "openParen",
+            description: "Output Keyword",
+          },
+          scan: {
+            lex: "scan",
+            delims: "openParen",
+            description: "Input Keyword",
+          },
+          if: {
+            lex: "if",
+            delims: ["whitespace", "openParen"],
+            description: "If Keyword",
+          },
+          else: {
+            lex: "else",
+            delims: ["whitespace", "newline", "openBrace"],
+            description: "Else Keyword",
+          },
+          elf: {
+            lex: "elf",
+            delims: ["whitespace", "openParen"],
+            description: "Else If Keyword",
+          },
+          stateSwitch: {
+            lex: "switch",
+            delims: ["openParen", "whitespace"],
+            description: "Switch Keyword",
+          },
+          vote: {
+            lex: "vote",
+            delims: "whitespace",
+            description: "Case Keyword",
+          },
+          default: {
+            lex: "default",
+            delims: ["colon", "whitespace"],
+            description: "Default Keyword",
+          },
+          for: {
+            lex: "for",
+            delims: ["openParen", "whitespace"],
+            description: "For Loop Keyword",
+          },
+          while: {
+            lex: "while",
+            delims: ["openParen", "whitespace"],
+            description: "While Loop Keyword",
+          },
+          do: {
+            lex: "do",
+            delims: ["openBrace", "whitespace", "newline"],
+            description: "Do-While Loop Keyword",
+          },
+          kill: {
+            lex: "kill",
+            delims: "terminator",
+            description: "Break Control Keyword",
+          },
+          control: {
+            lex: "continue",
+            delims: "terminator",
+            description: "Continue Control Keyword",
+          },
+          return: {
+            lex: "return",
+            delims: ["terminator", "openParen", "whitespace"],
+            description: "Return Keyword",
+          },
+          end: {
+            lex: "OUT",
+            delims: ["whitespace", "newline", "EOF"],
+            description: "End of Main Function Keyword",
+          },
+          and: {
+            lex: "and",
+            delims: "whitespace",
+            description: "And Logical Keyword",
+          },
+          or: {
+            lex: "or",
+            delims: "whitespace",
+            description: "Or Logical Keyword",
+          },
+          vital: {
+            lex: "vital",
+            delims: "whitespace",
+            description: "Constant Keyword",
+          },
+          clean: {
+            lex: "clean",
+            delims: "openParen",
+            description: "Clear Screen Function Keyword",
+          },
+          id: {
+            lex: "id",
+            delims: ["openBracket", "openParen", "unary", "appendAssign", "assignOper", "relationOper", "equal", "append", "arithOper", "closeParen", "closeBracket", "whitespace", "comparison", "dot", "terminator", "comma", "openBrace", "closeBrace", "access"],
+            description: "Identifier",
+          },
+          access: {
+            lex: "access",
+            delims: "openBracket",
+            description: "String Accessor Operator",
+          },
+          arithOper: {
+            lex: "operator",
+            delims: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "id", "whitespace"],
+            description: "Arithmetic Operator",
+          },
+          unary: {
+            lex: "unary",
+            delims: ["closeBracket", "closeParen", "closeBrace", "comma", "terminator", "id", "whitespace", "relationOper", "comparison"],
+            description: "Unary Operator",
+          },
+          append: {
+            lex: "operator",
+            delims: ["negative", "openParen", "litStr", "litInt", "negaLitInt", "litDec", "id", "whitespace"],
+            description: "Arithmetic / Append Operator",
+          },
+          appendAssign: {
+            lex: "assignment",
+            delims: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "id", "whitespace", "litStr"],
+            description: "Assignment with Arithmetic Operator",
+          },
+          assignOper: {
+            lex: "assignment",
+            delims: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "id", "whitespace"],
+            description: "Assignment with Arithmetic / Append Operator",
+          },
+          relationOper: {
+            lex: "relation",
+            delims: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "id", "whitespace", "not"],
+            description: "Relational Operator",
+          },
+          comparison: {
+            lex: "relation",
+            delims: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "litBool", "litStr", "id", "whitespace","not"],
+            description: "Relational Operator",
+          },
+          equal: {
+            lex: "assignment",
+            delims: ["negative", "openParen", "litInt", "negaLitInt", "litDec", "litStr", "litBool", "id", "whitespace", "openBrace", "not", "unary"],
+            description: "Assignment Operator",
+          },
+          not: {
+            lex: "negate",
+            delims: ["negative", "openParen", "id", "whitespace", "litInt", "negaLitInt", "litDec", "litStr", "litBool", "unary", "not"],
+            description: "Negation Operator",
+          },
+          colon: {
+            lex: "colon",
+            delims: ["whitespace", "newline"],
+            description: "Case Operator",
+          },
+          terminator: {
+            lex: "terminator",
+            delims: ["unary", "id", "openParen", "closeParen", "terminator", "whitespace", "newline", "singleComment", "not"],
+            description: "Terminator Operator",
+          },
+          comma: {
+            lex: "separator",
+            delims: ["unary", "not", "openBrace", "openParen", "litStr", "litInt", "negaLitInt", "litDec", "litBool", "id", "whitespace", "negative", "int", "dec", "str", "bool"],
+            description: "Separator Operator",
+          },
+          openBrace: {
+            lex: "openBrace",
+            delims: ["unary", "litStr", "not", "negative", "openParen", "openBrace", "closeBrace", "litInt", "negaLitInt", "litDec", "litBool", "id", "whitespace", "newline", "singleComment"],
+            description: "Start Operator of a Statement Block",
+          },
+          closeBrace: {
+            lex: "closeBrace",
+            delims: ["comma", "terminator", "closeBrace", "singleComment", "whitespace", "newline", "while", "EOF"],
+            description: "End Operator of a Statement Block",
+          },
+          openParen: {
+            lex: "openParenthesis",
+            delims: ["negative", "litStr", "closeParen", "not", "openParen", "terminator", "litInt", "negaLitInt", "litDec", "litBool", "id", "whitespace", "int", "dec", "str", "bool", "unary"],
+            description: "Start Operator of an Expression",
+          },
+          closeParen: {
+            lex: "closeParenthesis",
+            delims: ["comma", "terminator", "arithOper", "append", "comparison", "closeParen", "closeBracket", "closeBrace", "relationOper", "whitespace", "openBrace", "newline", "access", "colon"],
+            description: "End Operator of an Expression",
+          },
+          openBracket: {
+            lex: "openBracket",
+            delims: ["openParen", "litInt", "id", "whitespace", "unary", "closeBracket"],
+            description: "Start Operator of an Array Size / String Access",
+          },
+          closeBracket: {
+            lex: "closeBracket",
+            delims: ["dot", "append", "arithOper", "appendAssign", "assignOper", "unary", "openBracket", "closeBracket", "terminator", "comma", "comparison", "relationOper", "closeBrace", "equal", "whitespace", "closeParen", "colon", "access"],
+            description: "End Operator of an Array Size / String Access",
+          },
+          singleComment: {
+            lex: "comment",
+            delims: "newline",
+            description: "Single-line Comment",
+          },
+          negative: {
+            lex: "negative",
+            delims: ["id", "openParen"],
+            description: "Negative Operator",
+          },
+          dot: {
+            lex: "dot",
+            delims: "id",
+            description: "Struct Element Accessor Operator",
+          },
+          task: {
+            lex: "task",
+            delims: "whitespace",
+            description: "Function Keyword",
+          },
+          quote: {
+            lex: "",
+            delims: "",
+            description: "",
+          },
+          EOF: {
+            delims: "",
+            description: "End of File",
+          }
+        };
         const tokenStream = [];
         const final = [];
         const parser = moo.compile(state.lexRules);
         let reader = parser.reset(code);
-        const tokenDescription = state.tokenDescription;
         const errors = [];
 
         let token = " ";
@@ -298,7 +406,7 @@ export default {
                 word: token.value,
                 token: token.type,
                 lex: token.type !== "invalid" && token.type !== "whitespace" && token.type !== "newline"
-                  ? state.lex[token.type]
+                  ? results[token.type].lex
                   : token.type,
                 line: token.line,
                 col: token.col,
@@ -325,7 +433,6 @@ export default {
             const next = tokenStream[index+1]
             const currentToken = current.token;
             const nextToken = next ? next.token : "";
-            const delims = state.delims;
             console.log(currentToken, next, currentToken !== "invalid");
             if(nextToken !== "EOF")
             {
@@ -333,7 +440,7 @@ export default {
               if(currentToken !== "whitespace" &&
                   currentToken !== "newline" &&
                   currentToken !== "invalid" &&
-                  delims[currentToken].includes(nextToken)
+                  results[currentToken].delims.includes(nextToken)
               ) final.push(current);
               else if(currentToken !== "whitespace" && currentToken !== "newline"){
                 let message, expectations = "-";
@@ -358,7 +465,7 @@ export default {
 
                   message = `Invalid delimiter: ${nextWord} after: ${currentWord}`;
                   expectations = currentToken !== "invalid"
-                    ? await dispatch('GET_EXPECTATIONS', delims[currentToken])
+                    ? await dispatch('GET_EXPECTATIONS', results, results[currentToken].delims)
                     : "-"
                 }
 
@@ -389,7 +496,7 @@ export default {
                   col: current.col,
                   exp: "-"
                 });
-              }else if(delims[currentToken].includes(nextToken)){
+              }else if(results[currentToken].delims.includes(nextToken)){
                 final.push(current);
               }else{
                 const nextWord = next.word;
@@ -402,7 +509,7 @@ export default {
                   msg: `Invalid delimiter: ${nextWord} after: ${currentWord}`,
                   line: current.line,
                   col: current.col,
-                  exp: await dispatch('GET_EXPECTATIONS', delims[currentToken])
+                  exp: await dispatch('GET_EXPECTATIONS', results, results[currentToken].delims)
                 });
               }
             }
@@ -419,7 +526,7 @@ export default {
           }
         }
         final.forEach(token => {
-          token.description = tokenDescription[token["token"]];
+          token.description = results[token["token"]].description;
         });
         console.log(errors);
         commit("SET_LEXEME", final);
@@ -456,17 +563,17 @@ export default {
       }
       
     },
-    async GET_EXPECTATIONS({ state }, delimiters){
+    async GET_EXPECTATIONS(results, delimiters){
       let i = 0;
       let expectations = "";
       if(typeof(delimiters) === "string")
         expectations = delimiters !== "whitespace" && delimiters !== "newline"
-          ? state.lex[delimiters]
+          ? results[delimiters].lex
           : delimiters;
       else{
         while(i < delimiters.length && i < 3){
           expectations +=  delimiters[i] !== "whitespace" && delimiters[i] !== "newline"
-            ? state.lex[delimiters[i]]
+            ? results[delimiters[i]].lex
             : delimiters[i];
           if(i < delimiters.length-1 && i < 2) expectations += " / ";
           i++;
