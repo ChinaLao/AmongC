@@ -443,33 +443,36 @@ export default {
 
       let token = " ";
 
+      //moo tokenizer
       while(token){
-        console.log(token);
         try{
           token = reader.next();
           if(token){
+
+            //find the group of the token
             const group = token.type !== "invalid" && token.type !== "whitespace" && token.type !== "newline"
               ? await dispatch('FIND_GROUP', token.type)
               : null;
-            console.log(group, results[group])
+
+            //push to list of tokenized
             tokenStream.push({
-              word: token.value,
-              token: token.type,
-              lex: token.type !== "invalid" && token.type !== "whitespace" && token.type !== "newline" && group
+              word: token.value, //actual word
+              token: token.type, //token from moo
+              lex: token.type !== "invalid" && token.type !== "whitespace" && token.type !== "newline" && group // pretty token
                 ? results[group][token.type].lex
                 : token.type,
-              delims: group
+              delims: group //delimiters of this token
                 ? results[group].delims !== undefined
                   ? results[group].delims
                   : results[group][token.type].delims
                 : "",
-              description: group
+              description: group //description of this token
                 ? results[group].description !== undefined
                   ? results[group].description
                   : results[group][token.type].description
                 : "",
-              line: token.line,
-              col: token.col,
+              line: token.line, //line this token was found
+              col: token.col, //column this token was found
             });
           }
         }
@@ -477,7 +480,8 @@ export default {
           console.log(error);
         }
       }
-      const last = tokenStream[tokenStream.length-1];
+      const last = tokenStream[tokenStream.length-1]; //get the last token from tokenized list
+      //push EOF after the last tokenized
       tokenStream.push({
         word: "EOF",
         token: "EOF",
@@ -485,24 +489,30 @@ export default {
         line: last.line+1,
         col: 1
       })
+
+      //delimiter checker
       let index = 0;
-      console.log(tokenStream);
       while(index < tokenStream.length){
         try{
+          //initialize current and lookahead
           const current = tokenStream[index];
           const next = tokenStream[index+1]
           const currentToken = current.token;
           const nextToken = next ? next.token : "";
           const currentDelims = current.delims;
-          console.log(currentDelims, currentToken, next, currentToken !== "invalid");
-          if(nextToken !== "EOF" && currentToken !== "EOF")
+          
+          if(nextToken !== "EOF" && currentToken !== "EOF") //not yet EOF
           {
-            let missingQuote = false;
+            let missingQuote = false; //tag for invalid keyword in missing ending quote
+
+            //valid keyword and valid delimiter
             if(currentToken !== "whitespace" &&
                 currentToken !== "newline" &&
                 currentToken !== "invalid" && 
                 currentDelims && currentDelims.includes(nextToken)
             ) final.push(current);
+
+            //invalids
             else if(currentToken !== "whitespace" && currentToken !== "newline"){
               let message, expectations = "-";
               if(currentToken === "litInt" && (nextToken === "litInt" || nextToken === "litDec")){
@@ -516,7 +526,7 @@ export default {
                 expectations = "Identifier should not exceed 15 characters"
               }else if(currentToken === "quote"){
                 missingQuote = true;
-              }else{
+              }else if(currentToken !== "invalid"){
                 const nextWord = nextToken !== "whitespace" && nextToken !== "newline"
                   ? next.word
                   : nextToken;
@@ -525,11 +535,10 @@ export default {
                   : currentToken;
 
                 message = `Invalid delimiter: ${nextWord} after: ${currentWord}`;
-                expectations = currentToken !== "invalid"
-                  ? await dispatch('GET_EXPECTATIONS', results, currentDelims)
-                  : "-";
+                expectations =  await dispatch('GET_EXPECTATIONS', results, currentDelims);
               }
 
+              //dedicated for invalid keywords
               if(missingQuote || currentToken === "invalid")
                 errors.push({
                   type: "lex-error",
@@ -538,7 +547,7 @@ export default {
                   col: current.col,
                   exp: "-"
                 });
-              
+              //dedicated for other invalids
               else
                 errors.push({
                   type: "lex-error",
@@ -548,8 +557,8 @@ export default {
                   exp: expectations
                 });
             }
-          } else if(currentToken !== "" && currentToken !== "whitespace" && currentToken !== "newline"){
-            if(currentToken === "invalid"){
+          } else if(currentToken !== "" && currentToken !== "whitespace" && currentToken !== "newline"){ //EOF found
+            if(currentToken === "invalid"){ //invalid keyword
               errors.push({
                 type: "lex-error",
                 msg: `Invalid Keyword: ${current.word}`,
@@ -557,14 +566,13 @@ export default {
                 col: current.col,
                 exp: "-"
               });
-            }else if((currentDelims && currentDelims.includes(nextToken)) || currentToken === "EOF"){
+            }else if((currentDelims && currentDelims.includes(nextToken)) || currentToken === "EOF"){ //valid token with valid delimiter
               final.push(current);
-            }else{
+            }else{ //invalid delimiter
               const nextWord = next.word;
               const currentWord = currentToken !== "whitespace" && currentToken !== "newline"
                 ? current.word
                 : currentToken;
-              console.log(nextWord, currentWord);
               errors.push({
                 type: "lex-error",
                 msg: `Invalid delimiter: ${nextWord} after: ${currentWord}`,
@@ -592,15 +600,17 @@ export default {
       if(errors.length > 0) commit("CHANGE_ERROR", true);
     },
     async SYNTAX({ state, commit }) {
+      //should not run if there is lex error
       if(!state.foundError)
       {
-        const parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar));
-        const lexeme = state.lexeme;
+        const parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar)); //initializes nearley
+        const lexeme = state.lexeme; //gets list of lex
+
         let index = 0;
-        let synError = false;
+        let synError = false; //tag for syntax error
         while(index < lexeme.length && !synError) {
           try {
-            parser.feed(lexeme[index].token);
+            parser.feed(lexeme[index].token); //checks the cfg in grammar.ne
             console.log(parser.results);
             console.log(lexeme[index].token, index);
           } catch (err) {
@@ -621,22 +631,27 @@ export default {
       }
       
     },
-    async GET_EXPECTATIONS(results, delimiters){
+    async GET_EXPECTATIONS(results, delimiters){ //for delimiters
       let i = 0;
       let expectations = "";
+
+      //there is only one delimiter applicable
       if(typeof(delimiters) === "string")
         expectations = delimiters !== "whitespace" && delimiters !== "newline"
           ? results[await dispatch('FIND_GROUP', delimiters)].lex
           : delimiters;
+
+      //there is more than one delimiter applicable
       else{
-        while(i < delimiters.length && i < 3){
+        while(i < delimiters.length && i < 3){ //only three expectations to be shown
           expectations +=  delimiters[i] !== "whitespace" && delimiters[i] !== "newline"
-            ? results[await dispatch('FIND_GROUP', delimiter[i])].lex
+            ? results[await dispatch('FIND_GROUP', delimiter[i])].lex //find the group of the delimiter token
             : delimiters[i];
-          if(i < delimiters.length-1 && i < 2) expectations += " / ";
+
+          if(i < delimiters.length-1 && i < 2) expectations += " / "; //add separator if the delimiter is more than one
           i++;
         }
-        if (delimiters.length > 3) expectations += " etc..."
+        if (delimiters.length > 3) expectations += " etc..." //add etc for delimiters exceeding three
       }
       return expectations;
     },
@@ -645,9 +660,5 @@ export default {
       const found = groups.find(group => group.includes(token));
       if (found) return found[0];
     },
-    async FIND_DELIMS(group, token){
-      if(group.delims !== undefined) return group.delims;
-      else return token.delims;
-    }
   },
 };
