@@ -5,13 +5,13 @@
     const lexer = moo.compile({
 
         //special characters
-        assign_oper: ["appendAssign", "assignOper"], 
-        arith_oper: ["arithOper", "append"],
-        relation_oper: ["relationOper", "comparison"],
+        assign_oper: ["appendAssign", "minusEqual", "multiplyEqual", "divideEqual", "exponentEqual", "floorEqual", "moduloEqual"], 
+        arith_oper: ["minus", "multiply", "divide", "exponent", "floor", "modulo", "append"],
+        relation_oper: ["greater", "lesser", "greaterEqual", "lesserEqual", "isEqual", "isNotEqual"],
         
         equal: "equal",
         not: "not",
-        unary_oper: "unary",
+        unary_oper: ["increment", "decrement"],
         open_paren: "openParen",
         close_paren: "closeParen",
         open_bracket: "openBracket",
@@ -113,7 +113,7 @@ main_statement ->
 #changed comment to %singleComment
 function ->
         %task function_data_type %id %open_paren parameter %close_paren %open_brace in_function_statement %close_brace function
-    |   %singleComment function
+    #|   %singleComment function
     |   null
 
 data_type -> 
@@ -214,9 +214,9 @@ variable_next_null ->
 |   %arith_oper compute_choice
 |   null
 
-new_choice -> #added this to remove ambiguity with notter
-        conditional 
-    |   %open_paren condition %close_paren variable_next
+# new_choice -> #added this to remove ambiguity with notter
+#         conditional 
+#     |   %open_paren condition %close_paren variable_next
 
 iterate_choice ->
         %unary_oper
@@ -283,7 +283,7 @@ variable_choice ->
     |   condition_notter_less oper_condition
     |   not_many not_choice #repeated !!!
     |   %negative negative_choice 
-    |   %open_paren new_choice %close_paren variable_next_null
+    |   %open_paren choice %close_paren variable_next_null
     #|   condition
     #|   compute_choice
     #     condition %close_paren oper_condition
@@ -391,6 +391,7 @@ function_statement ->
 #changed unary to %unary_oper
 statement_choice ->
         data_declare
+    |   vital_define
     |   out_statement 
     |   in_statement 
     |   loop_statement 
@@ -407,6 +408,10 @@ assign_next_choice ->
         struct_choice
     |   null
 
+statement_in_function ->
+        function_statement_choice
+    |   %open_brace in_function_statement %close_brace
+
 in_function_statement -> 
         function_statement_choice in_function_statement
     |   null
@@ -415,11 +420,12 @@ in_function_statement ->
 #changed unary to %unary_oper
 function_statement_choice ->
         data_declare
+    |   vital_define
     |   out_statement 
     |   in_statement 
-    |   loop_statement 
-    |   if_statement 
-    |   switch_statement 
+    |   function_loop_statement 
+    |   function_if_statement 
+    |   function_switch_statement 
     |   %id id_start_statement
     |   %unary_oper %id assign_next_choice %terminator #kulang to
     |   return_statement
@@ -433,7 +439,27 @@ id_start_statement ->
     |   assign_statement
     |   iterate_statement_choice %terminator
     |   function_call_statement_choice %terminator
-    
+
+#added this for function
+function_loop_statement ->
+        %loopFor %open_paren for_initial %terminator for_condition %terminator iterate_statement %close_paren statement_in_function
+    |   %loopWhile %open_paren variable_choice %close_paren statement_in_function #changed condition to variable_choice
+    |   %loopDo statement_in_function %loopWhile %open_paren condition %close_paren %terminator
+
+#added this for function
+function_if_statement -> #bakit variable_choice to??? yung iba condition ha
+        %stateIf %open_paren variable_choice %close_paren statement_in_function function_else_choice
+
+#added this for function
+function_else_choice -> 
+        %stateElse statement_in_function
+    |   %elf %open_paren variable_choice %close_paren statement_in_function else_choice #changed condition to variable_choice
+    |   null
+
+#added this for function
+function_switch_statement ->
+        %stateSwitch %open_paren switch_choice %close_paren %open_brace %vote vote_choice %colon in_function_statement %kill %terminator vote %stateDefault %colon in_function_statement %close_brace
+
 struct_define_choice ->
         parameter_define %terminator
 
@@ -465,7 +491,8 @@ in_statement ->
 
 in_choice_choice ->
        # id_array 
-       struct_new
+        struct_new string_access
+    |   %access %open_bracket struct_size %close_bracket
     |   null
 
 #added in_choice_choice
@@ -735,20 +762,20 @@ for_choice_extra ->
     |   %open_paren for_choice %close_paren
 
 for_condition ->
-        condition for_condition_extra
+        variable_choice for_condition_extra #changed condition to variable_choice
     |   null
 
 loop_statement ->
         %loopFor %open_paren for_initial %terminator for_condition %terminator iterate_statement %close_paren statement
-    |   %loopWhile %open_paren condition %close_paren statement
-    |   %loopDo statement %loopWhile %open_paren condition %close_paren %terminator
+    |   %loopWhile %open_paren variable_choice %close_paren statement #changed condition to variable_choice
+    |   %loopDo statement %loopWhile %open_paren variable_choice %close_paren %terminator
 
-if_statement -> #bakit variable_choice to??? yung iba condition ha
+if_statement ->
         %stateIf %open_paren variable_choice %close_paren statement else_choice
 
 else_choice ->
         %stateElse statement
-    |   %elf %open_paren condition %close_paren statement else_choice
+    |   %elf %open_paren variable_choice %close_paren statement else_choice #changed condition to variable_choice
     |   null
 
 #changed array_size to struct_size
@@ -772,8 +799,19 @@ vote ->
     |   null
 
 return_next_choice ->
-        new_choice %close_paren variable_next_null
+        function_choice %close_paren variable_next_null
     |   %close_paren 
+
+function_choice ->
+        struct_new iterate_first_choice choice_choice_choice
+    |   function_call_statement_choice iterate_first_choice choice_choice_choice
+    |   iterate_choice choice_choice_choice
+    #     struct_new choice_choice_choice #iterate_choice
+    # |   function_call_statement_choice choice_choice_choice #iterate_choice
+     #   first_choice iterate_choice choice_choice_choice #(di ka na kailangan)
+    |   first_compute_choice #variable_next_choice #added this for computes with id at the start
+    |   first_condition_choice #variable_next_choice #added this for conditions with id at the start
+    #|   null
 
 return_choice ->
         %id choice #variable_next_choice

@@ -12,7 +12,8 @@ const vuetify = new Vuetify({
 				primary: "#0E0D47",
 				secondary: "#080728",
 				success: "#3EBCE5",
-				error: "#B80000",
+				error: "#FD0000",
+				background: "#2D2D2D"
 			},
 		},
 	},

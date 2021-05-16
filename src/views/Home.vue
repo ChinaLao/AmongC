@@ -1,12 +1,14 @@
 <template>
   <v-app>
     <Header />
-    <v-main>
+    <v-main class="bg" dark>
       <v-container>
+        <!-- top -->
         <v-row class="my-1">
-          <v-col cols="6">
+          <!-- buttons -->
+          <v-col>
             <v-row>
-              <h2 class="primary--text">Editor</h2>
+              <h2 class="white--text">Editor</h2>
               <v-tooltip bottom>
                 <template v-slot:activator="{ on, attrs }">
                   <v-btn
@@ -32,7 +34,7 @@
                     plain
                     fab
                     small
-                    color="error lighten-2"
+                    color="error"
                     :disabled="!runClicked"
                     @click="stop()"
                     v-bind="attrs"
@@ -50,7 +52,7 @@
                     plain
                     fab
                     small
-                    color="error lighten-2"
+                    color="error"
                     :disabled="!code || code === '' || runClicked"
                     @click="clearCode()"
                     v-bind="attrs"
@@ -63,31 +65,46 @@
               </v-tooltip>
             </v-row>
           </v-col>
-          <v-col cols="5" class="ml-2">
+          <!-- title of lexeme table -->
+          <v-col class="ml-2">
             <v-row>
-              <h2>Lexeme Table</h2>
+              <h2 class="white--text">Lexeme Table</h2>
             </v-row>
           </v-col>
         </v-row>
+
+        <!-- inputs and outputs -->
         <v-row align="center">
-          <v-col cols="6">
+          <v-col>
             <v-row>
               <prism-editor
-                class="my-editor pt-8"
+                class="background my-editor pt-8"
                 v-model="code"
                 :highlight="highlighter"
                 line-numbers
               ></prism-editor>
             </v-row>
+            <v-row>
+              <h2 class="success--text">Output</h2>
+              <prism-editor
+                class="background semOutput pt-8"
+                v-model="semantics"
+                :highlight="highlighter"
+                readonly
+              ></prism-editor>
+            </v-row>
           </v-col>
-          <v-col cols="5" class="ml-2">
+          <v-col class="ml-2">
             <v-row>
               <v-data-table
                 :headers="lexemeTableHeaders"
                 :items="lexeme"
                 :items-per-page="-1"
-                height="200"
-                class="output elevation-1"
+                height="270"
+                class="background lexOutput elevation-1"
+                dark
+                hide-default-footer
+                fixed-header
               ></v-data-table>
             </v-row>
             <v-row>
@@ -96,15 +113,18 @@
                 :headers="errorTableHeaders"
                 :items="error"
                 :items-per-page="-1"
-                height="120"
-                class="errorOutput elevation-1"
+                height="180"
+                class="background errorOutput elevation-1"
+                dark
+                hide-default-footer
+                fixed-header
               ></v-data-table>
             </v-row>
           </v-col>
         </v-row>
       </v-container>
     </v-main>
-    <v-footer class="center">Among C Compiler &copy; 2021</v-footer>
+    <v-footer class="primary center" dark>Among C Compiler &copy; 2021</v-footer>
   </v-app>
 </template>
 
@@ -124,6 +144,7 @@ export default {
   },
   data: () => ({
     code: null,
+    semantics: null,
     runClicked: false,
     lexemeTableHeaders: [
       {
@@ -197,8 +218,16 @@ export default {
     async run() {
       this.runClicked = true;
       this.clearOutput();
+      this.semantics = "Checking Lexical...";
       await this.$store.dispatch("lexicalAnalyzer/LEXICAL", this.code);
-      await this.$store.dispatch("lexicalAnalyzer/SYNTAX");
+      if(this.error.length <= 0){
+        this.semantics += "\nNo Lexical Error";
+        this.semantics += "\n\nChecking Syntax...";
+        await this.$store.dispatch("lexicalAnalyzer/SYNTAX");
+        if(this.error.length <= 0) this.semantics += "\nNo Syntax Error";
+        else this.semantics += "\nSyntax Error Found";
+      }
+      else this.semantics += "\nLexical Error Found";
       this.runClicked = false;
     },
     stop() {
@@ -209,6 +238,7 @@ export default {
       this.clearOutput();
     },
     clearOutput() {
+      this.semantics = null;
       this.$store.commit("lexicalAnalyzer/CLEAR_OUTPUTS");
     },
   },
@@ -227,16 +257,29 @@ export default {
 .my-editor {
   background: #080728;
   color: #ffff;
-  height: 72vh;
+  height: 40vh;
+  width: 100%;
   font-family: Consolas;
   font-size: 14px;
   line-height: 1.5;
   padding: 5px;
 }
 
-.output {
+.semOutput {
+  background: #080728;
+  color: #ffff;
+  height: 27.5vh;
+  width: 100%;
+  font-family: Consolas;
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 5px;
+}
+
+.lexOutput {
   border: 2px solid #080728;
   height: 40vh;
+  width: 100%;
   font-family: Consolas;
   font-size: 14px;
   line-height: 1.5;
@@ -246,6 +289,7 @@ export default {
 .errorOutput {
   border: 2px solid #080728;
   height: 27.5vh;
+  width: 100%;
   font-family: Consolas;
   font-size: 14px;
   line-height: 1.5;
@@ -254,5 +298,12 @@ export default {
 
 .prism-editor__textarea:focus {
   outline: none;
+}
+
+.bg {
+  background-image: url("../assets/background.gif");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 </style>
