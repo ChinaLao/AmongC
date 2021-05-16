@@ -6,12 +6,11 @@ const moo = require("moo");
 export default {
   namespaced: true,
   state: {
-    lexeme: [],
-    error: [],
-    tokenStream: [],
-    foundError: false,
-    lexRules: {
-      
+    lexeme: [], //for list of tokens
+    error: [], //for list of errors
+    foundError: false, //tag if any errors are found
+    id: [], //for list of ids
+    lexRules: { //moo rules
       id: {match: /[a-z][a-zA-Z0-9]{0,14}/, type: moo.keywords({
         "int": "int",
         "dec": "dec",
@@ -94,7 +93,7 @@ export default {
       access: "@",
       invalid: /./
     },
-    groups: [
+    groups: [ //for groupings of tokens
       ["dataTypes", "int", "dec", "str", "bool", "empty"],
       ["literals", "litStr", "negaLitInt", "litInt", "litDec", "litBool"],
       ["mainFunc", "start", "end"],
@@ -124,16 +123,18 @@ export default {
       state.lexeme = payload;
     },
     SET_ERROR(state, payload) {
-      console.log(state.error, payload);
       state.error = payload;
-      console.log(state.error, payload);
     },
     CLEAR_OUTPUTS(state) {
         state.error = state.lexeme = [];
+        state.id.splice(0, state.id.length)
         state.foundError = false;
     },
     CHANGE_ERROR(state, payload){
       state.foundError = payload;
+    },
+    SET_ID(state, payload){
+      state.id.push(payload);
     }
   },
   actions: {
@@ -448,29 +449,40 @@ export default {
         try{
           token = reader.next();
           if(token){
-
+            const res = {
+              lex: null,
+              delims: null,
+              description: null
+            };
             //find the group of the token
             const group = token.type !== "invalid" && token.type !== "whitespace" && token.type !== "newline"
               ? await dispatch('FIND_GROUP', token.type)
               : null;
 
+            if(group){ //if gr
+              const lex = results[group][token.type].lex; //find the lex from deignated group
+              res.lex = lex === "id"
+                ? lex + await dispatch('FOUND_ID', token.value) //number ID
+                : lex;
+              res.delims = results[group].delims !== undefined //determine if the delims are global for the group or not
+                ? results[group].delims
+                : results[group][token.type].delims;
+              res.description = results[group].description !== undefined //determine if the description are global for the group or not
+              ? results[group].description
+              : results[group][token.type].description;
+            }else{
+              res.lex = token.type;
+              res.delims = "";
+              res.description = "";
+            }
+
             //push to list of tokenized
             tokenStream.push({
               word: token.value, //actual word
               token: token.type, //token from moo
-              lex: token.type !== "invalid" && token.type !== "whitespace" && token.type !== "newline" && group // pretty token
-                ? results[group][token.type].lex
-                : token.type,
-              delims: group //delimiters of this token
-                ? results[group].delims !== undefined
-                  ? results[group].delims
-                  : results[group][token.type].delims
-                : "",
-              description: group //description of this token
-                ? results[group].description !== undefined
-                  ? results[group].description
-                  : results[group][token.type].description
-                : "",
+              lex: res.lex, //pretty token
+              delims: res.delims, //delimiters of this token
+              description: res.description, //description of this token
               line: token.line, //line this token was found
               col: token.col, //column this token was found
             });
@@ -660,5 +672,13 @@ export default {
       const found = groups.find(group => group.includes(token));
       if (found) return found[0];
     },
+    async FOUND_ID({ state, commit }, id){
+      const stateId = state.id;
+      if(stateId.includes(id)) return stateId.indexOf(id)+1;
+      else{
+        commit('SET_ID', id);
+        return state.id.indexOf(id)+1;
+      }
+    }
   },
 };
