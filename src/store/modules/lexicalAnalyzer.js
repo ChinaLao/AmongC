@@ -10,6 +10,7 @@ export default {
     error: [], //for list of errors
     foundError: false, //tag if any errors are found
     id: [], //for list of ids
+    ast: [], //for tree of program
     lexRules: { //moo rules
       id: {match: /[a-z][a-zA-Z0-9]{0,14}/, type: moo.keywords({
         "int": "int",
@@ -623,8 +624,6 @@ export default {
         while(index < lexeme.length && !synError) {
           try {
             parser.feed(lexeme[index].token); //checks the cfg in grammar.ne
-            console.log(parser.results);
-            console.log(lexeme[index].token, index);
           } catch (err) {
             const errors = [];
             errors.push({
@@ -639,7 +638,10 @@ export default {
           }
           index++;
         }
-        console.log(parser.results);
+        if(parser.results.length > 1){
+          console.log("AMBIGUOUS GRAMMAR DETECTED");
+          console.log(parser.results);
+        }
       }
       
     },
