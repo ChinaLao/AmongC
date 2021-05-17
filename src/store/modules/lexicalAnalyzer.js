@@ -47,7 +47,7 @@ export default {
       newline: {match: /\n|\r\n|\r/, lineBreaks: true},
       whitespace: /[ \t]+/,
 
-      litStr: /["].*["]/,
+      litStr: /"(?:[^"\\]|\\.)*"/,
       singleComment: /#.*/,
       litDec: /[~]?[0-9]{1,9}[.][0-9]{1,5}/,
       negaLitInt: /[~][0-9]{1,9}/,
@@ -127,7 +127,7 @@ export default {
       state.error = payload;
     },
     CLEAR_OUTPUTS(state) {
-        state.error = state.lexeme = [];
+        state.error = state.lexeme = state.ast = [];
         state.id.splice(0, state.id.length)
         state.foundError = false;
     },
@@ -136,7 +136,10 @@ export default {
     },
     SET_ID(state, payload){
       state.id.push(payload);
-    }
+    },
+    SET_AST(state, payload){
+      state.ast = payload;
+    },
   },
   actions: {
     async LEXICAL({ state, commit, dispatch }, code){
@@ -607,7 +610,7 @@ export default {
           });
         }
       }
-      console.log(errors);
+      console.log("Lexical Errors: ", errors);
       commit("SET_LEXEME", final);
       commit("SET_ERROR", errors);
       if(errors.length > 0) commit("CHANGE_ERROR", true);
@@ -623,12 +626,21 @@ export default {
         let synError = false; //tag for syntax error
         while(index < lexeme.length && !synError) {
           try {
-            parser.feed(lexeme[index].token); //checks the cfg in grammar.ne
+            parser.feed(lexeme[index].word); //checks the cfg in grammar.ne
           } catch (err) {
+            let type, msg = null;
+            if(err.message.includes("Syntax error") || err.message.includes("invalid syntax")){
+              type = "syn-error";
+              msg = `Unexpected token: ${lexeme[index].lex} (${lexeme[index].word})`;
+            }else{
+              type = "programmer-error";
+              msg = "Unaccounted error. Check logs";
+              console.log(err);
+            }
             const errors = [];
             errors.push({
-              type: "syn-error",
-              msg: `Unexpected token: ${lexeme[index].lex} (${lexeme[index].word})`,
+              type: type,
+              msg: msg,
               line: lexeme[index].line,
               col: lexeme[index].col,
               exp: "-"
@@ -638,9 +650,13 @@ export default {
           }
           index++;
         }
-        if(parser.results.length > 1){
+        if(parser.results && parser.results.length > 1){
           console.log("AMBIGUOUS GRAMMAR DETECTED");
           console.log(parser.results);
+        }else if(parser.results && parser.results.length > 0){
+          console.log("Parser Results: ", parser.results);
+          commit('SET_AST', parser.results[0]);
+          console.log("AST: ", state.ast);
         }
       }
       
