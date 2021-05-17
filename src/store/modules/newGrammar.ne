@@ -343,7 +343,7 @@ choice_choice_choice ->
     #|   iterate_choice
     |   null
 
-choice ->
+# choice ->
         struct_new iterate_first_choice choice_choice_choice
     |   function_call_statement_choice iterate_first_choice choice_choice_choice
     |   iterate_choice choice_choice_choice
@@ -381,7 +381,7 @@ not_choice ->
 
 
 
-variable_choice ->
+# variable_choice ->
         %id choice #variable_next_choice
   # |   condition_less_choice_choice
     |   condition_notter_less oper_condition
@@ -553,7 +553,7 @@ function_switch_statement ->
 struct_define_choice ->
         parameter_define %terminator
 
-function_call_statement_choice ->
+# function_call_statement_choice ->
         %open_paren function_call %close_paren
 
 #changed unary to %unary_oper
@@ -990,7 +990,7 @@ recur_parameter ->
     |   null                                      {% id %}
 
 #changed array_size to struct_size
-# id_array_2D ->
+id_array_2D ->
         %open_bracket struct_size %close_bracket
         {%
             (data) => {
@@ -1010,7 +1010,7 @@ function_call_statement ->
             }
         %}
 
-function_call -> #temporarily changed function_variables to variable_choice
+# function_call -> #temporarily changed function_variables to variable_choice
         variable_choice additional_call
         {%
             (data) => {
@@ -1024,7 +1024,7 @@ function_call -> #temporarily changed function_variables to variable_choice
             }
         %}
 
-additional_call -> #temporarily changed function_variables to variable_choice
+# additional_call -> #temporarily changed function_variables to variable_choice
         %comma variable_choice additional_call
         {%
             (data) => {

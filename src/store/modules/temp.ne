@@ -185,12 +185,13 @@ struct_size ->
     # |   compute_choice_less
     # |   %unary_oper %id struct_choice
 
-struct_size_choice ->
+struct_size_choice -> #actually choices for id details
         id_array                                 {% id %}
-    # |   function_call_statement_choice
+    |   function_call_statement_choice
     # |   first_compute_choice
     # |   struct_unary
 
+#one dimensional
 id_array ->
         %open_bracket struct_size %close_bracket id_array_2D
         {%
@@ -199,11 +200,12 @@ id_array ->
                     type: "property_size",
                     size_1: data[1],
                     size_2: data[3]
-                }
+                };
             }
         %}
     |   null                                      {% id %}
 
+#two dimensional
 id_array_2D ->
         %open_bracket struct_size %close_bracket
         {%
@@ -212,7 +214,69 @@ id_array_2D ->
             }
         %}
     |   null                                      {% id %}
-    
+
+function_call_statement_choice ->
+        %open_paren function_call %close_paren
+        {%
+            (data) => {
+                return{
+                    type: "function_call",
+                    parameter_list: [...data[1]]
+                };
+            }
+        %}
+
+function_call ->
+        variable_choice additional_call
+        {%
+            (data) => {
+                return[data[0], ...data[1]];
+            }
+        %}
+    |   null
+        {%
+            (data) => {
+                return[data[0]];
+            }
+        %}
+
+variable_choice ->
+        %id choice
+        {%
+            (data) => {
+                return{
+                    id_name: data[0],
+                    id_details: data[1]
+                };
+            }
+        %}
+    # |   condition_notter_less oper_condition
+    # |   not_many not_choice
+    # |   %negative negative_choice 
+    # |   %open_paren choice %close_paren variable_next_null
+
+additional_call ->
+        additional_call %comma variable_choice
+        {%
+            (data) => {
+                return[...data[0], data[2]];
+            }
+        %}
+    |   %comma variable_choice
+        {%
+            (data) => {
+                return[data[1]];
+            }
+        %}
+
+choice ->
+    #     struct_new iterate_first_choice choice_choice_choice
+    # |   function_call_statement_choice iterate_first_choice choice_choice_choice
+    # |   iterate_choice choice_choice_choice
+    # |   first_compute_choice
+    # |   first_condition_choice
+       null                                      {% id %}
+
 recur_vital -> 
         recur_vital %comma %id %equal literal
         {%
