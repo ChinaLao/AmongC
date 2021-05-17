@@ -84,8 +84,8 @@ global_choice ->
     |   struct_declare
     |   %singleComment
 
-vital_define -> 
-        %vital data_type %id %equal literal recur_vital %terminator
+vital_define -> #changed %equal literal recur_vital to declare_choice
+        %vital data_type %id declare_choice %terminator
 
 recur_vital -> 
         %comma %id %equal literal recur_vital
