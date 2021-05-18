@@ -87,9 +87,9 @@ global_choice ->
 vital_define -> #changed %equal literal recur_vital to declare_choice
         %vital data_type %id declare_choice %terminator
 
-recur_vital -> 
-        %comma %id %equal literal recur_vital
-    |   null
+# recur_vital -> 
+#         %comma %id %equal literal recur_vital
+#     |   null
 
 #temporarily moved %id to declare_choice
 data_declare -> 
@@ -444,7 +444,7 @@ id_start_statement ->
 function_loop_statement ->
         %loopFor %open_paren for_initial %terminator for_condition %terminator iterate_statement %close_paren statement_in_function
     |   %loopWhile %open_paren variable_choice %close_paren statement_in_function #changed condition to variable_choice
-    |   %loopDo statement_in_function %loopWhile %open_paren condition %close_paren %terminator
+    |   %loopDo statement_in_function %loopWhile %open_paren variable_choice %close_paren %terminator #changed condition to variable_choice
 
 #added this for function
 function_if_statement -> #bakit variable_choice to??? yung iba condition ha
@@ -453,7 +453,7 @@ function_if_statement -> #bakit variable_choice to??? yung iba condition ha
 #added this for function
 function_else_choice -> 
         %stateElse statement_in_function
-    |   %elf %open_paren variable_choice %close_paren statement_in_function else_choice #changed condition to variable_choice
+    |   %elf %open_paren variable_choice %close_paren statement_in_function function_else_choice #changed condition to variable_choice
     |   null
 
 #added this for function
@@ -749,17 +749,17 @@ iterate_unary -> #changed iterate_choice to iterate_intdec
         %unary_oper iterate_statement_extra
     |   %assign_oper iterate_intdec iterate_statement_extra
 
-recur_for_condition ->
-        %logical_oper for_condition
-    |   null
+# recur_for_condition ->
+#         %logical_oper for_condition
+#     |   null
 
 for_condition_extra ->
         %comma for_condition
     |   null
 
-for_choice_extra ->
-        for_choice
-    |   %open_paren for_choice %close_paren
+# for_choice_extra ->
+#         for_choice
+#     |   %open_paren for_choice %close_paren
 
 for_condition ->
         variable_choice for_condition_extra #changed condition to variable_choice
