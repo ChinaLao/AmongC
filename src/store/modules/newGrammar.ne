@@ -1,222 +1,331 @@
 @{%
     const moo = require("moo");
-    //const IndentationLexer = require("moo-indentation-lexer")
 
     const lexer = moo.compile({
+        id: {match: /[a-z][a-zA-Z0-9]{0,14}/, type: moo.keywords({
+        "int": "int",
+        "dec": "dec",
+        "struct": "struct",
+        "str": "str",
+        "bool": "bool",
+        "empty": "empty",
+        "shoot": "shoot",
+        "scan": "scan",
+        "stateIf": "if",
+        "stateElse": "else",
+        "elf": "elf",
+        "stateSwitch": "switch",
+        "vote": "vote",
+        "stateDefault": "default",
+        "loopFor": "for",
+        "loopWhile": "while",
+        "loopDo": "do",
+        "kill": "kill",
+        "control": "continue",
+        "litBool": ["true", "false"],
+        "stateReturn": "return",
+        "logical_oper": ["and","or"],
+        "vital": "vital",
+        "task": "task",
+        "clean": "clean",
+      })},
 
-        //special characters
-        assign_oper: ["appendAssign", "minusEqual", "multiplyEqual", "divideEqual", "exponentEqual", "floorEqual", "moduloEqual"], 
-        arith_oper: ["minus", "multiply", "divide", "exponent", "floor", "modulo", "append"],
-        relation_oper: ["greater", "lesser", "greaterEqual", "lesserEqual", "isEqual", "isNotEqual"],
-        
-        equal: "equal",
-        not: "not",
-        unary_oper: ["increment", "decrement"],
-        open_paren: "openParen",
-        close_paren: "closeParen",
-        open_bracket: "openBracket",
-        close_bracket: "closeBracket",
-        open_brace: "openBrace",
-        close_brace: "closeBrace",
-        terminator: "terminator", //end of statement
-        comma: "comma",
-        dot: "dot",
-        colon: "colon",
-        negative: "negative",
-        
-        //unit keywords
-        IN: "start", 
-        OUT: "end",
-        int: "int",
-        dec: "dec",
-        struct: "struct",
-        str: "str",
-        bool: "bool",
-        empty: "empty",
-        shoot: "shoot",
-        scan: "scan",
-        stateIf: "if",
-        stateElse: "else",
-        elf: "elf",
-        stateSwitch: "stateSwitch",
-        vote: "vote",
-        stateDefault: "default",
-        loopFor: "for",
-        loopWhile: "while",
-        loopDo: "do",
-        kill: "kill",
-        control: "control",
-        bool_literal: "litBool",
-        stateReturn: "return",
-        vital: "vital",
-        task: "task",
-        clean: "clean",
-        logical_oper: ["and","or"],
+      IN: "IN",
+      OUT: "OUT",
 
+      str_literal: /["].*["]/,
+      singleComment: /#.*/,
+      dec_literal: /[~]?[0-9]{1,9}[.][0-9]{1,5}/,
+      nega_int_literal: /[~][0-9]{1,9}/,
+      posi_int_literal: /[0-9]{1,9}/,
+      
+      terminator: ";",
+      comma: ",",
+      dot: ".",
 
-        str_literal: "litStr",
-        singleComment: "singleComment",
-        posi_int_literal: "litInt",
-        nega_int_literal: "negaLitInt",
-        dec_literal: "litDec",
-        access: "access",
-        
-        id: "id", 
-
-        eof: "EOF",
-    }); 
+      open_paren: "(",
+      close_paren: ")",
+      open_brace: "{",
+      close_brace: "}",
+      open_bracket: "[",
+      close_bracket: "]",
+      colon: ":",
+      unary_oper: ["++", "--"],
+      assign_oper: ["+=", "-=", "**=", "*=", "//=", "/=", "%="],
+      relation_oper: ["==", "!=", ">=", "<=", ">", "<"],
+      arith_oper: ["+", "-", "**", "*", "//", "/", "%"],
+      equal: "=",
+      not: "!",
+      negative: "~",
+      access: "@",
+      eof: "EOF"
+    });
 %}
 
 @lexer lexer
 
-program -> 
+# program -> 
         global %IN main_statement %OUT function %eof
+        {%
+            (data) => {
+                return {
+                    type: "program",
+                    global_declarations: data[0],
+                    main_function: [data[2]],
+                    user_function: data[4]
+                }
+            }
+        %}
 
 #changed comment to %singleComment; moved it to global_choice
-global -> 
+# global -> 
         global_choice global
-    #|   %singleComment global 
+        {%
+            (data) => {
+                return [data[0], ...data[1]]
+            }
+        %}
     |   null
+        {%
+            (data) => {
+                return [data[0]]
+            }
+        %}
 
-global_choice -> 
-        vital_define 
-    |   data_declare
-    |   struct_declare
-    |   %singleComment
+# global_choice -> 
+        vital_define                            {% id %}
+    |   data_declare                            {% id %}
+    |   struct_declare                          {% id %}
+    |   %singleComment                          {% id %}
 
-vital_define -> #changed %equal literal recur_vital to declare_choice
-        %vital data_type %id declare_choice %terminator
+# vital_define -> 
+        %vital data_type %id %equal literal recur_vital %terminator
+        {%
+            (data) => {
+                return {
+                    type: "constant_assign",
+                    dtype: data[1],
+                    constant_assign: [
+                        {
+                            id_name: data[2],
+                            literal_value: data[4],
+                        },
+                        ...data[5]
+                    ]
+                }
+            }
+        %}
 
-recur_vital -> 
+# recur_vital -> 
         %comma %id %equal literal recur_vital
+        {%
+            (data) => {
+                return [
+                    {
+                        id_name: data[1],
+                        literal_value: data[3]
+                    },
+                    ...data[4]
+                ]
+            }
+        %}
     |   null
 
 #temporarily moved %id to declare_choice
 data_declare -> 
-        data_type %id declare_choice %terminator 
+        data_type %id declare_choice %terminator
+        {%
+            (data) => {
+                return {
+                    type: "data_declaration",
+                    dtype: data[0],
+                    id_name: data[1],
+                    id_details: [...data[2]]
+                }
+            }
+        %}
 
 declare_choice -> 
         # %id declare_choice_choice
         variable 
+        {%
+            (data) => {
+                return [data[0]]
+            }
+        %}
     |   array 
+        {%
+            (data) => {
+                return [data[0]]
+            }
+        %}
     |   null
+        {%
+            (data) => {
+                return [data[0]]
+            }
+        %}
 
 struct_declare ->
         %struct %id %open_brace first_struct %close_brace
+        {%
+            (data) => {
+                return {
+                    type: "structure_declaration",
+                    id_name: data[1],
+                    struct_body: [...data[3]]
+                }
+            }
+        %}
 
 #changed comment to %singleComment; it's on statement_choice
 main_statement ->
         statement_choice main_statement
-    #|   %singleComment main_statement
+        {%
+            (data) => {
+                return [data[0], ...data[1]]
+            }
+        %}
     |   null
+        {%
+            (data) => {
+                return [data[0]]
+            }
+        %}
 
 #changed comment to %singleComment
 function ->
         %task function_data_type %id %open_paren parameter %close_paren %open_brace in_function_statement %close_brace function
-    #|   %singleComment function
+        {%
+            (data) => {
+                return [
+                    {
+                        type: "user_function",
+                        function_dtype: data[1],
+                        function_name: data[2],
+                        arguments: [...data[4]],
+                        function_body: [...data[7]]
+                    },
+                    ...data[9]
+                ]
+            }
+        %}
     |   null
+        {%
+            (data) => {
+                return [data[0]]
+            }
+        %}
 
-data_type -> 
-        %int 
-    |   %dec 
-    |   %str 
-    |   %bool
+# data_type -> 
+        %int                                    {% id %}
+    |   %dec                                    {% id %}
+    |   %str                                    {% id %}
+    |   %bool                                   {% id %}
 
 function_data_type -> 
-        data_type 
-    |   %empty
+        data_type                               {% id %}
+    |   %empty                                  {% id %}
 
 negation ->
-        %negative
-    |   null
+        %negative                               {% id %}
+    |   null                                    {% id %}
 
-int_literal ->
-        %posi_int_literal
-    |   %nega_int_literal
+# int_literal ->
+        %posi_int_literal                       {% id %}
+    |   %nega_int_literal                       {% id %}
 
-literal -> 
-        int_literal 
-    |   %dec_literal 
-    |   %str_literal string_access
-    |   %bool_literal
+# literal -> 
+        int_literal                             {% id %}
+    |   %dec_literal                            {% id %}
+    |   %str_literal string_access              {% id %}
+    |   %bool_literal                           {% id %}
 
 #changed array_size to struct_size
-string_access ->
+# string_access ->
         %access %open_bracket struct_size %close_bracket
-    |   null
-
-# declare_choice_choice ->
-#         variable 
-#     |   array 
-
-#recur_assign -> 
-  #      %equal %id recur_assign
-  #  |   assign_choice
-  #  |   null
-
-#assign_choice -> 
-  #      recur_assign %equal variable_choice 
-  #  |   assign_array recur_assign %equal variable_choice 
-  #  |   assign_struct recur_assign %equal variable_choice
+        {% 
+            (data) => {
+                return data[2]
+            }
+        %}
+    |   null                                    {% id %}
 
 #created new recur_assign, assign_choice
 recur_assign -> 
         %equal %id struct_choice recur_assign
+        {%
+            (data) => {
+                return[
+                    {
+                        type: "additional_assign",
+                        id_name: data[1],
+                        id_details: [data[2]]
+                    },
+                    ...data[3]
+                ]
+            }
+        %}
     |   null
+        {%
+            (data) => {
+                return [data[0]]
+            }
+        %}
 
 #added string_access
 assign_choice -> #temporarily changed assign_struct to struct_choice
         struct_choice string_access recur_assign %equal variable_choice
-       
+        {%
+            (data) => {
+                return{
+                    type: "assign",
+                    id_details: [...data[0], data[1]],
+                    more_id: [...data[2]],
+                    value: [...data[4]]
+                }
+            }
+        %}  
+
 assign_statement ->
         assign_choice %terminator 
-
-#BAKA DI NA TO KAILANGAN
-# variable_array ->
-#         assign_array
-#     |   null
+        {%
+            (data) => {
+                return [data[0]]
+            }
+        %}
 
 iterate_intdec ->
-        int_literal
-    |   %dec_literal
+        int_literal                                         {% id %}
+    |   %dec_literal                                        {% id %}
 
 
 first_choice ->
-        struct_new
-    |   function_call_statement_choice
-    |   null
-
-#ambiguity (wala na ata)
-# variable_choice ->
-#        # compute_choice
-#         #%id variable_array string_access
-#        # literal
-#     # |   %str_literal access
-#     # |   %bool_literal
-#         variable_choice_choice
-       # %id choice
-    #|  compute_choice_less #changed compute_choice to compute_choice_less
-    #|  condition_choice_less oper_condition #changed condition_less to condition_choice_less oper_condition
-    #|  notter negation %open_paren variable_choice_choice
-   # |   condition_less
+        struct_new                                          {% id %}
+    |   function_call_statement_choice                      {% id %}
+    |   null                                                {% id %}
 
 variable_next_choice ->
         oper_choice condition
-    |   null
+        {%
+            (data) => {
+                return{
+                    type: "condition",
+                    operator: data[0],
+                    operand: data[3]
+                }
+            }
+        %}
+    |   null                                                {% id %}
 
 variable_next ->
         oper_condition
     |   oper_compute
-    #|   null
 
 variable_next_null ->
     oper_choice condition
-|   %arith_oper compute_choice
-|   null
-
-# new_choice -> #added this to remove ambiguity with notter
-#         conditional 
-#     |   %open_paren condition %close_paren variable_next
+    |   %arith_oper compute_choice
+    |   null
 
 iterate_choice ->
         %unary_oper
@@ -234,7 +343,7 @@ choice_choice_choice ->
     #|   iterate_choice
     |   null
 
-choice ->
+# choice ->
         struct_new iterate_first_choice choice_choice_choice
     |   function_call_statement_choice iterate_first_choice choice_choice_choice
     |   iterate_choice choice_choice_choice
@@ -270,14 +379,9 @@ not_choice ->
         %open_paren condition %close_paren oper_condition
     |   %id choice
 
-# negative_many ->
-#         %negative negative_again
 
-# negative_again ->
-#         %negative negative_again
-#     |   null
 
-variable_choice ->
+# variable_choice ->
         %id choice #variable_next_choice
   # |   condition_less_choice_choice
     |   condition_notter_less oper_condition
@@ -301,23 +405,13 @@ recur_variable -> #changed recur_variable to declare_choice, removed array
     |   %comma %id declare_choice
     |   null
 
-#DI KA NA ATA KAILAGAN HOHO
-# array_size ->
-#         struct_size 
-#     #|   struct_statement array_unary
-#     #|   unary struct_statement
 
-# array_unary ->
-#         unary
-#     |   null
-
-#changed unary to %unary_oper
 struct_unary -> #changed iterate_choice to iterate_intdec
         %assign_oper iterate_intdec
     |   id_array %unary_oper
 
 #added this to remove ambiguity with id
-struct_size_choice ->
+# struct_size_choice ->
         id_array
     |   function_call_statement_choice
     |   first_compute_choice #added this for computes with id at the start
@@ -325,7 +419,7 @@ struct_size_choice ->
 
 #added struct_size_choice
 #changed unary to %unary_oper
-struct_size ->
+# struct_size ->
         %id struct_size_choice
     #|   %posi_int_literal (removed bc of ambiguity)
     |   compute_choice_less #changed compute_choice to compute_choice_less
@@ -348,11 +442,7 @@ assign_array_2D ->
 assign_array ->
          %open_bracket struct_size %close_bracket assign_array_2D
 
-# array_recur_choice ->
-#         %comma declare_choice
-#     |   null
 
-#added this for array
 recur_array ->
         %comma %id declare_choice
     |   null
@@ -463,7 +553,7 @@ function_switch_statement ->
 struct_define_choice ->
         parameter_define %terminator
 
-function_call_statement_choice ->
+# function_call_statement_choice ->
         %open_paren function_call %close_paren
 
 #changed unary to %unary_oper
@@ -524,25 +614,7 @@ digit_notter ->
     |   %dec_literal
     |   negation %id digit_another_choice #this is still an ambiguity (di ba hindi na????)
 
-# compute_choice -> 
-#         digit_choice %arith_oper compute_choice recur_compute
-#     |   %open_paren digit_choice additional_compute %close_paren recur_compute
-#     |   compute
 
-# compute ->
-#         digit_choice
-#     |   %open_paren digit_choice %close_paren
-
-# recur_compute ->
-#         additional_compute
-#     |   null
-
-# additional_compute ->
-#         %arith_oper digit_choice recur_compute
-#     |   extra_compute
-
-# extra_compute ->
-#         %arith_oper compute_choice
 
 compute_choice ->
         computation
@@ -555,16 +627,13 @@ oper_compute ->
         %arith_oper compute_choice
     |   null
 
-# close ->
-#         %close_paren
-#     |   null
+
 
 #added this for computes that have id at the start
 first_compute_choice -> 
         %arith_oper compute_choice variable_next_choice #close
 
-# digit_choice_less -> #removed notter
-#         digit_notter_less
+
 
 digit_notter_less ->
         int_literal
@@ -578,9 +647,7 @@ compute_choice_less -> #changed digit_choice_less to digit_notter_less
         digit_notter_less oper_compute
     |   negation %open_paren compute_choice %close_paren oper_compute
 
-# compute_less ->
-#         digit_choice_less
-#     |   %open_paren digit_choice %close_paren
+
 
 #changed unary to %unary_oper
 iterate_statement_condition ->
@@ -592,35 +659,7 @@ iterate_statement_condition_less -> #changed struct_statement_choice to struct_c
         struct_choice iterate_unary
     |   %unary_oper unary_choice iterate_statement_extra
 
-# condition_choice ->
-#         condition_notter
 
-#added this to remove ambiguity
-# condition_notter_choice ->
-#        %access %open_bracket struct_size %close_bracket
-#     |  first_compute_choice #added this for computes with id at the start
-#     |   first_condition_choice
-#     |   null
-
-# condition_extra ->
-#         condition_choice
-#     |   %open_paren condition_choice %close_paren
-
-# condition -> 
-#         condition_extra oper_choice condition recur_condition
-#     |   notter %open_paren condition_extra additional_condition %close_paren recur_condition
-#     |   condition_extra
-
-# recur_condition ->
-#         additional_condition
-#     |   null
-
-# additional_condition ->
-#         oper_choice condition_choice recur_condition
-#     |   extra_condition
-    
-# extra_condition ->
-#         oper_choice condition
 
 condition_notter_choice ->
         struct_new #iterate_choice
@@ -659,12 +698,7 @@ oper_condition ->
 first_condition_choice ->
     oper_choice condition #variable_next_choice
 
-# condition_choice_less -> #removed notter
-#         condition_notter_less
 
-# choice_choice ->
-#     compute_choice_less_less
-#     | null
 
 #listed all literals to remove ambiguity of their next 
 condition_notter_less ->
@@ -678,15 +712,7 @@ condition_notter_less ->
     #iterate_statement_extra #ambiguity on iterate_statement_extra (dugtong to sa taas pero baka di na)
     #|   compute_choice_less_less
 
-# condition_extra_less ->
-#         condition_choice_less
-#     |   %open_paren condition_choice %close_paren
 
-# condition_less_choice ->
-#         oper_choice condition recur_condition
-#     |   null
-
-#changed oper_choice condition recur_condition to condition_less_choice
 condition_less -> #moved condition_choice.... and %open_paren... to condition_less_choice_choice
         notter condition_less_choice_choice
         
@@ -825,14 +851,7 @@ return_choice ->
 return_statement ->
         %stateReturn return_choice %terminator
 
-# return_first_choice ->
-#         variable_choice
-#     #|   %open_paren %id %close_paren
-#     #|   null
 
-# return_choice -> 
-#         variable_choice
-#     #|   null
 
 recur_declare ->
         %comma parameter_define
@@ -857,8 +876,6 @@ struct_new ->
         %open_bracket struct_size %close_bracket extra_struct element
     |   %dot %id element_choice
 
-# struct_statement_choice ->
-#         struct_choice
 
 #temporarily removed string_access from struct_choice, extra_struct, element_choice, element_option (think about this)
 #changed array_size to struct_size
@@ -888,77 +905,151 @@ element ->
 
 recur_define ->
         %comma %id assign_struct_size recur_define
-    #|   recur_define
+        {%
+            (data) => {
+                return[
+                    {
+                        id_name: data[1],
+                        size: data[2]
+                    },
+                    ...data[3]
+                ]
+            }
+        %}
     |   null
+        {%
+            (data) => {
+                return [data[0]]
+            }
+        %}
 
 parameter_define ->
         assign_struct_size recur_define
-    #|   recur_define
-    #|   null
+        {%
+            (data) => {
+                return[
+                    {
+                        size: data[0]
+                    },
+                    ...data[1]
+                ]
+            }
+        %}
 
 array_parameter ->
         %open_bracket %close_bracket
-    |   null
+        {%
+            (data) => {
+                return data[0] + data[1]
+            }
+        %}
+    |   null                                      {% id %}
 
 parameter -> 
         data_type %id array_parameter recur_parameter
-    |   %id %id array_parameter recur_parameter 
+        {%
+            (data) => {
+                return[
+                    {
+                        parameter_dtype: data[0],
+                        parameter_name: data[1],
+                        parameter_details: data[2]
+                    },
+                    data[3]
+                ]
+            }
+        %}
     |   null
+        {%
+            (data) => {
+                return [data[0]]
+            }
+        %}
 
 recur_parameter ->
-        %comma recur_parameter_again
-    |   null
+        %comma parameter
+        {%
+            (data) => {
+                return [...data[1]]
+            }
+        %}
+    |   null                                      {% id %}
 
-recur_parameter_again ->
-        data_type %id array_parameter recur_parameter
-    |   %id %id array_parameter recur_parameter
-
-#KAILANGAN KA PA BA, OH ID_ARAY
 #changed array_size to struct_size
-id_array ->
+# id_array ->
         %open_bracket struct_size %close_bracket id_array_2D
-    |   null #(bakit ba pinapatanggal yung null?)
+        {%
+            (data) => {
+                return{
+                    type: "array_size_1",
+                    size_1: data[1],
+                    size_2: data[3]
+                }
+            }
+        %}
+    |   null                                      {% id %}
 
 #changed array_size to struct_size
 id_array_2D ->
-        %open_bracket struct_size %close_bracket id_array_2D
-    |   null #(may automatic null na ba to???)
-
-#added this to remove ambiguity
-function_variables_choice -> #parang may ambiguity to
-        #id_array
-        function_call_statement_choice
-    |   struct_choice #changed struct_statement_choice to struct_choice
-    |   first_compute_choice #added this for computes with id at the start
-    |   first_condition_choice #added this for conditions with id at the start
-
-#added function_variables_choice
-function_variables ->
-        %id function_variables_choice
-    |   literal
-    |   compute_choice_less #changed compute_choice to compute_choice_less
-    |   condition_less #changed condition to condition_less
+        %open_bracket struct_size %close_bracket
+        {%
+            (data) => {
+                return data[1]
+            }
+        %}
 
 function_call_statement ->
         %id %open_paren function_call %close_paren
+        {%
+            (data) => {
+                return{
+                    type: "function_call",
+                    function_name: data[0],
+                    arguments: [...data[2]]
+                }
+            }
+        %}
 
-function_call -> #temporarily changed function_variables to variable_choice
+# function_call -> #temporarily changed function_variables to variable_choice
         variable_choice additional_call
+        {%
+            (data) => {
+                return[data[1], data[2]]
+            }
+        %}
     |   null
+        {%
+            (data) => {
+                return[data[0]]
+            }
+        %}
 
-additional_call -> #temporarily changed function_variables to variable_choice
+# additional_call -> #temporarily changed function_variables to variable_choice
         %comma variable_choice additional_call
+        {%
+            (data) => {
+                return[data[1], ...data[2]]
+            }
+        %}
     |   null
-
-#TANGGALIN NAKITA AH
-# unary ->
-#         %unary_oper
+        {%
+            (data) => {
+                return[data[0]]
+            }
+        %}
 
 #changed array_size to struct_size
 oper ->
         %arith_oper struct_size oper
+        {%
+            (data) => {
+                return[
+                    {
+                        operator: data[0],
+                        operand: data[1],
+                    },
+                    ...data[2]
+                ]
+            }
+        %}
     |   null
-
-#TANGGALIN NAKITA AH
-# comment ->
-#         %singleComment

@@ -10,6 +10,8 @@ export default {
     error: [], //for list of errors
     foundError: false, //tag if any errors are found
     id: [], //for list of ids
+    ast: [], //for tree of program
+    output: [],
     lexRules: { //moo rules
       id: {match: /[a-z][a-zA-Z0-9]{0,14}/, type: moo.keywords({
         "int": "int",
@@ -46,7 +48,7 @@ export default {
       newline: {match: /\n|\r\n|\r/, lineBreaks: true},
       whitespace: /[ \t]+/,
 
-      litStr: /["].*["]/,
+      litStr: /"(?:[^"\\]|\\.)*"/,
       singleComment: /#.*/,
       litDec: /[~]?[0-9]{1,9}[.][0-9]{1,5}/,
       negaLitInt: /[~][0-9]{1,9}/,
@@ -99,7 +101,7 @@ export default {
       ["mainFunc", "start", "end"],
       ["conditionals", "if", "else", "elf", "stateSwitch", "vote", "default"],
       ["loops", "for", "while", "do"],
-      ["controls", "kill", "continue"],
+      ["controls", "kill", "control"],
       ["keywords", "struct", "return", "vital", "clean", "task"],
       ["inputOutput", "shoot", "scan"],
       ["logicals", "and", "or"],
@@ -117,6 +119,7 @@ export default {
   getters: {
     LEXEME: (state) => state.lexeme,
     ERROR: (state) => state.error,
+    OUTPUT: (state) => state.output,
   },
   mutations: {
     SET_LEXEME(state, payload) {
@@ -126,7 +129,7 @@ export default {
       state.error = payload;
     },
     CLEAR_OUTPUTS(state) {
-        state.error = state.lexeme = [];
+        state.error = state.lexeme = state.ast = state.output = [];
         state.id.splice(0, state.id.length)
         state.foundError = false;
     },
@@ -135,6 +138,12 @@ export default {
     },
     SET_ID(state, payload){
       state.id.push(payload);
+    },
+    SET_AST(state, payload){
+      state.ast = payload;
+    },
+    SET_OUTPUT(state, payload){
+      state.output = payload;
     }
   },
   actions: {
@@ -606,12 +615,12 @@ export default {
           });
         }
       }
-      console.log(errors);
+      console.log("Lexical Errors: ", errors);
       commit("SET_LEXEME", final);
       commit("SET_ERROR", errors);
       if(errors.length > 0) commit("CHANGE_ERROR", true);
     },
-    async SYNTAX({ state, commit }) {
+    async SYNTAX({ state, commit, dispatch }) {
       //should not run if there is lex error
       if(!state.foundError)
       {
@@ -622,14 +631,21 @@ export default {
         let synError = false; //tag for syntax error
         while(index < lexeme.length && !synError) {
           try {
-            parser.feed(lexeme[index].token); //checks the cfg in grammar.ne
-            console.log(parser.results);
-            console.log(lexeme[index].token, index);
+            parser.feed(lexeme[index].word); //checks the cfg in grammar.ne
           } catch (err) {
+            let type, msg = null;
+            if(err.message.includes("Syntax error") || err.message.includes("invalid syntax")){
+              type = "syn-error";
+              msg = `Unexpected token: ${lexeme[index].lex} (${lexeme[index].word})`;
+            }else{
+              type = "programmer-error";
+              msg = "Unaccounted error. Check logs";
+              console.log(err);
+            }
             const errors = [];
             errors.push({
-              type: "syn-error",
-              msg: `Unexpected token: ${lexeme[index].lex} (${lexeme[index].word})`,
+              type: type,
+              msg: msg,
               line: lexeme[index].line,
               col: lexeme[index].col,
               exp: "-"
@@ -639,7 +655,15 @@ export default {
           }
           index++;
         }
-        console.log(parser.results);
+        if(parser.results && parser.results.length > 1){
+          console.log("AMBIGUOUS GRAMMAR DETECTED");
+          console.log(parser.results);
+        }else if(parser.results && parser.results.length > 0){
+          console.log("Parser Results: ", parser.results);
+          commit('SET_AST', parser.results[0]);
+          console.log("AST: ", state.ast);
+          await dispatch('WRITE_AST');
+        }
       }
       
     },
@@ -679,6 +703,54 @@ export default {
         commit('SET_ID', id);
         return state.id.indexOf(id)+1;
       }
+    },
+    async WRITE_AST({ state, commit }){
+      commit('SET_OUTPUT', state.ast);
+    },
+    async WRITE_JAVASCRIPT({ state, dispatch, commit }, statements){
+      const javascriptStatements = [];
+      for (const statement of statements){
+        const javascriptStatement = await dispatch('CREATE_JAVASCRIPT', statement);
+        console.log(javascriptStatement);
+        javascriptStatements.push(javascriptStatement);
+      }
+      const js = javascriptStatements.join("\n");
+      const output = JSON.stringify(state.output, null, " ") + "\n\nJS:\n" + js;
+      console.log(output);
+      commit('SET_OUTPUT', output);
+      return output;
+    },
+    async CREATE_JAVASCRIPT({state}, statement){
+      console.log(statement);
+      let js = ``;
+
+      if(statement.type === "constant_assign"){
+        const dataType = statement.dtype.value;
+        let index = 0;
+        let error = false;
+        while(index < statement.values.length && !error){
+          const variable = statement.values[index].id_name.value;
+          const valueType = statement.values[index].literal_value.type;
+          const expression = statement.values[index].literal_value.value.value;
+
+          if(dataType === valueType){
+            if(js === ``)
+              js += `const ${variable} = ${expression}`;
+            else
+              js += `, ${variable} = ${expression}`;
+            console.log(js);
+          }else{
+            error = true;
+          }
+          index++;
+        }
+        if(!error){
+          return js + `;`;
+        }
+        else{
+          return "Mismatched data type and value";
+        }
+      }
     }
-  },
+  }, 
 };
