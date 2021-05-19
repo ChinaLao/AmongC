@@ -226,9 +226,9 @@ export default {
         await this.$store.dispatch("lexicalAnalyzer/SYNTAX");
         if(this.error.length <= 0){
           this.semantics += "\nNo Syntax Error";
-          // const output = JSON.stringify(this.$store.getters["lexicalAnalyzer/OUTPUT"], null, " ");
-          // const statements = JSON.parse(output);
-          // this.semantics += "\n\nAST:\n" + await this.$store.dispatch('lexicalAnalyzer/WRITE_JAVASCRIPT', statements);
+          const output = JSON.stringify(this.$store.getters["lexicalAnalyzer/OUTPUT"], null, " ");
+          const statements = JSON.parse(output);
+          this.semantics += "\n\nAST:\n" + await this.$store.dispatch('lexicalAnalyzer/WRITE_JAVASCRIPT', statements);
         }else this.semantics += "\nSyntax Error Found";
       }
       else this.semantics += "\nLexical Error Found";
