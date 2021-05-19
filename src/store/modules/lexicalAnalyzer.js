@@ -101,7 +101,7 @@ export default {
       ["mainFunc", "start", "end"],
       ["conditionals", "if", "else", "elf", "stateSwitch", "vote", "default"],
       ["loops", "for", "while", "do"],
-      ["controls", "kill", "continue"],
+      ["controls", "kill", "control"],
       ["keywords", "struct", "return", "vital", "clean", "task"],
       ["inputOutput", "shoot", "scan"],
       ["logicals", "and", "or"],
