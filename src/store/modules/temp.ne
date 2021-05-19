@@ -69,7 +69,7 @@ program ->
     global %IN main_statement %OUT function %eof
     {%
         (data) => {
-            return [data[0], data[2], data[4]];
+            return [...data[0], ...data[2], ...data[4]];
         }
     %}
 
@@ -81,10 +81,10 @@ global ->
                 return [...data[0], data[1]];
             }
         %}
-    |   global_choice
+    |   null
         {%
             (data) => {
-                return [data[0]];
+                return [];
             }
         %}
 
@@ -102,7 +102,7 @@ vital_define ->
                 return {
                     type: "constant_assign",
                     dtype: data[1],
-                    constant_assign: [
+                    values: [
                         {
                             id_name: data[2],
                             literal_value: data[4],
@@ -124,7 +124,7 @@ literal ->
         {% 
             (data) => {
                 return{
-                    type: "int_literal",
+                    type: "int",
                     value: data[0],
                 };
             }
@@ -133,7 +133,7 @@ literal ->
         {% 
             (data) => {
                 return{
-                    type: "dec_literal",
+                    type: "dec",
                     value: data[0]
                 };
             }
@@ -142,7 +142,7 @@ literal ->
         {% 
             (data) => {
                 return{
-                    type: "str_literal",
+                    type: "str",
                     value: data[0],
                     access: data[1]
                 };
@@ -152,7 +152,7 @@ literal ->
         {% 
             (data) => {
                 return{
-                    type: "bool_literal",
+                    type: "bool",
                     value: data[0]
                 };
             }
@@ -236,7 +236,7 @@ function_call ->
     |   null
         {%
             (data) => {
-                return[data[0]];
+                return [];
             }
         %}
 
@@ -293,7 +293,7 @@ recur_vital ->
     |   null 
         {%
             (data) => {
-                return [data[0]];
+                return [];
             }
         %}
 
@@ -308,7 +308,7 @@ main_statement ->
        null
         {%
             (data) => {
-                return [data[0]];
+                return [];
             }
         %}
 
@@ -331,6 +331,6 @@ function ->
        null
         {%
             (data) => {
-                return [data[0]];
+                return [];
             }
         %}
