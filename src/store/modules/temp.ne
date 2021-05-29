@@ -59,6 +59,7 @@
         negative: "~",
         access: "@",
         eof: "EOF",
+		nl: {match: /[\r\n]+/, lineBreaks: true},
         ws: /[ \t]+/
     });
 %}
@@ -67,19 +68,19 @@
 
 #main program
 program -> 
-    global _ %IN _ main_statement _ %OUT _ function _ %eof
+    global __ %IN main_statement __ %OUT __ function __ %eof
     {%
         (data) => {
-            return [...data[0], ...data[4], ...data[8]];
+            return [...data[0], ...data[3], ...data[7]];
         }
     %}
 
-#whitespaces
-_ -> %ws:*
+#newlines and whitespaces
+__ ->   (%ws | %nl):*
 
 #global declarations~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 global -> 
-        global _ global_choice
+        global __ global_choice
         {%
             (data) => {
                 return [...data[0], data[2]];
@@ -96,11 +97,16 @@ global_choice ->
         vital_define                            {% id %}
     # |   data_declare                            {% id %}
     # |   struct_declare                          {% id %}
-    # |   %singleComment                          {% id %}
+    |   %singleComment
+		{%
+            (data) => {
+                return;
+            }
+        %}
 
 #for everywhere~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 vital_define -> 
-        %vital _ data_type _ %id _ %equal _ literal _ recur_vital _ %terminator
+        %vital __ data_type __ %id __ %equal __ literal __ recur_vital __ %terminator
         {%
             (data) => {
                 return {
@@ -167,7 +173,7 @@ int_literal ->
     |   %nega_int_literal                       {% id %}
 
 string_access ->
-        %access %open_bracket _ struct_size _ %close_bracket
+        %access %open_bracket __ struct_size __ %close_bracket
         {% 
             (data) => {
                 return data[3]
@@ -197,7 +203,7 @@ struct_size_choice -> #actually choices for id details
 
 #one dimensional
 id_array ->
-        %open_bracket _ struct_size _ %close_bracket id_array_2D
+        %open_bracket __ struct_size __ %close_bracket id_array_2D
         {%
             (data) => {
                 return{
@@ -211,7 +217,7 @@ id_array ->
 
 #two dimensional
 id_array_2D ->
-        %open_bracket _ struct_size _ %close_bracket
+        %open_bracket __ struct_size __ %close_bracket
         {%
             (data) => {
                 return data[1]
@@ -220,7 +226,7 @@ id_array_2D ->
     |   null                                      {% id %}
 
 function_call_statement_choice ->
-        %open_paren _ function_call _ %close_paren
+        %open_paren __ function_call __ %close_paren
         {%
             (data) => {
                 return{
@@ -260,7 +266,7 @@ variable_choice ->
     # |   %open_paren choice %close_paren variable_next_null
 
 additional_call ->
-        additional_call _ %comma _ variable_choice
+        additional_call __ %comma __ variable_choice
         {%
             (data) => {
                 return[...data[0], data[2]];
@@ -282,7 +288,7 @@ choice ->
        null                                      {% id %}
 
 recur_vital -> 
-        recur_vital _ %comma _ %id _ %equal _ literal _
+        recur_vital __ %comma __ %id __ %equal __ literal __
         {%
             (data) => {
                 return [
@@ -303,10 +309,10 @@ recur_vital ->
 
 #main function~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 main_statement ->
-        statement_choice main_statement
+        main_statement __ statement_choice
         {%
             (data) => {
-                return [data[0], ...data[1]]
+                return [...data[0], data[2]]
             }
         %}
 |       null
@@ -327,8 +333,18 @@ statement_choice ->
     # |   %id id_start_statement
     # |   %unary_oper %id assign_next_choice %terminator
     # |   control_statement 
-    # |   %clean %open_paren %close_paren %terminator
-    # |   %singleComment
+    |   %clean %open_paren %close_paren %terminator
+		{%
+            (data) => {
+                return;
+            }
+        %}
+    |   %singleComment
+		{%
+            (data) => {
+                return;
+            }
+        %}
 
 function ->
         # %task function_data_type %id %open_paren parameter %close_paren %open_brace in_function_statement %close_brace function

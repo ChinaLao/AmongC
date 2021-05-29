@@ -538,10 +538,10 @@ export default {
             }
 
             //whitespaces and newlines
-            else if(currentToken === "whitespace") finalToPass.push(current);
+            else if(currentToken === "whitespace" || currentToken === "newline") finalToPass.push(current);
 
             //invalids
-            else if(currentToken !== "newline"){
+            else{
               let message, expectations = "-";
               if(currentToken === "litInt" && (nextToken === "litInt" || nextToken === "litDec")){
                 message = "Limit exceeded";
@@ -585,9 +585,9 @@ export default {
                   exp: expectations
                 });
             }
-          } else if(currentToken === "whitespace"){ 
+          } else if(currentToken === "whitespace" || currentToken === "newline"){ 
             finalToPass.push(current);
-          } else if(currentToken !== "" && currentToken !== "newline"){ //EOF found
+          } else if(currentToken !== ""){ //EOF found
             if(currentToken === "invalid"){ //invalid keyword
               errors.push({
                 type: "lex-error",
@@ -666,10 +666,9 @@ export default {
           }
           index++;
         }
-        if(parser.results && parser.results.length > 1){
+        if(parser.results && parser.results.length > 1)
           console.log("AMBIGUOUS GRAMMAR DETECTED");
-          console.log(parser.results);
-        }if(parser.results){
+        if(parser.results){
           console.log("Parser Results: ", parser.results);
           commit('SET_AST', parser.results[0]);
           console.log("AST: ", state.ast);
@@ -722,17 +721,14 @@ export default {
       const javascriptStatements = [];
       for (const statement of statements){
         const javascriptStatement = await dispatch('CREATE_JAVASCRIPT', statement);
-        console.log(javascriptStatement);
         javascriptStatements.push(javascriptStatement);
       }
       const js = javascriptStatements.join("\n");
       const output = "\n\nJS:\n" + js;
-      console.log(output);
       commit('SET_OUTPUT', output);
       return output;
     },
     async CREATE_JAVASCRIPT({commit}, statement){
-      console.log(statement);
       let js = ``;
 
       if(statement.type === "constant_assign"){
@@ -745,14 +741,12 @@ export default {
           const valueType = statement.values[index].literal_value.type;
           const expression = statement.values[index].literal_value.value;
           let expressionValue = expression.value;
-
           if(dataType === valueType){
             expressionValue = expressionValue.replace(/~/, '-');
             if(js === ``)
               js += `const ${variable} = ${expressionValue}`;
             else
               js += `, ${variable} = ${expressionValue}`;
-            console.log(js);
             index++;
           }else{
             error = true;
@@ -762,7 +756,6 @@ export default {
           return js + `;`;
         }
         else{
-          console.log(statement.values[index].literal_value)
           const error = [{
             type: "sem-error",
             msg: "Mismatched data type and value",
