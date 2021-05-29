@@ -239,7 +239,6 @@ var grammar = {
                 },
     {"name": "main_statement", "symbols": ["main_statement", "__", "statement_choice"], "postprocess": 
         (data) => {
-            console.log(data[2])
             return data[2]
                 ? [...data[0], data[2]]
                 : [...data[0]]
@@ -261,9 +260,51 @@ var grammar = {
             return;
         }
                 },
+    {"name": "function", "symbols": [(lexer.has("task") ? {type: "task"} : task), "__", "function_data_type", "__", (lexer.has("id") ? {type: "id"} : id), "__", (lexer.has("open_paren") ? {type: "open_paren"} : open_paren), "__", "parameter", (lexer.has("close_paren") ? {type: "close_paren"} : close_paren), "__", (lexer.has("open_brace") ? {type: "open_brace"} : open_brace), "__", "in_function_statement", "__", (lexer.has("close_brace") ? {type: "close_brace"} : close_brace), "__", "function"], "postprocess": 
+        (data) => {
+            return [
+                    {
+                        type: "user_function",
+                        function_dtype: data[2],
+                        function_name: data[4],
+                        arguments: [...data[8]],
+                        function_body: data[13]
+                            ? [...data[13]]
+                            : []
+                    },
+                ];
+        }
+                },
     {"name": "function", "symbols": [], "postprocess": 
         (data) => {
             return [];
+        }
+                },
+    {"name": "function_data_type", "symbols": ["data_type"], "postprocess": id},
+    {"name": "function_data_type", "symbols": [(lexer.has("empty") ? {type: "empty"} : empty)], "postprocess": id},
+    {"name": "parameter", "symbols": [], "postprocess": 
+        (data) => {
+            return[];
+        }
+                },
+    {"name": "in_function_statement$ebnf$1", "symbols": []},
+    {"name": "in_function_statement$ebnf$1", "symbols": ["in_function_statement$ebnf$1", "function_statement_choice"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "in_function_statement", "symbols": ["in_function_statement$ebnf$1"], "postprocess": 
+        (data) => {
+            return data[0]
+                ? [data[0]]
+                : [];
+        }
+                },
+    {"name": "function_statement_choice", "symbols": ["vital_define"], "postprocess": id},
+    {"name": "function_statement_choice", "symbols": [(lexer.has("clean") ? {type: "clean"} : clean), (lexer.has("open_paren") ? {type: "open_paren"} : open_paren), (lexer.has("close_paren") ? {type: "close_paren"} : close_paren), (lexer.has("terminator") ? {type: "terminator"} : terminator)], "postprocess": 
+        (data) => {
+            return;
+        }
+                },
+    {"name": "function_statement_choice", "symbols": [(lexer.has("singleComment") ? {type: "singleComment"} : singleComment)], "postprocess": 
+        (data) => {
+            return;
         }
                 }
 ]

@@ -351,24 +351,87 @@ statement_choice ->
         %}
 
 function ->
-        # %task function_data_type %id %open_paren parameter %close_paren %open_brace in_function_statement %close_brace function
-        # {%
-        #     (data) => {
-        #         return [
-        #             {
-        #                 type: "user_function",
-        #                 function_dtype: data[1],
-        #                 function_name: data[2],
-        #                 arguments: [...data[4]],
-        #                 function_body: [...data[7]]
-        #             },
-        #             ...data[9]
-        #         ]
-        #     }
-        # %}
+        %task __ function_data_type __ %id __ %open_paren __ parameter %close_paren __ %open_brace __ in_function_statement __ %close_brace __ function
+        {%
+            (data) => {
+                return [
+                    {
+                        type: "user_function",
+                        function_dtype: data[2],
+                        function_name: data[4],
+                        arguments: [...data[8]],
+                        function_body: data[13]
+                            ? [...data[13]]
+                            : []
+                    },
+                ];
+            }
+        %}
+    |
        null
         {%
             (data) => {
                 return [];
+            }
+        %}
+
+function_data_type -> 
+        data_type                            {% id %}
+    |   %empty                               {% id %}
+
+parameter -> 
+        # data_type __ %id __ array_parameter __ comma_parameter
+    # |   %id %id array_parameter comma_parameter 
+       null
+        {%
+            (data) => {
+                return[];
+            }
+        %}
+
+# array_parameter ->
+        # %open_bracket %close_bracket
+    #    null
+
+# comma_parameter ->
+        # %comma recur_parameter_again
+    #    null
+
+# recur_parameter ->
+#         data_type %id array_parameter comma_parameter
+#     |   %id %id array_parameter comma_parameter
+
+in_function_statement -> 
+        function_statement_choice:*
+        {%
+            (data) => {
+                return data[0]
+                    ? [data[0]]
+                    : [];
+            }
+        %}
+
+function_statement_choice ->
+        vital_define                            {% id %}
+    # |   data_declare
+    # |   out_statement 
+    # |   in_statement 
+    # |   function_loop_statement 
+    # |   function_if_statement 
+    # |   function_switch_statement 
+    # |   %id id_start_statement
+    # |   %unary_oper %id assign_next_choice %terminator #kulang to
+    # |   return_statement
+    # |   control_statement 
+    |   %clean %open_paren %close_paren %terminator
+        {%
+            (data) => {
+                return;
+            }
+        %}
+    |   %singleComment
+        {%
+            (data) => {
+                return;
             }
         %}
