@@ -58,7 +58,8 @@
         not: "!",
         negative: "~",
         access: "@",
-        eof: "EOF"
+        eof: "EOF",
+        ws: /[ \t]+/
     });
 %}
 
@@ -66,19 +67,24 @@
 
 #main program
 program -> 
-    global %IN main_statement %OUT function %eof
+    global _ %IN _ main_statement _ %OUT _ function _ %eof
     {%
         (data) => {
-            return [...data[0], ...data[2], ...data[4]];
+            // console.log(data)
+            return [...data[0], ...data[4], ...data[8]];
         }
     %}
 
+_ -> %ws:*
+
+__ -> %ws:+
+
 #global declarations~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 global -> 
-        global global_choice
+        global _ global_choice
         {%
             (data) => {
-                return [...data[0], data[1]];
+                return [...data[0], data[2]];
             }
         %}
     |   null
@@ -96,18 +102,18 @@ global_choice ->
 
 #for everywhere~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 vital_define -> 
-        %vital data_type %id %equal literal recur_vital %terminator
+        %vital __ data_type __ %id _ %equal _ literal _ recur_vital _ %terminator _
         {%
             (data) => {
                 return {
                     type: "constant_assign",
-                    dtype: data[1],
+                    dtype: data[2],
                     values: [
                         {
-                            id_name: data[2],
-                            literal_value: data[4],
+                            id_name: data[4],
+                            literal_value: data[8],
                         },
-                        ...data[5]
+                        ...data[10]
                     ]
                 };
             }
@@ -163,10 +169,10 @@ int_literal ->
     |   %nega_int_literal                       {% id %}
 
 string_access ->
-        %access %open_bracket struct_size %close_bracket
+        %access %open_bracket _ struct_size _ %close_bracket
         {% 
             (data) => {
-                return data[2]
+                return data[3]
             }
         %}
     |   null                                    {% id %}
@@ -187,13 +193,13 @@ struct_size ->
 
 struct_size_choice -> #actually choices for id details
         id_array                                 {% id %}
-    |   function_call_statement_choice
+    |   function_call_statement_choice           {% id %}
     # |   first_compute_choice
     # |   struct_unary
 
 #one dimensional
 id_array ->
-        %open_bracket struct_size %close_bracket id_array_2D
+        %open_bracket _ struct_size _ %close_bracket id_array_2D
         {%
             (data) => {
                 return{
@@ -207,7 +213,7 @@ id_array ->
 
 #two dimensional
 id_array_2D ->
-        %open_bracket struct_size %close_bracket
+        %open_bracket _ struct_size _ %close_bracket
         {%
             (data) => {
                 return data[1]
@@ -216,7 +222,7 @@ id_array_2D ->
     |   null                                      {% id %}
 
 function_call_statement_choice ->
-        %open_paren function_call %close_paren
+        %open_paren _ function_call _ %close_paren
         {%
             (data) => {
                 return{
@@ -256,13 +262,13 @@ variable_choice ->
     # |   %open_paren choice %close_paren variable_next_null
 
 additional_call ->
-        additional_call %comma variable_choice
+        additional_call _ %comma _ variable_choice
         {%
             (data) => {
                 return[...data[0], data[2]];
             }
         %}
-    |   %comma variable_choice
+    |   %comma _ variable_choice
         {%
             (data) => {
                 return[data[1]];
@@ -278,14 +284,14 @@ choice ->
        null                                      {% id %}
 
 recur_vital -> 
-        recur_vital %comma %id %equal literal
+        recur_vital _ %comma _ %id _ %equal _ literal _
         {%
             (data) => {
                 return [
                     ...data[0],
                     {
-                        id_name: data[2],
-                        literal_value: data[4]
+                        id_name: data[4],
+                        literal_value: data[8]
                     }
                 ];
             }

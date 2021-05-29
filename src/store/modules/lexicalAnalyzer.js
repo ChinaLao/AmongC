@@ -447,6 +447,7 @@ export default {
       };
       const tokenStream = [];
       const final = [];
+      const finalToPass = [];
       const parser = moo.compile(state.lexRules);
       let reader = parser.reset(code);
       const errors = [];
@@ -531,10 +532,16 @@ export default {
                 currentToken !== "newline" &&
                 currentToken !== "invalid" && 
                 currentDelims && currentDelims.includes(nextToken)
-            ) final.push(current);
+            ){
+              final.push(current);
+              finalToPass.push(current)
+            }
+
+            //whitespaces and newlines
+            else if(currentToken === "whitespace") finalToPass.push(current);
 
             //invalids
-            else if(currentToken !== "whitespace" && currentToken !== "newline"){
+            else if(currentToken !== "newline"){
               let message, expectations = "-";
               if(currentToken === "litInt" && (nextToken === "litInt" || nextToken === "litDec")){
                 message = "Limit exceeded";
@@ -578,7 +585,9 @@ export default {
                   exp: expectations
                 });
             }
-          } else if(currentToken !== "" && currentToken !== "whitespace" && currentToken !== "newline"){ //EOF found
+          } else if(currentToken === "whitespace"){ 
+            finalToPass.push(current);
+          } else if(currentToken !== "" && currentToken !== "newline"){ //EOF found
             if(currentToken === "invalid"){ //invalid keyword
               errors.push({
                 type: "lex-error",
@@ -589,6 +598,7 @@ export default {
               });
             }else if((currentDelims && currentDelims.includes(nextToken)) || currentToken === "EOF"){ //valid token with valid delimiter
               final.push(current);
+              finalToPass.push(current)
             }else{ //invalid delimiter
               const nextWord = next.word;
               const currentWord = currentToken !== "whitespace" && currentToken !== "newline"
@@ -619,13 +629,14 @@ export default {
       commit("SET_LEXEME", final);
       commit("SET_ERROR", errors);
       if(errors.length > 0) commit("CHANGE_ERROR", true);
+      return finalToPass;
     },
-    async SYNTAX({ state, commit, dispatch }) {
+    async SYNTAX({ state, commit, dispatch }, tokenStream) {
       //should not run if there is lex error
       if(!state.foundError)
       {
         const parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar)); //initializes nearley
-        const lexeme = state.lexeme; //gets list of lex
+        const lexeme = tokenStream; //gets list of lex
 
         let index = 0;
         let synError = false; //tag for syntax error
@@ -658,7 +669,7 @@ export default {
         if(parser.results && parser.results.length > 1){
           console.log("AMBIGUOUS GRAMMAR DETECTED");
           console.log(parser.results);
-        }else if(parser.results && parser.results.length > 0){
+        }if(parser.results){
           console.log("Parser Results: ", parser.results);
           commit('SET_AST', parser.results[0]);
           console.log("AST: ", state.ast);
@@ -720,7 +731,7 @@ export default {
       commit('SET_OUTPUT', output);
       return output;
     },
-    async CREATE_JAVASCRIPT({state}, statement){
+    async CREATE_JAVASCRIPT({commit}, statement){
       console.log(statement);
       let js = ``;
 
@@ -730,25 +741,38 @@ export default {
         let error = false;
         while(index < statement.values.length && !error){
           const variable = statement.values[index].id_name.value;
+          const value = statement.values[index].literal_value;
           const valueType = statement.values[index].literal_value.type;
-          const expression = statement.values[index].literal_value.value.value;
+          const expression = statement.values[index].literal_value.value;
+          let expressionValue = expression.value;
 
           if(dataType === valueType){
+            expressionValue = expressionValue.replace(/~/, '-');
             if(js === ``)
-              js += `const ${variable} = ${expression}`;
+              js += `const ${variable} = ${expressionValue}`;
             else
-              js += `, ${variable} = ${expression}`;
+              js += `, ${variable} = ${expressionValue}`;
             console.log(js);
+            index++;
           }else{
             error = true;
           }
-          index++;
         }
         if(!error){
           return js + `;`;
         }
         else{
-          return "Mismatched data type and value";
+          console.log(statement.values[index].literal_value)
+          const error = [{
+            type: "sem-error",
+            msg: "Mismatched data type and value",
+            line: statement.values[index].literal_value.value.line,
+            col: statement.values[index].literal_value.value.col,
+            exp: `Expected ${dataType} value`,
+          }];
+          commit("SET_ERROR", error);
+          if(error.length > 0) commit("CHANGE_ERROR", true);
+          return "";
         }
       }
     }

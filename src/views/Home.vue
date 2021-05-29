@@ -219,11 +219,11 @@ export default {
       this.runClicked = true;
       this.clearOutput();
       this.semantics = "Checking Lexical...";
-      await this.$store.dispatch("lexicalAnalyzer/LEXICAL", this.code);
+      const tokens = await this.$store.dispatch("lexicalAnalyzer/LEXICAL", this.code);
       if(this.error.length <= 0){
         this.semantics += "\nNo Lexical Error";
         this.semantics += "\n\nChecking Syntax...";
-        await this.$store.dispatch("lexicalAnalyzer/SYNTAX");
+        await this.$store.dispatch("lexicalAnalyzer/SYNTAX", tokens);
         if(this.error.length <= 0){
           this.semantics += "\nNo Syntax Error";
           const output = JSON.stringify(this.$store.getters["lexicalAnalyzer/OUTPUT"], null, " ");
