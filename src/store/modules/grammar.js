@@ -77,9 +77,6 @@ var grammar = {
     {"name": "_$ebnf$1", "symbols": []},
     {"name": "_$ebnf$1", "symbols": ["_$ebnf$1", (lexer.has("ws") ? {type: "ws"} : ws)], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "_", "symbols": ["_$ebnf$1"]},
-    {"name": "__$ebnf$1", "symbols": [(lexer.has("ws") ? {type: "ws"} : ws)]},
-    {"name": "__$ebnf$1", "symbols": ["__$ebnf$1", (lexer.has("ws") ? {type: "ws"} : ws)], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "__", "symbols": ["__$ebnf$1"]},
     {"name": "global", "symbols": ["global", "_", "global_choice"], "postprocess": 
         (data) => {
             return [...data[0], data[2]];
@@ -91,7 +88,7 @@ var grammar = {
         }
                 },
     {"name": "global_choice", "symbols": ["vital_define"], "postprocess": id},
-    {"name": "vital_define", "symbols": [(lexer.has("vital") ? {type: "vital"} : vital), "__", "data_type", "__", (lexer.has("id") ? {type: "id"} : id), "_", (lexer.has("equal") ? {type: "equal"} : equal), "_", "literal", "_", "recur_vital", "_", (lexer.has("terminator") ? {type: "terminator"} : terminator), "_"], "postprocess": 
+    {"name": "vital_define", "symbols": [(lexer.has("vital") ? {type: "vital"} : vital), "_", "data_type", "_", (lexer.has("id") ? {type: "id"} : id), "_", (lexer.has("equal") ? {type: "equal"} : equal), "_", "literal", "_", "recur_vital", "_", (lexer.has("terminator") ? {type: "terminator"} : terminator)], "postprocess": 
         (data) => {
             return {
                 type: "constant_assign",

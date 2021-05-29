@@ -77,8 +77,6 @@ program ->
 
 _ -> %ws:*
 
-__ -> %ws:+
-
 #global declarations~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 global -> 
         global _ global_choice
@@ -102,7 +100,7 @@ global_choice ->
 
 #for everywhere~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 vital_define -> 
-        %vital __ data_type __ %id _ %equal _ literal _ recur_vital _ %terminator _
+        %vital _ data_type _ %id _ %equal _ literal _ recur_vital _ %terminator
         {%
             (data) => {
                 return {
