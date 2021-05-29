@@ -227,11 +227,17 @@ var grammar = {
             return [];
         }
                 },
+    {"name": "main_statement", "symbols": ["statement_choice", "main_statement"], "postprocess": 
+        (data) => {
+            return [data[0], ...data[1]]
+        }
+                },
     {"name": "main_statement", "symbols": [], "postprocess": 
         (data) => {
             return [];
         }
                 },
+    {"name": "statement_choice", "symbols": ["vital_define"], "postprocess": id},
     {"name": "function", "symbols": [], "postprocess": 
         (data) => {
             return [];

@@ -303,18 +303,32 @@ recur_vital ->
 
 #main function~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 main_statement ->
-        # statement_choice main_statement
-        # {%
-        #     (data) => {
-        #         return [data[0], ...data[1]]
-        #     }
-        # %}
-       null
+        statement_choice main_statement
+        {%
+            (data) => {
+                return [data[0], ...data[1]]
+            }
+        %}
+|       null
         {%
             (data) => {
                 return [];
             }
         %}
+
+statement_choice ->
+        vital_define                            {% id %}
+    # |   data_declare
+    # |   out_statement 
+    # |   in_statement 
+    # |   loop_statement 
+    # |   if_statement 
+    # |   switch_statement 
+    # |   %id id_start_statement
+    # |   %unary_oper %id assign_next_choice %terminator
+    # |   control_statement 
+    # |   %clean %open_paren %close_paren %terminator
+    # |   %singleComment
 
 function ->
         # %task function_data_type %id %open_paren parameter %close_paren %open_brace in_function_statement %close_brace function
