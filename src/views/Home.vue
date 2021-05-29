@@ -87,8 +87,8 @@
             <v-row>
               <h2 class="success--text">Output</h2>
               <prism-editor
-                class="background semOutput pt-8"
-                v-model="semantics"
+                class="background msgOutput pt-8"
+                v-model="output"
                 :highlight="highlighter"
                 readonly
               ></prism-editor>
@@ -144,7 +144,7 @@ export default {
   },
   data: () => ({
     code: null,
-    semantics: null,
+    output: null,
     runClicked: false,
     lexemeTableHeaders: [
       {
@@ -217,22 +217,29 @@ export default {
     },
     async run() {
       this.runClicked = true;
-      this.clearOutput();
-      this.semantics = "Checking Lexical...";
-      const tokens = await this.$store.dispatch("lexicalAnalyzer/LEXICAL", this.code);
-      if(this.error.length <= 0){
-        this.semantics += "\nNo Lexical Error";
-        this.semantics += "\n\nChecking Syntax...";
-        await this.$store.dispatch("lexicalAnalyzer/SYNTAX", tokens);
-        if(this.error.length <= 0){
-          this.semantics += "\nNo Syntax Error";
-          const output = JSON.stringify(this.$store.getters["lexicalAnalyzer/OUTPUT"], null, "  ");
-          this.semantics += "\n\nAST:\n" + output;
-          const statements = JSON.parse(output);
-          this.semantics += await this.$store.dispatch('lexicalAnalyzer/WRITE_JAVASCRIPT', statements);
-        }else this.semantics += "\nSyntax Error Found";
+      this.clearOutput(); //clears lex table, error table, and output
+
+      this.output = "Checking Lexical...";
+      const tokens = await this.$store.dispatch("lexicalAnalyzer/LEXICAL", this.code); //gets tokenized with spaces
+
+      if(this.error.length <= 0){ //if no lex-error
+
+        this.output += "\nNo Lexical Error\n\nChecking Syntax...";
+        await this.$store.dispatch("lexicalAnalyzer/SYNTAX", tokens); //check syntax and pass the tokens with spaces
+
+        if(this.error.length <= 0){ //if no syn-error
+
+          this.output += "\nNo Syntax Error\n\nChecking Semantics...";
+
+          const ast = JSON.stringify(this.$store.getters["lexicalAnalyzer/OUTPUT"], null, "  "); //create AST from nearley output and convert to string
+          this.output += "\n\nAST:\n" + ast;
+
+          const statements = JSON.parse(ast); //convert ast to object
+          this.output += await this.$store.dispatch('lexicalAnalyzer/WRITE_JAVASCRIPT', statements); //write js from statements
+
+        }else this.output += "\nSyntax Error Found";
       }
-      else this.semantics += "\nLexical Error Found";
+      else this.output += "\nLexical Error Found";
       this.runClicked = false;
     },
     stop() {
@@ -243,7 +250,7 @@ export default {
       this.clearOutput();
     },
     clearOutput() {
-      this.semantics = null;
+      this.output = null;
       this.$store.commit("lexicalAnalyzer/CLEAR_OUTPUTS");
     },
   },
@@ -270,7 +277,7 @@ export default {
   padding: 5px;
 }
 
-.semOutput {
+.msgOutput {
   background: #080728;
   color: #ffff;
   height: 27.5vh;
