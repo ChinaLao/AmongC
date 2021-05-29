@@ -70,7 +70,6 @@ var grammar = {
     ParserRules: [
     {"name": "program", "symbols": ["global", "_", (lexer.has("IN") ? {type: "IN"} : IN), "_", "main_statement", "_", (lexer.has("OUT") ? {type: "OUT"} : OUT), "_", "function", "_", (lexer.has("eof") ? {type: "eof"} : eof)], "postprocess": 
         (data) => {
-            // console.log(data)
             return [...data[0], ...data[4], ...data[8]];
         }
             },
@@ -206,9 +205,9 @@ var grammar = {
             return[...data[0], data[2]];
         }
                 },
-    {"name": "additional_call", "symbols": [(lexer.has("comma") ? {type: "comma"} : comma), "_", "variable_choice"], "postprocess": 
+    {"name": "additional_call", "symbols": [], "postprocess": 
         (data) => {
-            return[data[1]];
+            return[];
         }
                 },
     {"name": "choice", "symbols": [], "postprocess": id},

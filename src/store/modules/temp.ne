@@ -70,11 +70,11 @@ program ->
     global _ %IN _ main_statement _ %OUT _ function _ %eof
     {%
         (data) => {
-            // console.log(data)
             return [...data[0], ...data[4], ...data[8]];
         }
     %}
 
+#whitespaces
 _ -> %ws:*
 
 #global declarations~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -266,10 +266,10 @@ additional_call ->
                 return[...data[0], data[2]];
             }
         %}
-    |   %comma _ variable_choice
+    |   null
         {%
             (data) => {
-                return[data[1]];
+                return[];
             }
         %}
 

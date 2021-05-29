@@ -645,13 +645,13 @@ export default {
             parser.feed(lexeme[index].word); //checks the cfg in grammar.ne
           } catch (err) {
             let type, msg = null;
+            console.log(err); 
             if(err.message.includes("Syntax error") || err.message.includes("invalid syntax")){
               type = "syn-error";
               msg = `Unexpected token: ${lexeme[index].lex} (${lexeme[index].word})`;
             }else{
               type = "programmer-error";
               msg = "Unaccounted error. Check logs";
-              console.log(err);
             }
             const errors = [];
             errors.push({
