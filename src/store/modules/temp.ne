@@ -83,7 +83,9 @@ global ->
         global __ global_choice
         {%
             (data) => {
-                return [...data[0], data[2]];
+                return data[2]
+                    ? [...data[0], data[2]]
+                    : [...data[0]];
             }
         %}
     |   null
@@ -312,7 +314,9 @@ main_statement ->
         main_statement __ statement_choice
         {%
             (data) => {
-                return [...data[0], data[2]]
+                return data[2]
+                    ? [...data[0], data[2]]
+                    : [...data[0]]
             }
         %}
 |       null

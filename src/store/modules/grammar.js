@@ -81,7 +81,9 @@ var grammar = {
     {"name": "__", "symbols": ["__$ebnf$1"]},
     {"name": "global", "symbols": ["global", "__", "global_choice"], "postprocess": 
         (data) => {
-            return [...data[0], data[2]];
+            return data[2]
+                ? [...data[0], data[2]]
+                : [...data[0]];
         }
                 },
     {"name": "global", "symbols": [], "postprocess": 
@@ -237,7 +239,10 @@ var grammar = {
                 },
     {"name": "main_statement", "symbols": ["main_statement", "__", "statement_choice"], "postprocess": 
         (data) => {
-            return [...data[0], data[2]]
+            console.log(data[2])
+            return data[2]
+                ? [...data[0], data[2]]
+                : [...data[0]]
         }
                 },
     {"name": "main_statement", "symbols": [], "postprocess": 
