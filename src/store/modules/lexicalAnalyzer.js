@@ -768,7 +768,7 @@ export default {
             msg: "Mismatched data type and value",
             line: statement.values[index].literal_value.value.line,
             col: statement.values[index].literal_value.value.col,
-            exp: `Expected ${dataType} value`,
+            exp: `${dataType} value`,
           }];
           commit("SET_ERROR", error);
           if(error.length > 0) commit("CHANGE_ERROR", true);
