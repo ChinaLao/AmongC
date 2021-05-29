@@ -726,7 +726,7 @@ export default {
         javascriptStatements.push(javascriptStatement);
       }
       const js = javascriptStatements.join("\n");
-      const output = JSON.stringify(state.output, null, " ") + "\n\nJS:\n" + js;
+      const output = "\n\nJS:\n" + js;
       console.log(output);
       commit('SET_OUTPUT', output);
       return output;

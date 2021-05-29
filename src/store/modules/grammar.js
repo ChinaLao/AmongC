@@ -88,7 +88,7 @@ var grammar = {
         }
                 },
     {"name": "global_choice", "symbols": ["vital_define"], "postprocess": id},
-    {"name": "vital_define", "symbols": [(lexer.has("vital") ? {type: "vital"} : vital), "_", "data_type", "_", (lexer.has("id") ? {type: "id"} : id), "_", (lexer.has("equal") ? {type: "equal"} : equal), "_", "literal", "_", "recur_vital", "_", (lexer.has("terminator") ? {type: "terminator"} : terminator)], "postprocess": 
+    {"name": "vital_define", "symbols": [(lexer.has("vital") ? {type: "vital"} : vital), "_", "data_type", "_", (lexer.has("id") ? {type: "id"} : id), "_", "declare_choice", "_", "recur_vital", "_", (lexer.has("terminator") ? {type: "terminator"} : terminator)], "postprocess": 
         (data) => {
             return {
                 type: "constant_assign",
@@ -96,9 +96,9 @@ var grammar = {
                 values: [
                     {
                         id_name: data[4],
-                        literal_value: data[8],
+                        definition: data[6],
                     },
-                    ...data[10]
+                    ...data[8]
                 ]
             };
         }
@@ -106,7 +106,41 @@ var grammar = {
     {"name": "data_type", "symbols": [(lexer.has("int") ? {type: "int"} : int)], "postprocess": id},
     {"name": "data_type", "symbols": [(lexer.has("dec") ? {type: "dec"} : dec)], "postprocess": id},
     {"name": "data_type", "symbols": [(lexer.has("str") ? {type: "str"} : str)], "postprocess": id},
-    {"name": "data_type", "symbols": [(lexer.has("bool") ? {type: "bool"} : bool)], "postprocess": id},
+    {"name": "data_type", "symbols": [(lexer.has("bool") ? {type: "bool"} : bool)]},
+    {"name": "declare_choice", "symbols": ["variable"], "postprocess": id},
+    {"name": "variable", "symbols": [(lexer.has("equal") ? {type: "equal"} : equal), "_", "variable_choice", "_", "recur_variable"], "postprocess": 
+        (data) => {
+            return{
+                variable: data[2],
+                definition: data[4]
+            }
+        }
+                },
+    {"name": "variable", "symbols": [(lexer.has("comma") ? {type: "comma"} : comma), "_", (lexer.has("id") ? {type: "id"} : id), "_", "declare_choice"], "postprocess": 
+        (data) => {
+            return{
+                variable: data[2],
+                definition: data[4]
+            }
+        }
+                },
+    {"name": "recur_variable", "symbols": [(lexer.has("equal") ? {type: "equal"} : equal), "_", "variable_choice", "_", "recur_variable"], "postprocess": 
+        (data) => {
+            return{
+                variable: data[2],
+                definition: data[4]
+            }
+        }
+                },
+    {"name": "recur_variable", "symbols": [(lexer.has("comma") ? {type: "comma"} : comma), "_", (lexer.has("id") ? {type: "id"} : id), "_", "declare_choice"], "postprocess": 
+        (data) => {
+            return{
+                variable: data[2],
+                definition: data[4]
+            }
+        }
+                },
+    {"name": "recur_variable", "symbols": [], "postprocess": id},
     {"name": "literal", "symbols": ["int_literal"], "postprocess":  
         (data) => {
             return{
