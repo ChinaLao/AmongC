@@ -262,7 +262,6 @@ var grammar = {
                 },
     {"name": "function", "symbols": [(lexer.has("task") ? {type: "task"} : task), "__", "function_data_type", "__", (lexer.has("id") ? {type: "id"} : id), "__", (lexer.has("open_paren") ? {type: "open_paren"} : open_paren), "__", "parameter", (lexer.has("close_paren") ? {type: "close_paren"} : close_paren), "__", (lexer.has("open_brace") ? {type: "open_brace"} : open_brace), "in_function_statement", "__", (lexer.has("close_brace") ? {type: "close_brace"} : close_brace), "__", "function"], "postprocess": 
         (data) => {
-            console.log("a", ...data[12])
             return [
                 {
                     type: "user_function",
@@ -290,7 +289,6 @@ var grammar = {
                 },
     {"name": "in_function_statement", "symbols": ["in_function_statement", "__", "function_statement_choice"], "postprocess": 
         (data) => {
-            console.log(data);
             return [...data[0], ...data[2]];
         }
                 },

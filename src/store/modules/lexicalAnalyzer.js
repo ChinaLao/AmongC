@@ -126,11 +126,12 @@ export default {
       state.lexeme = payload;
     },
     SET_ERROR(state, payload) {
-      state.error = payload;
+      state.error.push(payload);
     },
     CLEAR_OUTPUTS(state) {
-        state.error = state.lexeme = state.ast = state.output = [];
-        state.id.splice(0, state.id.length)
+        state.lexeme = state.ast = state.output = [];
+        state.id.splice(0, state.id.length);
+        state.error.splice(0, state.error.length);
         state.foundError = false;
     },
     CHANGE_ERROR(state, payload){
@@ -450,7 +451,6 @@ export default {
       const finalToPass = [];
       const parser = moo.compile(state.lexRules);
       let reader = parser.reset(code);
-      const errors = [];
 
       let token = " ";
 
@@ -568,7 +568,7 @@ export default {
 
               //dedicated for invalid keywords
               if(missingQuote || currentToken === "invalid")
-                errors.push({
+                commit("SET_ERROR", {
                   type: "lex-error",
                   msg: `Invalid Keyword: ${current.word}`,
                   line: current.line,
@@ -577,7 +577,7 @@ export default {
                 });
               //dedicated for other invalids
               else
-                errors.push({
+                commit("SET_ERROR", {
                   type: "lex-error",
                   msg: message,
                   line: next.line,
@@ -589,7 +589,7 @@ export default {
             finalToPass.push(current);
           } else if(currentToken !== ""){ //EOF found
             if(currentToken === "invalid"){ //invalid keyword
-              errors.push({
+              commit("SET_ERROR", {
                 type: "lex-error",
                 msg: `Invalid Keyword: ${current.word}`,
                 line: current.line,
@@ -604,7 +604,7 @@ export default {
               const currentWord = currentToken !== "whitespace" && currentToken !== "newline"
                 ? current.word
                 : currentToken;
-              errors.push({
+              commit("SET_ERROR", {
                 type: "lex-error",
                 msg: `Invalid delimiter: ${nextWord} after: ${currentWord}`,
                 line: current.line,
@@ -616,7 +616,7 @@ export default {
           index++;
         }catch(err){
           console.log(err);
-          errors.push({
+          commit("SET_ERROR", {
             type: "programmer-error",
             msg: `Missing delimiter rule`,
             line: tokenStream[index].line,
@@ -625,10 +625,9 @@ export default {
           });
         }
       }
-      console.log("Lexical Errors: ", errors);
+      console.log("Lexical Errors: ", state.error);
       commit("SET_LEXEME", final);
-      commit("SET_ERROR", errors);
-      if(errors.length > 0) commit("CHANGE_ERROR", true);
+      if(state.error.length > 0) commit("CHANGE_ERROR", true);
       return finalToPass;
     },
     async SYNTAX({ state, commit, dispatch }, tokenStream) {
@@ -653,15 +652,13 @@ export default {
               type = "programmer-error";
               msg = "Unaccounted error. Check logs";
             }
-            const errors = [];
-            errors.push({
+            commit("SET_ERROR", {
               type: type,
               msg: msg,
               line: lexeme[index].line,
               col: lexeme[index].col,
               exp: "-"
             });
-            commit("SET_ERROR", errors);
             synError = true;
           }
           index++;
@@ -728,7 +725,7 @@ export default {
       commit('SET_OUTPUT', output);
       return output;
     },
-    async CREATE_JAVASCRIPT({commit}, section){
+    async CREATE_JAVASCRIPT({ state, commit }, section){
       let js = ``;
       const isUDF = section.type === "user_function"
         ? true 
@@ -737,6 +734,7 @@ export default {
       const statements = isUDF
         ? section.function_body
         : section;
+      
       if(statements)
         statements.forEach(statement => {
           const statementType = statement.type;
@@ -750,6 +748,7 @@ export default {
               const valueType = value.type;
               const expression = value.value;
               let expressionValue = expression.value;
+              
               if(dataType === valueType){
                 expressionValue = expressionValue.replace(/~/, '-');
                 if(js === ``)
@@ -765,57 +764,18 @@ export default {
               return js + `;`;
             }
             else{
-              const error = [{
+              commit("SET_ERROR", {
                 type: "sem-error",
                 msg: "Mismatched data type and value",
                 line: statement.values[index].literal_value.value.line,
                 col: statement.values[index].literal_value.value.col,
                 exp: `${dataType} value`,
-              }];
-              commit("SET_ERROR", error);
-              if(error.length > 0) commit("CHANGE_ERROR", true);
+              });
               return "";
             }
           }
         });
-        
-      // if(statement.type === "constant_assign"){
-      //   const dataType = statement.dtype.value;
-      //   let index = 0;
-      //   let error = false;
-      //   while(index < statement.values.length && !error){
-      //     const variable = statement.values[index].id_name.value;
-      //     const value = statement.values[index].literal_value;
-      //     const valueType = statement.values[index].literal_value.type;
-      //     const expression = statement.values[index].literal_value.value;
-      //     let expressionValue = expression.value;
-      //     if(dataType === valueType){
-      //       expressionValue = expressionValue.replace(/~/, '-');
-      //       if(js === ``)
-      //         js += `const ${variable} = ${expressionValue}`;
-      //       else
-      //         js += `, ${variable} = ${expressionValue}`;
-      //       index++;
-      //     }else{
-      //       error = true;
-      //     }
-      //   }
-      //   if(!error){
-      //     return js + `;`;
-      //   }
-      //   else{
-      //     const error = [{
-      //       type: "sem-error",
-      //       msg: "Mismatched data type and value",
-      //       line: statement.values[index].literal_value.value.line,
-      //       col: statement.values[index].literal_value.value.col,
-      //       exp: `${dataType} value`,
-      //     }];
-      //     commit("SET_ERROR", error);
-      //     if(error.length > 0) commit("CHANGE_ERROR", true);
-      //     return "";
-      //   }
-      // }
+        if(state.error.length > 0) commit("CHANGE_ERROR", true);
     }
   }, 
 };
