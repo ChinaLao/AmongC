@@ -99,7 +99,7 @@ var grammar = {
                 },
     {"name": "vital_define", "symbols": [(lexer.has("vital") ? {type: "vital"} : vital), "__", "data_type", "__", (lexer.has("id") ? {type: "id"} : id), "__", (lexer.has("equal") ? {type: "equal"} : equal), "__", "literal", "__", "recur_vital", "__", (lexer.has("terminator") ? {type: "terminator"} : terminator)], "postprocess": 
         (data) => {
-            return {
+            return [{
                 type: "constant_assign",
                 dtype: data[2],
                 values: [
@@ -109,7 +109,7 @@ var grammar = {
                     },
                     ...data[10]
                 ]
-            };
+            }];
         }
                 },
     {"name": "data_type", "symbols": [(lexer.has("int") ? {type: "int"} : int)], "postprocess": id},
@@ -260,19 +260,20 @@ var grammar = {
             return;
         }
                 },
-    {"name": "function", "symbols": [(lexer.has("task") ? {type: "task"} : task), "__", "function_data_type", "__", (lexer.has("id") ? {type: "id"} : id), "__", (lexer.has("open_paren") ? {type: "open_paren"} : open_paren), "__", "parameter", (lexer.has("close_paren") ? {type: "close_paren"} : close_paren), "__", (lexer.has("open_brace") ? {type: "open_brace"} : open_brace), "__", "in_function_statement", "__", (lexer.has("close_brace") ? {type: "close_brace"} : close_brace), "__", "function"], "postprocess": 
+    {"name": "function", "symbols": [(lexer.has("task") ? {type: "task"} : task), "__", "function_data_type", "__", (lexer.has("id") ? {type: "id"} : id), "__", (lexer.has("open_paren") ? {type: "open_paren"} : open_paren), "__", "parameter", (lexer.has("close_paren") ? {type: "close_paren"} : close_paren), "__", (lexer.has("open_brace") ? {type: "open_brace"} : open_brace), "in_function_statement", "__", (lexer.has("close_brace") ? {type: "close_brace"} : close_brace), "__", "function"], "postprocess": 
         (data) => {
+            console.log("a", ...data[12])
             return [
-                    {
-                        type: "user_function",
-                        function_dtype: data[2],
-                        function_name: data[4],
-                        arguments: [...data[8]],
-                        function_body: data[13]
-                            ? [...data[13]]
-                            : []
-                    },
-                ];
+                {
+                    type: "user_function",
+                    function_dtype: data[2],
+                    function_name: data[4],
+                    arguments: [...data[8]],
+                    function_body: data[12]
+                        ? [...data[12]]
+                        : []
+                },
+            ];
         }
                 },
     {"name": "function", "symbols": [], "postprocess": 
@@ -287,13 +288,15 @@ var grammar = {
             return[];
         }
                 },
-    {"name": "in_function_statement$ebnf$1", "symbols": []},
-    {"name": "in_function_statement$ebnf$1", "symbols": ["in_function_statement$ebnf$1", "function_statement_choice"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "in_function_statement", "symbols": ["in_function_statement$ebnf$1"], "postprocess": 
+    {"name": "in_function_statement", "symbols": ["in_function_statement", "__", "function_statement_choice"], "postprocess": 
         (data) => {
-            return data[0]
-                ? [data[0]]
-                : [];
+            console.log(data);
+            return [...data[0], ...data[2]];
+        }
+                },
+    {"name": "in_function_statement", "symbols": [], "postprocess": 
+        (data) => {
+            return[];
         }
                 },
     {"name": "function_statement_choice", "symbols": ["vital_define"], "postprocess": id},

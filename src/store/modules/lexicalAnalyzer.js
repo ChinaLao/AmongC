@@ -728,46 +728,94 @@ export default {
       commit('SET_OUTPUT', output);
       return output;
     },
-    async CREATE_JAVASCRIPT({commit}, statement){
+    async CREATE_JAVASCRIPT({commit}, section){
       let js = ``;
-
-      if(statement.type === "constant_assign"){
-        const dataType = statement.dtype.value;
-        let index = 0;
-        let error = false;
-        while(index < statement.values.length && !error){
-          const variable = statement.values[index].id_name.value;
-          const value = statement.values[index].literal_value;
-          const valueType = statement.values[index].literal_value.type;
-          const expression = statement.values[index].literal_value.value;
-          let expressionValue = expression.value;
-          if(dataType === valueType){
-            expressionValue = expressionValue.replace(/~/, '-');
-            if(js === ``)
-              js += `const ${variable} = ${expressionValue}`;
-            else
-              js += `, ${variable} = ${expressionValue}`;
-            index++;
-          }else{
-            error = true;
+      const isUDF = section.type === "user_function"
+        ? true 
+        : false;
+      
+      const statements = isUDF
+        ? section.function_body
+        : section;
+      if(statements)
+        statements.forEach(statement => {
+          const statementType = statement.type;
+          if(statementType === "constant_assign"){
+            const dataType = statement.dtype.value;
+            let index = 0;
+            let error = false;
+            while(index < statement.values.length && !error){
+              const variable = statement.values[index].id_name.value;
+              const value = statement.values[index].literal_value;
+              const valueType = value.type;
+              const expression = value.value;
+              let expressionValue = expression.value;
+              if(dataType === valueType){
+                expressionValue = expressionValue.replace(/~/, '-');
+                if(js === ``)
+                  js += `const ${variable} = ${expressionValue}`;
+                else
+                  js += `, ${variable} = ${expressionValue}`;
+                index++;
+              }else{
+                error = true;
+              }
+            }
+            if(!error){
+              return js + `;`;
+            }
+            else{
+              const error = [{
+                type: "sem-error",
+                msg: "Mismatched data type and value",
+                line: statement.values[index].literal_value.value.line,
+                col: statement.values[index].literal_value.value.col,
+                exp: `${dataType} value`,
+              }];
+              commit("SET_ERROR", error);
+              if(error.length > 0) commit("CHANGE_ERROR", true);
+              return "";
+            }
           }
-        }
-        if(!error){
-          return js + `;`;
-        }
-        else{
-          const error = [{
-            type: "sem-error",
-            msg: "Mismatched data type and value",
-            line: statement.values[index].literal_value.value.line,
-            col: statement.values[index].literal_value.value.col,
-            exp: `${dataType} value`,
-          }];
-          commit("SET_ERROR", error);
-          if(error.length > 0) commit("CHANGE_ERROR", true);
-          return "";
-        }
-      }
+        });
+        
+      // if(statement.type === "constant_assign"){
+      //   const dataType = statement.dtype.value;
+      //   let index = 0;
+      //   let error = false;
+      //   while(index < statement.values.length && !error){
+      //     const variable = statement.values[index].id_name.value;
+      //     const value = statement.values[index].literal_value;
+      //     const valueType = statement.values[index].literal_value.type;
+      //     const expression = statement.values[index].literal_value.value;
+      //     let expressionValue = expression.value;
+      //     if(dataType === valueType){
+      //       expressionValue = expressionValue.replace(/~/, '-');
+      //       if(js === ``)
+      //         js += `const ${variable} = ${expressionValue}`;
+      //       else
+      //         js += `, ${variable} = ${expressionValue}`;
+      //       index++;
+      //     }else{
+      //       error = true;
+      //     }
+      //   }
+      //   if(!error){
+      //     return js + `;`;
+      //   }
+      //   else{
+      //     const error = [{
+      //       type: "sem-error",
+      //       msg: "Mismatched data type and value",
+      //       line: statement.values[index].literal_value.value.line,
+      //       col: statement.values[index].literal_value.value.col,
+      //       exp: `${dataType} value`,
+      //     }];
+      //     commit("SET_ERROR", error);
+      //     if(error.length > 0) commit("CHANGE_ERROR", true);
+      //     return "";
+      //   }
+      // }
     }
   }, 
 };

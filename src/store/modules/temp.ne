@@ -111,7 +111,7 @@ vital_define ->
         %vital __ data_type __ %id __ %equal __ literal __ recur_vital __ %terminator
         {%
             (data) => {
-                return {
+                return [{
                     type: "constant_assign",
                     dtype: data[2],
                     values: [
@@ -121,7 +121,7 @@ vital_define ->
                         },
                         ...data[10]
                     ]
-                };
+                }];
             }
         %}
 
@@ -351,7 +351,7 @@ statement_choice ->
         %}
 
 function ->
-        %task __ function_data_type __ %id __ %open_paren __ parameter %close_paren __ %open_brace __ in_function_statement __ %close_brace __ function
+        %task __ function_data_type __ %id __ %open_paren __ parameter %close_paren __ %open_brace in_function_statement __ %close_brace __ function
         {%
             (data) => {
                 return [
@@ -360,8 +360,8 @@ function ->
                         function_dtype: data[2],
                         function_name: data[4],
                         arguments: [...data[8]],
-                        function_body: data[13]
-                            ? [...data[13]]
+                        function_body: data[12]
+                            ? [...data[12]]
                             : []
                     },
                 ];
@@ -402,12 +402,16 @@ parameter ->
 #     |   %id %id array_parameter comma_parameter
 
 in_function_statement -> 
-        function_statement_choice:*
+        in_function_statement __ function_statement_choice
         {%
             (data) => {
-                return data[0]
-                    ? [data[0]]
-                    : [];
+                return [...data[0], ...data[2]];
+            }
+        %}
+    |   null
+        {%
+            (data) => {
+                return[];
             }
         %}
 
