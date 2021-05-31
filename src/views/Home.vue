@@ -232,11 +232,13 @@ export default {
           this.output += "\nNo Syntax Error\n\nChecking Semantics...";
 
           const ast = JSON.stringify(this.$store.getters["lexicalAnalyzer/OUTPUT"], null, "  "); //create AST from nearley output and convert to string
-          this.output += "\n\nAST:\n" + ast;
+          let output = "\n\nAST:\n" + ast;
 
           const statements = JSON.parse(ast); //convert ast to object
-          this.output += await this.$store.dispatch('lexicalAnalyzer/WRITE_JAVASCRIPT', statements); //write js from statements
+          output += await this.$store.dispatch('lexicalAnalyzer/WRITE_JAVASCRIPT', statements); //write js from statements
 
+          if(this.error.length <= 0) this.output += "\nNo Semantics Error" + output
+          else this.output += "\nSemantics Error Found" + output
         }else this.output += "\nSyntax Error Found";
       }
       else this.output += "\nLexical Error Found";
