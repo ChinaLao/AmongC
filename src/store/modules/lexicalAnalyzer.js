@@ -813,10 +813,10 @@ export default {
       const mainConst = [];
       const udfConst = [];
       const dataTypes = ["int", "dec", "str", "bool"];
+      const ids = [];
 
       let index = 0;
       while(index < tokenStream.length){
-        console.log(tokenStream[index])
         if(tokenStream[index].word === "IN") location = "main"
         else if(tokenStream[index].word === "OUT") location = "udf"
 
@@ -827,7 +827,8 @@ export default {
             tokenStream[index+2].declared = tokenStream[index+2].defined = true;
             tokenStream[index+2].editable = false;
             tokenStream[index+2].location = location;
-
+            tokenStream[index+2].dtype = dtype.word;
+            ids.push(tokenStream[index+2]);
             const constant = {
               dtype: dtype,
               varName: tokenStream[index+2],
@@ -837,21 +838,42 @@ export default {
                   ? "bool"
                   : Number(tokenStream[index+4].word) - Math.floor(Number(tokenStream[index+4].word)) === 0
                     ? "int"
-                    : "dec",
+                    : tokenStream[index+4].word.includes(".")
+                      ? "dec"
+                      : ids.findIndex(id => id.lex === tokenStream[index+4].lex),
               value: tokenStream[index+4],
               line: tokenStream[index+4].line,
               col: tokenStream[index+4].col
             };
+            if(typeof(constant.valuetype) === "number")
+              if(constant.valuetype === 0) constant.valuetype = ids[constant.valuetype].dtype;
+              else constant.valuetype = undefined;
+            
+            if(ids[constant.valuetype]) console.log(ids[constant.valuetype].dtype)
 
-            if(constant.dtype.word !== constant.valuetype){
+            const error = {
+              isError: false,
+              message: "",
+              exp: ""
+            };
+            
+            if(constant.valuetype !== undefined && constant.dtype.word !== constant.valuetype){
+              error.isError = true;
+              error.message = `Mismatched data type (${constant.dtype.word}) and value (${constant.valuetype})`;
+              error.exp = `${constant.dtype.word} value`;
+            } else if(constant.valuetype === undefined){
+              error.isError = true;
+              error.message = `Undeclared variable (${constant.value.word})`;
+              error.exp = `-`;
+            }
+            if(error.isError === true)
               commit("SET_ERROR", {
                 type: "sem-error",
-                msg: `Mismatched data type (${constant.dtype.word}) and value (${constant.valuetype})`,
+                msg: error.message,
                 line: constant.line,
                 col: constant.col,
-                exp: `${constant.dtype.word} value`,
+                exp: error.exp,
               });
-            }
             if(tokenStream[index+5].word === ";"){
               moreConst = false;
               index+=5;
