@@ -710,22 +710,22 @@ export default {
           } catch (err) {
             let type, msg = null;
             console.log(err);
-            const expectations = []; 
-            
+            const expectations = []; //for syntax expectations
+            const results = state.results; //for the list of grouped results
+
             if(err.message.includes("Syntax error") || err.message.includes("invalid syntax")){
-              const specificExps = err.message
-                .split(/\n/g)
-                .filter(exp => exp.includes("A "));
+              const expectationLines = err.message
+                .split(/\n/g) //split the nearley message per newline
+                .filter(exp => exp.includes("A ")); //then filter it to lines with "A "
 
-              for(const specificExp of specificExps){
-                const expectation = specificExp
-                  .split("A ")[1]
-                  .match(/[a-zA-Z_]+/);
-                const tokenExp = typeof(token[expectation]) === "string"
-                  ? [token[expectation]]
-                  : token[expectation];
+              for(const expectationLine of expectationLines){ //loop through lines
+                const expectation = expectationLine
+                  .split("A ")[1] //removes the "A " in front
+                  .match(/[a-zA-Z_]+/); //filters the line to the expectation through reg exp
+                const tokenExp = typeof(token[expectation]) === "string" //if one expectation only in a line
+                  ? [token[expectation]] //put the expectation in an array
+                  : token[expectation]; //put it as it is
 
-                const results = state.results;
                 for(const expect of tokenExp){
                   //find the group of the token
                   const group = await dispatch('FIND_GROUP', expect);
