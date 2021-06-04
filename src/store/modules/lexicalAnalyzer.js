@@ -846,7 +846,7 @@ export default {
               col: tokenStream[index+4].col
             };
             if(typeof(constant.valuetype) === "number")
-              if(constant.valuetype === 0) constant.valuetype = ids[constant.valuetype].dtype;
+              if(constant.valuetype >= 0) constant.valuetype = ids[constant.valuetype].dtype;
               else constant.valuetype = undefined;
             
             if(ids[constant.valuetype]) console.log(ids[constant.valuetype].dtype)
@@ -892,9 +892,11 @@ export default {
             tokenStream[index+1].declared = true;
             tokenStream[index+1].editable = true;
             tokenStream[index+1].location = location;
+            tokenStream[index+1].dtype = dtype.word;
+            ids.push(tokenStream[index+1]);
 
             const value = tokenStream[index+2].word === "="
-              ? tokenStream[index+3].word
+              ? tokenStream[index+3]
               : dtype === "str"
                   ? "\"\""
                   : dtype === "bool"
@@ -907,13 +909,15 @@ export default {
             const define = {
               dtype: dtype,
               varName: tokenStream[index+1],
-              valuetype: value.includes("\"")
+              valuetype: value.word.includes("\"")
                 ? "str"
-                : value.includes("true") || value.includes("false")
+                : value.word.includes("true") || value.word.includes("false")
                   ? "bool"
-                  : Number(value) - Math.floor(Number(value)) === 0
+                  : Number(value.word) - Math.floor(Number(value.word)) === 0
                     ? "int"
-                    : "dec",
+                    : value.word.includes(".")
+                      ? "dec"
+                      : ids.findIndex(id => id.lex === value.lex),
               value: value,
               line: tokenStream[index+2].word === "="
                 ? tokenStream[index+3].line
@@ -922,16 +926,36 @@ export default {
                 ? tokenStream[index+3].col
                 : tokenStream[index+1].col,
             };
+            console.log(define, ids)
+            if(typeof(define.valuetype) === "number")
+              if(define.valuetype >= 0) define.valuetype = ids[define.valuetype].dtype;
+              else define.valuetype = undefined;
+            
+            if(ids[define.valuetype]) console.log(ids[define.valuetype].dtype)
 
-            if(define.dtype.word !== define.valuetype){
+            const error = {
+              isError: false,
+              message: "",
+              exp: ""
+            };
+            
+            if(define.valuetype !== undefined && define.dtype.word !== define.valuetype){
+              error.isError = true;
+              error.message = `Mismatched data type (${define.dtype.word}) and value (${define.valuetype})`;
+              error.exp = `${define.dtype.word} value`;
+            } else if(define.valuetype === undefined){
+              error.isError = true;
+              error.message = `Undeclared variable (${define.value.word})`;
+              error.exp = `-`;
+            }
+            if(error.isError === true)
               commit("SET_ERROR", {
                 type: "sem-error",
-                msg: `Mismatched data type (${define.dtype.word}) and value (${define.valuetype})`,
+                msg: error.message,
                 line: define.line,
                 col: define.col,
-                exp: `${define.dtype.word} value`,
+                exp: error.exp,
               });
-            }
             tokenStream[index+2].word === "="
               ? tokenStream[index+4].word === ";"
                 ? moreVar = false
