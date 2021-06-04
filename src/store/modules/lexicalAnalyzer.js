@@ -807,12 +807,19 @@ export default {
     async SEMANTICS({state, commit, dispatch}, tokenStream){
       let location = "global";
       const globalVar = [];
+      const mainVar = [];
+      const udfVar = [];
       const globalConst = [];
       const mainConst = [];
       const udfConst = [];
+      const dataTypes = ["int", "dec", "str", "bool"];
 
       let index = 0;
       while(index < tokenStream.length){
+
+        if(tokenStream[index].word === "IN") location = "main"
+        else if(tokenStream[index].word === "OUT") location = "udf"
+
         if(tokenStream[index].word === "vital"){
           let moreConst = true;
           const dtype = tokenStream[index+1]
@@ -853,15 +860,64 @@ export default {
                 ? mainConst.push(constant)
                 : udfConst.push(constant);
           }
-        }
+        } else if(dataTypes.includes(tokenStream[index].word)){
+          let moreVar = true;
+          const dtype = tokenStream[index]
+          while(moreVar){
+            tokenStream[index+1].declared = true;
+            tokenStream[index+1].editable = true;
+            tokenStream[index+1].location = location;
 
-        if(tokenStream[index].word === "IN") location = "main"
-        else if(tokenStream[index].word === "OUT") location = "udf"
+            const value = tokenStream[index+2].word === "="
+              ? tokenStream[index+3].word
+              : null;
+            
+            tokenStream[index+1].defined = tokenStream[index+2].word === "=";
+            const define = {
+              dtype: dtype,
+              varName: tokenStream[index+1],
+              valuetype: value
+                ? value.includes("\"")
+                  ? "str"
+                  : value.includes("true") || value.includes("false")
+                    ? "bool"
+                    : Number(value) - Math.floor(Number(value)) === 0
+                      ? "int"
+                      : "dec"
+                : null,
+              value: value,
+              line: tokenStream[index+3].line,
+              col: tokenStream[index+3].col
+            };
+
+            if(define.valuetype !== null && define.dtype.word !== define.valuetype){
+              commit("SET_ERROR", {
+                type: "sem-error",
+                msg: "Mismatched data type and value",
+                line: define.line,
+                col: define.col,
+                exp: `${define.dtype.word} value`,
+              });
+            }
+            if(tokenStream[index+4].word === ";") moreVar = false;
+            else index+=4;
+            define.varName.location === "global"
+              ? globalVar.push(define)
+              : define.varName.location === "main"
+                ? mainVar.push(define)
+                : udfVar.push(define);
+          }
+        }
 
         if(tokenStream[index].token === "id") tokenStream[index].location = location;
         index++;
       }
       console.log("Global Constants: ", globalConst);
+      console.log("Global Variables: ", globalVar);
+      console.log("Main Constants: ", mainConst);
+      console.log("Main Variables: ", mainVar);
+      console.log("UDF Constants: ", udfConst);
+      console.log("UDF Variables: ", udfVar);
     },
     async WRITE_JAVASCRIPT({ state, dispatch, commit }, statements){
       const javascriptStatements = [];
