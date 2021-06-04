@@ -816,7 +816,7 @@ export default {
 
       let index = 0;
       while(index < tokenStream.length){
-
+        console.log(tokenStream[index])
         if(tokenStream[index].word === "IN") location = "main"
         else if(tokenStream[index].word === "OUT") location = "udf"
 
@@ -870,27 +870,35 @@ export default {
 
             const value = tokenStream[index+2].word === "="
               ? tokenStream[index+3].word
-              : null;
+              : dtype === "str"
+                  ? "\"\""
+                  : dtype === "bool"
+                    ? "false"
+                    : dtype === "int"
+                      ? "0"
+                      : "0.0";
             
             tokenStream[index+1].defined = tokenStream[index+2].word === "=";
             const define = {
               dtype: dtype,
               varName: tokenStream[index+1],
-              valuetype: value
-                ? value.includes("\"")
-                  ? "str"
-                  : value.includes("true") || value.includes("false")
-                    ? "bool"
-                    : Number(value) - Math.floor(Number(value)) === 0
-                      ? "int"
-                      : "dec"
-                : null,
+              valuetype: value.includes("\"")
+                ? "str"
+                : value.includes("true") || value.includes("false")
+                  ? "bool"
+                  : Number(value) - Math.floor(Number(value)) === 0
+                    ? "int"
+                    : "dec",
               value: value,
-              line: tokenStream[index+3].line,
-              col: tokenStream[index+3].col
+              line: tokenStream[index+2].word === "="
+                ? tokenStream[index+3].line
+                : tokenStream[index+1].line,
+              col: tokenStream[index+2].word === "="
+                ? tokenStream[index+3].col
+                : tokenStream[index+1].col,
             };
 
-            if(define.valuetype !== null && define.dtype.word !== define.valuetype){
+            if(define.dtype.word !== define.valuetype){
               commit("SET_ERROR", {
                 type: "sem-error",
                 msg: "Mismatched data type and value",
@@ -899,8 +907,13 @@ export default {
                 exp: `${define.dtype.word} value`,
               });
             }
-            if(tokenStream[index+4].word === ";") moreVar = false;
-            else index+=4;
+            tokenStream[index+2].word === "="
+              ? tokenStream[index+4].word === ";"
+                ? moreVar = false
+                : index+=4
+              : tokenStream[index+2].word === ";"
+                ? moreVar = false
+                : index+=2
             define.varName.location === "global"
               ? globalVar.push(define)
               : define.varName.location === "main"
