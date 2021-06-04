@@ -846,13 +846,16 @@ export default {
             if(constant.dtype.word !== constant.valuetype){
               commit("SET_ERROR", {
                 type: "sem-error",
-                msg: "Mismatched data type and value",
+                msg: `Mismatched data type (${constant.dtype.word}) and value (${constant.valuetype})`,
                 line: constant.line,
                 col: constant.col,
                 exp: `${constant.dtype.word} value`,
               });
             }
-            if(tokenStream[index+5].word === ";") moreConst = false;
+            if(tokenStream[index+5].word === ";"){
+              moreConst = false;
+              index+=5;
+            }
             else index+=4;
             constant.varName.location === "global"
               ? globalConst.push(constant)
@@ -901,7 +904,7 @@ export default {
             if(define.dtype.word !== define.valuetype){
               commit("SET_ERROR", {
                 type: "sem-error",
-                msg: "Mismatched data type and value",
+                msg: `Mismatched data type (${define.dtype.word}) and value (${define.valuetype})`,
                 line: define.line,
                 col: define.col,
                 exp: `${define.dtype.word} value`,
