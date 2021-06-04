@@ -229,7 +229,8 @@ export default {
 
         if(this.error.length <= 0){ //if no syn-error
 
-          // this.output += "\nNo Syntax Error\n\nChecking Semantics...";
+          this.output += "\nNo Syntax Error\n\nChecking Semantics...";
+          await this.$store.dispatch("lexicalAnalyzer/SEMANTICS", tokens); 
 
           // const ast = JSON.stringify(this.$store.getters["lexicalAnalyzer/OUTPUT"], null, "  "); //create AST from nearley output and convert to string
           // let output = "\n\nAST:\n" + ast;

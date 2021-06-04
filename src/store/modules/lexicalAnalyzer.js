@@ -804,6 +804,65 @@ export default {
     async WRITE_AST({ state, commit }){
       commit('SET_OUTPUT', state.ast);
     },
+    async SEMANTICS({state, commit, dispatch}, tokenStream){
+      let location = "global";
+      const globalVar = [];
+      const globalConst = [];
+      const mainConst = [];
+      const udfConst = [];
+
+      let index = 0;
+      while(index < tokenStream.length){
+        if(tokenStream[index].word === "vital"){
+          let moreConst = true;
+          const dtype = tokenStream[index+1]
+          while(moreConst){
+            tokenStream[index+2].declared = tokenStream[index+2].defined = true;
+            tokenStream[index+2].editable = false;
+            tokenStream[index+2].location = location;
+
+            const constant = {
+              dtype: dtype,
+              varName: tokenStream[index+2],
+              valuetype: tokenStream[index+4].word.includes("\"")
+                ? "str"
+                : tokenStream[index+4].word.includes("true") || tokenStream[index+4].word.includes("false")
+                  ? "bool"
+                  : Number(tokenStream[index+4].word) - Math.floor(Number(tokenStream[index+4].word)) === 0
+                    ? "int"
+                    : "dec",
+              value: tokenStream[index+4],
+              line: tokenStream[index+4].line,
+              col: tokenStream[index+4].col
+            };
+
+            if(constant.dtype.word !== constant.valuetype){
+              commit("SET_ERROR", {
+                type: "sem-error",
+                msg: "Mismatched data type and value",
+                line: constant.line,
+                col: constant.col,
+                exp: `${constant.dtype.word} value`,
+              });
+            }
+            if(tokenStream[index+5].word === ";") moreConst = false;
+            else index+=4;
+            constant.varName.location === "global"
+              ? globalConst.push(constant)
+              : constant.varName.location === "main"
+                ? mainConst.push(constant)
+                : udfConst.push(constant);
+          }
+        }
+
+        if(tokenStream[index].word === "IN") location = "main"
+        else if(tokenStream[index].word === "OUT") location = "udf"
+
+        if(tokenStream[index].token === "id") tokenStream[index].location = location;
+        index++;
+      }
+      console.log("Global Constants: ", globalConst);
+    },
     async WRITE_JAVASCRIPT({ state, dispatch, commit }, statements){
       const javascriptStatements = [];
       for (const statement of statements){
