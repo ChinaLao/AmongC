@@ -972,7 +972,19 @@ export default {
           }
         }
 
-        if(tokenStream[index].token === "id") tokenStream[index].location = location;
+        if(tokenStream[index].token === "id"){
+          const i = ids.findIndex(id => id.lex === tokenStream[index].lex);
+          if(i < 0){
+            commit("SET_ERROR", {
+              type: "sem-error",
+              msg: `Undeclared variable (${tokenStream[index].word})`,
+              line: tokenStream[index].line,
+              col: tokenStream[index].col,
+              exp: "-",
+            });
+          }
+          tokenStream[index].location = location;
+        }
         index++;
       }
       console.log("Global Constants: ", globalConst);
