@@ -636,8 +636,9 @@ export default {
       const token = {
 
         //special characters
-        assign_oper: ["appendAssign", "minusEqual", "multiplyEqual", "divideEqual", "exponentEqual", "floorEqual", "moduloEqual"], 
-        arith_oper: ["minus", "multiply", "divide", "exponent", "floor", "modulo", "append"],
+        assign_oper: ["appendAssign", "minusEqual", "multiplyEqual", "divideEqual", "exponentEqual", "floorEqual", "moduloEqual"],
+        append: "append", 
+        arith_oper: ["minus", "multiply", "divide", "exponent", "floor", "modulo"],
         relation_oper: ["greater", "lesser", "greaterEqual", "lesserEqual", "isEqual", "isNotEqual"],
         
         equal: "equal",
