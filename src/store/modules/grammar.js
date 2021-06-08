@@ -10,9 +10,11 @@ function id(x) { return x[0]; }
 
         //special characters
         assign_oper: ["appendAssign", "minusEqual", "multiplyEqual", "divideEqual", "exponentEqual", "floorEqual", "moduloEqual"], 
-        arith_oper: ["minus", "multiply", "divide", "exponent", "floor", "modulo", "append"],
+        append: "append", //added this for string append
+        arith_oper: ["minus", "multiply", "divide", "exponent", "floor", "modulo"], //removed append
         relation_oper: ["greater", "lesser", "greaterEqual", "lesserEqual", "isEqual", "isNotEqual"],
         
+
         equal: "equal",
         not: "not",
         unary_oper: ["increment", "decrement"],
@@ -79,9 +81,13 @@ var grammar = {
     {"name": "global_choice", "symbols": ["data_declare"]},
     {"name": "global_choice", "symbols": ["struct_declare"]},
     {"name": "global_choice", "symbols": [(lexer.has("singleComment") ? {type: "singleComment"} : singleComment)]},
-    {"name": "vital_define", "symbols": [(lexer.has("vital") ? {type: "vital"} : vital), "data_type", (lexer.has("id") ? {type: "id"} : id), "declare_choice", (lexer.has("terminator") ? {type: "terminator"} : terminator)]},
-    {"name": "recur_vital", "symbols": [(lexer.has("comma") ? {type: "comma"} : comma), (lexer.has("id") ? {type: "id"} : id), (lexer.has("equal") ? {type: "equal"} : equal), "literal", "recur_vital"]},
+    {"name": "vital_define", "symbols": [(lexer.has("vital") ? {type: "vital"} : vital), "data_type", (lexer.has("id") ? {type: "id"} : id), "vital_declare_choice", (lexer.has("terminator") ? {type: "terminator"} : terminator)]},
+    {"name": "vital_declare_choice", "symbols": ["variable", "recur_vital"]},
+    {"name": "vital_declare_choice", "symbols": ["array", "recur_vital"]},
+    {"name": "recur_vital", "symbols": [(lexer.has("comma") ? {type: "comma"} : comma), "vital_choices", "recur_vital"]},
     {"name": "recur_vital", "symbols": []},
+    {"name": "vital_choices", "symbols": ["variable"]},
+    {"name": "vital_choices", "symbols": ["array"]},
     {"name": "data_declare", "symbols": ["data_type", (lexer.has("id") ? {type: "id"} : id), "declare_choice", (lexer.has("terminator") ? {type: "terminator"} : terminator)]},
     {"name": "declare_choice", "symbols": ["variable"]},
     {"name": "declare_choice", "symbols": ["array"]},
@@ -121,7 +127,7 @@ var grammar = {
     {"name": "variable_next", "symbols": ["oper_condition"]},
     {"name": "variable_next", "symbols": ["oper_compute"]},
     {"name": "variable_next_null", "symbols": ["oper_choice", "condition"]},
-    {"name": "variable_next_null", "symbols": [(lexer.has("arith_oper") ? {type: "arith_oper"} : arith_oper), "compute_choice"]},
+    {"name": "variable_next_null", "symbols": ["arith_oper", "compute_choice"]},
     {"name": "variable_next_null", "symbols": []},
     {"name": "iterate_choice", "symbols": [(lexer.has("unary_oper") ? {type: "unary_oper"} : unary_oper)]},
     {"name": "iterate_choice", "symbols": [(lexer.has("assign_oper") ? {type: "assign_oper"} : assign_oper), "iterate_intdec"]},
@@ -263,9 +269,9 @@ var grammar = {
     {"name": "compute_choice", "symbols": ["computation"]},
     {"name": "compute_choice", "symbols": ["negation", (lexer.has("open_paren") ? {type: "open_paren"} : open_paren), "compute_choice", (lexer.has("close_paren") ? {type: "close_paren"} : close_paren), "oper_compute"]},
     {"name": "computation", "symbols": ["digit_choice", "oper_compute"]},
-    {"name": "oper_compute", "symbols": [(lexer.has("arith_oper") ? {type: "arith_oper"} : arith_oper), "compute_choice"]},
+    {"name": "oper_compute", "symbols": ["arith_oper", "compute_choice"]},
     {"name": "oper_compute", "symbols": []},
-    {"name": "first_compute_choice", "symbols": [(lexer.has("arith_oper") ? {type: "arith_oper"} : arith_oper), "compute_choice", "variable_next_choice"]},
+    {"name": "first_compute_choice", "symbols": ["arith_oper", "compute_choice", "variable_next_choice"]},
     {"name": "digit_notter_less", "symbols": ["int_literal"]},
     {"name": "digit_notter_less", "symbols": [(lexer.has("dec_literal") ? {type: "dec_literal"} : dec_literal)]},
     {"name": "compute_choice_less_less", "symbols": ["oper_compute"]},
@@ -294,11 +300,15 @@ var grammar = {
     {"name": "oper_condition", "symbols": ["oper_choice", "condition"]},
     {"name": "oper_condition", "symbols": []},
     {"name": "first_condition_choice", "symbols": ["oper_choice", "condition"]},
-    {"name": "condition_notter_less", "symbols": [(lexer.has("str_literal") ? {type: "str_literal"} : str_literal), "string_access"]},
+    {"name": "condition_notter_less", "symbols": [(lexer.has("str_literal") ? {type: "str_literal"} : str_literal), "string_choice"]},
     {"name": "condition_notter_less", "symbols": [(lexer.has("bool_literal") ? {type: "bool_literal"} : bool_literal)]},
     {"name": "condition_notter_less", "symbols": ["int_literal", "oper_compute"]},
     {"name": "condition_notter_less", "symbols": [(lexer.has("dec_literal") ? {type: "dec_literal"} : dec_literal), "oper_compute"]},
     {"name": "condition_notter_less", "symbols": [(lexer.has("unary_oper") ? {type: "unary_oper"} : unary_oper), "unary_choice"]},
+    {"name": "string_choice", "symbols": ["string_access"]},
+    {"name": "string_choice", "symbols": [(lexer.has("append") ? {type: "append"} : append), (lexer.has("str_literal") ? {type: "str_literal"} : str_literal), "append_again"]},
+    {"name": "append_again", "symbols": [(lexer.has("append") ? {type: "append"} : append), (lexer.has("str_literal") ? {type: "str_literal"} : str_literal), "append_again"]},
+    {"name": "append_again", "symbols": []},
     {"name": "condition_less", "symbols": ["notter", "condition_less_choice_choice"]},
     {"name": "condition_less_choice_choice", "symbols": ["condition_notter_less", "oper_condition"]},
     {"name": "condition_less_choice_choice", "symbols": ["notter", (lexer.has("open_paren") ? {type: "open_paren"} : open_paren), "condition", (lexer.has("close_paren") ? {type: "close_paren"} : close_paren), "oper_condition"]},
@@ -317,9 +327,6 @@ var grammar = {
     {"name": "for_initial_extra", "symbols": []},
     {"name": "iterate_statement_extra", "symbols": [(lexer.has("comma") ? {type: "comma"} : comma), "iterate_statement"]},
     {"name": "iterate_statement_extra", "symbols": []},
-    {"name": "iterate_choice", "symbols": ["int_literal"]},
-    {"name": "iterate_choice", "symbols": [(lexer.has("dec_literal") ? {type: "dec_literal"} : dec_literal)]},
-    {"name": "iterate_choice", "symbols": [(lexer.has("id") ? {type: "id"} : id), "digit_another_choice"]},
     {"name": "unary_choice", "symbols": [(lexer.has("id") ? {type: "id"} : id), "struct_choice"]},
     {"name": "iterate_statement", "symbols": ["unary_choice", "iterate_unary"]},
     {"name": "iterate_statement", "symbols": [(lexer.has("unary_oper") ? {type: "unary_oper"} : unary_oper), "unary_choice", "iterate_statement_extra"]},
@@ -411,8 +418,10 @@ var grammar = {
     {"name": "function_call", "symbols": []},
     {"name": "additional_call", "symbols": [(lexer.has("comma") ? {type: "comma"} : comma), "variable_choice", "additional_call"]},
     {"name": "additional_call", "symbols": []},
-    {"name": "oper", "symbols": [(lexer.has("arith_oper") ? {type: "arith_oper"} : arith_oper), "struct_size", "oper"]},
-    {"name": "oper", "symbols": []}
+    {"name": "oper", "symbols": ["arith_oper", "struct_size", "oper"]},
+    {"name": "oper", "symbols": []},
+    {"name": "arith_oper", "symbols": [(lexer.has("arith_oper") ? {type: "arith_oper"} : arith_oper)]},
+    {"name": "arith_oper", "symbols": [(lexer.has("append") ? {type: "append"} : append)]}
 ]
   , ParserStart: "program"
 }
