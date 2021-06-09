@@ -58,7 +58,9 @@
         not: "!",
         negative: "~",
         access: "@",
-        eof: "EOF"
+        eof: "EOF",
+		nl: {match: /[\r\n]+/, lineBreaks: true},
+        ws: /[ \t]+/
     });
 %}
 
@@ -66,19 +68,24 @@
 
 #main program
 program -> 
-    global %IN main_statement %OUT function %eof
+    global __ %IN main_statement __ %OUT __ function __ %eof
     {%
         (data) => {
-            return [...data[0], ...data[2], ...data[4]];
+            return [...data[0], ...data[3], ...data[7]];
         }
     %}
 
+#newlines and whitespaces
+__ ->   (%ws | %nl):*
+
 #global declarations~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 global -> 
-        global global_choice
+        global __ global_choice
         {%
             (data) => {
-                return [...data[0], data[1]];
+                return data[2]
+                    ? [...data[0], data[2]]
+                    : [...data[0]];
             }
         %}
     |   null
@@ -92,24 +99,29 @@ global_choice ->
         vital_define                            {% id %}
     # |   data_declare                            {% id %}
     # |   struct_declare                          {% id %}
-    # |   %singleComment                          {% id %}
+    |   %singleComment
+		{%
+            (data) => {
+                return;
+            }
+        %}
 
 #for everywhere~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 vital_define -> 
-        %vital data_type %id %equal literal recur_vital %terminator
+        %vital __ data_type __ %id __ %equal __ literal __ recur_vital __ %terminator
         {%
             (data) => {
-                return {
+                return [{
                     type: "constant_assign",
-                    dtype: data[1],
+                    dtype: data[2],
                     values: [
                         {
-                            id_name: data[2],
-                            literal_value: data[4],
+                            id_name: data[4],
+                            literal_value: data[8],
                         },
-                        ...data[5]
+                        ...data[10]
                     ]
-                };
+                }];
             }
         %}
 
@@ -163,10 +175,10 @@ int_literal ->
     |   %nega_int_literal                       {% id %}
 
 string_access ->
-        %access %open_bracket struct_size %close_bracket
+        %access %open_bracket __ struct_size __ %close_bracket
         {% 
             (data) => {
-                return data[2]
+                return data[3]
             }
         %}
     |   null                                    {% id %}
@@ -187,13 +199,13 @@ struct_size ->
 
 struct_size_choice -> #actually choices for id details
         id_array                                 {% id %}
-    |   function_call_statement_choice
+    |   function_call_statement_choice           {% id %}
     # |   first_compute_choice
     # |   struct_unary
 
 #one dimensional
 id_array ->
-        %open_bracket struct_size %close_bracket id_array_2D
+        %open_bracket __ struct_size __ %close_bracket id_array_2D
         {%
             (data) => {
                 return{
@@ -207,7 +219,7 @@ id_array ->
 
 #two dimensional
 id_array_2D ->
-        %open_bracket struct_size %close_bracket
+        %open_bracket __ struct_size __ %close_bracket
         {%
             (data) => {
                 return data[1]
@@ -216,7 +228,7 @@ id_array_2D ->
     |   null                                      {% id %}
 
 function_call_statement_choice ->
-        %open_paren function_call %close_paren
+        %open_paren __ function_call __ %close_paren
         {%
             (data) => {
                 return{
@@ -256,16 +268,16 @@ variable_choice ->
     # |   %open_paren choice %close_paren variable_next_null
 
 additional_call ->
-        additional_call %comma variable_choice
+        additional_call __ %comma __ variable_choice
         {%
             (data) => {
                 return[...data[0], data[2]];
             }
         %}
-    |   %comma variable_choice
+    |   null
         {%
             (data) => {
-                return[data[1]];
+                return[];
             }
         %}
 
@@ -278,14 +290,14 @@ choice ->
        null                                      {% id %}
 
 recur_vital -> 
-        recur_vital %comma %id %equal literal
+        recur_vital __ %comma __ %id __ %equal __ literal __
         {%
             (data) => {
                 return [
                     ...data[0],
                     {
-                        id_name: data[2],
-                        literal_value: data[4]
+                        id_name: data[4],
+                        literal_value: data[8]
                     }
                 ];
             }
@@ -299,12 +311,63 @@ recur_vital ->
 
 #main function~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 main_statement ->
-        # statement_choice main_statement
-        # {%
-        #     (data) => {
-        #         return [data[0], ...data[1]]
-        #     }
-        # %}
+        main_statement __ statement_choice
+        {%
+            (data) => {
+                return data[2]
+                    ? [...data[0], data[2]]
+                    : [...data[0]]
+            }
+        %}
+|       null
+        {%
+            (data) => {
+                return [];
+            }
+        %}
+
+statement_choice ->
+        vital_define                            {% id %}
+    # |   data_declare
+    # |   out_statement 
+    # |   in_statement 
+    # |   loop_statement 
+    # |   if_statement 
+    # |   switch_statement 
+    # |   %id id_start_statement
+    # |   %unary_oper %id assign_next_choice %terminator
+    # |   control_statement 
+    |   %clean %open_paren %close_paren %terminator
+		{%
+            (data) => {
+                return;
+            }
+        %}
+    |   %singleComment
+		{%
+            (data) => {
+                return;
+            }
+        %}
+
+function ->
+        %task __ function_data_type __ %id __ %open_paren __ parameter %close_paren __ %open_brace in_function_statement __ %close_brace __ function
+        {%
+            (data) => {
+                return [
+                    {
+                        type: "user_function",
+                        function_dtype: data[2],
+                        function_name: data[4],
+                        arguments: [...data[8]],
+                        function_body: data[12]
+                            ? [...data[12]]
+                            : []
+                    },
+                ];
+            }
+        %}
+    |
        null
         {%
             (data) => {
@@ -312,25 +375,67 @@ main_statement ->
             }
         %}
 
-function ->
-        # %task function_data_type %id %open_paren parameter %close_paren %open_brace in_function_statement %close_brace function
-        # {%
-        #     (data) => {
-        #         return [
-        #             {
-        #                 type: "user_function",
-        #                 function_dtype: data[1],
-        #                 function_name: data[2],
-        #                 arguments: [...data[4]],
-        #                 function_body: [...data[7]]
-        #             },
-        #             ...data[9]
-        #         ]
-        #     }
-        # %}
+function_data_type -> 
+        data_type                            {% id %}
+    |   %empty                               {% id %}
+
+parameter -> 
+        # data_type __ %id __ array_parameter __ comma_parameter
+    # |   %id %id array_parameter comma_parameter 
        null
         {%
             (data) => {
-                return [];
+                return[];
+            }
+        %}
+
+# array_parameter ->
+        # %open_bracket %close_bracket
+    #    null
+
+# comma_parameter ->
+        # %comma recur_parameter_again
+    #    null
+
+# recur_parameter ->
+#         data_type %id array_parameter comma_parameter
+#     |   %id %id array_parameter comma_parameter
+
+in_function_statement -> 
+        in_function_statement __ function_statement_choice
+        {%
+            (data) => {
+                return [...data[0], ...data[2]];
+            }
+        %}
+    |   null
+        {%
+            (data) => {
+                return[];
+            }
+        %}
+
+function_statement_choice ->
+        vital_define                            {% id %}
+    # |   data_declare
+    # |   out_statement 
+    # |   in_statement 
+    # |   function_loop_statement 
+    # |   function_if_statement 
+    # |   function_switch_statement 
+    # |   %id id_start_statement
+    # |   %unary_oper %id assign_next_choice %terminator #kulang to
+    # |   return_statement
+    # |   control_statement 
+    |   %clean %open_paren %close_paren %terminator
+        {%
+            (data) => {
+                return;
+            }
+        %}
+    |   %singleComment
+        {%
+            (data) => {
+                return;
             }
         %}

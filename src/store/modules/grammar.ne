@@ -6,9 +6,11 @@
 
         //special characters
         assign_oper: ["appendAssign", "minusEqual", "multiplyEqual", "divideEqual", "exponentEqual", "floorEqual", "moduloEqual"], 
-        arith_oper: ["minus", "multiply", "divide", "exponent", "floor", "modulo", "append"],
+        append: "append", //added this for string append
+        arith_oper: ["minus", "multiply", "divide", "exponent", "floor", "modulo"], //removed append
         relation_oper: ["greater", "lesser", "greaterEqual", "lesserEqual", "isEqual", "isNotEqual"],
         
+
         equal: "equal",
         not: "not",
         unary_oper: ["increment", "decrement"],
@@ -85,11 +87,19 @@ global_choice ->
     |   %singleComment
 
 vital_define -> #changed %equal literal recur_vital to declare_choice
-        %vital data_type %id declare_choice %terminator
+        %vital data_type %id vital_declare_choice %terminator
 
-recur_vital -> 
-        %comma %id %equal literal recur_vital
+vital_declare_choice ->
+        variable recur_vital
+    |   array recur_vital
+
+recur_vital ->  #changed %id %equal literal recur_vital to variable, array
+        %comma vital_choices recur_vital
     |   null
+
+vital_choices ->
+        variable
+    |   array
 
 #temporarily moved %id to declare_choice
 data_declare -> 
@@ -211,7 +221,7 @@ variable_next ->
 
 variable_next_null ->
     oper_choice condition
-|   %arith_oper compute_choice
+|   arith_oper compute_choice #changed %arith_oper to arith_oper
 |   null
 
 # new_choice -> #added this to remove ambiguity with notter
@@ -552,7 +562,7 @@ computation ->
         digit_choice oper_compute
 
 oper_compute ->
-        %arith_oper compute_choice
+        arith_oper compute_choice
     |   null
 
 # close ->
@@ -561,7 +571,7 @@ oper_compute ->
 
 #added this for computes that have id at the start
 first_compute_choice -> 
-        %arith_oper compute_choice variable_next_choice #close
+        arith_oper compute_choice variable_next_choice #close #changed %arith_oper to arith_oper
 
 # digit_choice_less -> #removed notter
 #         digit_notter_less
@@ -669,7 +679,7 @@ first_condition_choice ->
 #listed all literals to remove ambiguity of their next 
 condition_notter_less ->
      #   literal
-        %str_literal string_access
+        %str_literal string_choice #changed string_access to string_choice
     |   %bool_literal
     |   int_literal oper_compute
     |   %dec_literal oper_compute
@@ -677,6 +687,14 @@ condition_notter_less ->
     |   %unary_oper unary_choice 
     #iterate_statement_extra #ambiguity on iterate_statement_extra (dugtong to sa taas pero baka di na)
     #|   compute_choice_less_less
+
+string_choice ->
+        string_access
+    |   %append %str_literal append_again
+
+append_again ->
+        %append %str_literal append_again
+    |   null
 
 # condition_extra_less ->
 #         condition_choice_less
@@ -729,11 +747,12 @@ iterate_statement_extra ->
         %comma iterate_statement
     |   null
 
+#deleted for now, this is a duplicate
 #changed iterate_choice_choice (deleted) to digit_another_choice
-iterate_choice ->
-        int_literal
-    |   %dec_literal
-    |   %id digit_another_choice
+# iterate_choice ->
+#         int_literal
+#     |   %dec_literal
+#     |   %id digit_another_choice 
 
 unary_choice -> #changed struct_statement_choice to struct_choice
         %id struct_choice
@@ -956,9 +975,13 @@ additional_call -> #temporarily changed function_variables to variable_choice
 
 #changed array_size to struct_size
 oper ->
-        %arith_oper struct_size oper
+        arith_oper struct_size oper #changed %arith_oper to arith_oper
     |   null
 
 #TANGGALIN NAKITA AH
 # comment ->
 #         %singleComment
+
+arith_oper ->
+        %arith_oper
+    |   %append
