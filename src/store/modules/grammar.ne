@@ -238,16 +238,17 @@ iterate_first_choice ->
         iterate_choice
     |   null
 
-choice_choice_choice ->
+#changed choice_choice_choice to choice_choice
+choice_choice ->
         first_compute_choice
     |   first_condition_choice
     #|   iterate_choice
     |   null
 
 choice ->
-        struct_new iterate_first_choice choice_choice_choice
-    |   function_call_statement_choice iterate_first_choice choice_choice_choice
-    |   iterate_choice choice_choice_choice
+        struct_new iterate_first_choice choice_choice #changed choice_choice_choice to choice_choice
+    |   function_call_statement_choice iterate_first_choice choice_choice #changed choice_choice_choice to choice_choice
+    |   iterate_choice choice_choice #changed choice_choice_choice to choice_choice
     #     struct_new choice_choice_choice #iterate_choice
     # |   function_call_statement_choice choice_choice_choice #iterate_choice
      #   first_choice iterate_choice choice_choice_choice #(di ka na kailangan)
@@ -256,8 +257,8 @@ choice ->
     |   null
 
 choice_less -> 
-        struct_new choice_choice_choice
-    |   function_call_statement_choice choice_choice_choice
+        struct_new choice_choice #changed choice_choice_choice to choice_choice
+    |   function_call_statement_choice choice_choice #changed choice_choice_choice to choice_choice
     #     struct_new choice_choice_choice #iterate_choice
     # |   function_call_statement_choice choice_choice_choice #iterate_choice
      #   first_choice iterate_choice choice_choice_choice #(di ka na kailangan)
@@ -454,7 +455,7 @@ id_start_statement ->
 function_loop_statement ->
         %loopFor %open_paren for_initial %terminator for_condition %terminator iterate_statement %close_paren statement_in_function
     |   %loopWhile %open_paren variable_choice %close_paren statement_in_function #changed condition to variable_choice
-    |   %loopDo statement_in_function %loopWhile %open_paren condition %close_paren %terminator
+    |   %loopDo statement_in_function %loopWhile %open_paren variable_choice %close_paren %terminator #changed condition to variable_choice
 
 #added this for function
 function_if_statement -> #bakit variable_choice to??? yung iba condition ha
@@ -463,7 +464,7 @@ function_if_statement -> #bakit variable_choice to??? yung iba condition ha
 #added this for function
 function_else_choice -> 
         %stateElse statement_in_function
-    |   %elf %open_paren variable_choice %close_paren statement_in_function else_choice #changed condition to variable_choice
+    |   %elf %open_paren variable_choice %close_paren statement_in_function function_else_choice #changed condition to variable_choice
     |   null
 
 #added this for function
@@ -643,7 +644,7 @@ condition_notter_choice ->
 condition_notter ->
         negation %id condition_notter_choice #condition_notter_choice #may problem pa to kasi pwedeng i-negate yung string access
     #|   literal
-    |   %str_literal string_access
+    |   %str_literal string_choice #changed string_access to string_choice
     |   %bool_literal
     |   int_literal oper_compute
     |   %dec_literal oper_compute
@@ -787,7 +788,7 @@ for_condition ->
 loop_statement ->
         %loopFor %open_paren for_initial %terminator for_condition %terminator iterate_statement %close_paren statement
     |   %loopWhile %open_paren variable_choice %close_paren statement #changed condition to variable_choice
-    |   %loopDo statement %loopWhile %open_paren variable_choice %close_paren %terminator
+    |   %loopDo statement %loopWhile %open_paren variable_choice %close_paren %terminator #changed condition to variable_choice
 
 if_statement ->
         %stateIf %open_paren variable_choice %close_paren statement else_choice
@@ -822,9 +823,9 @@ return_next_choice ->
     |   %close_paren 
 
 function_choice ->
-        struct_new iterate_first_choice choice_choice_choice
-    |   function_call_statement_choice iterate_first_choice choice_choice_choice
-    |   iterate_choice choice_choice_choice
+        struct_new iterate_first_choice choice_choice #changed choice_choice_choice to choice_choice
+    |   function_call_statement_choice iterate_first_choice choice_choice #changed choice_choice_choice to choice_choice
+    |   iterate_choice choice_choice #changed choice_choice_choice to choice_choice
     #     struct_new choice_choice_choice #iterate_choice
     # |   function_call_statement_choice choice_choice_choice #iterate_choice
      #   first_choice iterate_choice choice_choice_choice #(di ka na kailangan)
