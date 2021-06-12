@@ -504,7 +504,7 @@ id_start_statement ->
         %id struct_define_choice
     |   struct_choice iterate_statement_choice %terminator
     |   assign_statement
-    |   iterate_statement_choice %terminator
+    #|   iterate_statement_choice %terminator #removed bc of ambiguity
     |   function_call_statement_choice %terminator
 
 #added this for function
