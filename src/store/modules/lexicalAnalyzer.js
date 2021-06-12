@@ -820,8 +820,18 @@ export default {
           lex: "begin"
         }
       ];
+      const tasks = []
 
       let index = 0;
+      while(index < tokenStream.length){
+        if(tokenStream[index].word === "task"){
+          tasks.push(tokenStream[index+2]);
+          index++;
+        }
+        index++;
+      }
+
+      index = 0;
       while(index < tokenStream.length){
         if(tokenStream[index].word === "IN"){
           location = "main";
@@ -995,7 +1005,9 @@ export default {
         }
 
         if(tokenStream[index].token === "id"){
-          const i = ids.findIndex(id => id.lex === tokenStream[index].lex);
+          const i = tokenStream[index+1].word === "("
+            ? tasks.findIndex(task => task.lex === tokenStream[index].lex)
+            : ids.findIndex(id => id.lex === tokenStream[index].lex);
           if(i < 0){
             commit("SET_ERROR", {
               type: "sem-error",
