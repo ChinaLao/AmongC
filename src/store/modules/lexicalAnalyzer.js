@@ -842,11 +842,6 @@ export default {
           }
           ids.pop();
           location = "udf";
-          ids.push(
-            {
-              lex: "begin"
-            }
-          );
         }
 
         if(tokenStream[index].word === "vital"){
@@ -1029,7 +1024,7 @@ export default {
           );
         }
         console.log(ids)
-        if(tokenStream[index].word === "}"){
+        if(tokenStream[index].word === "}" || tokenStream[index].word === "kill"){
           let deleteIndex = ids.length-1;
           while(ids[deleteIndex].lex !== "begin"){
             ids.pop();
