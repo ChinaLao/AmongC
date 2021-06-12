@@ -814,6 +814,7 @@ export default {
       const mainConst = [];
       const udfConst = [];
       const dataTypes = ["int", "dec", "str", "bool"];
+      const beginKeywords = ["vote", "switch", "task", "for", "if", "elf", "else", "do"]
       const ids = [
         {
           lex: "begin"
@@ -1005,13 +1006,27 @@ export default {
           tokenStream[index].location = location;
         }
 
-        if(tokenStream[index].token === "openBrace") ids.push(
+        if(beginKeywords.includes(tokenStream[index].word)) ids.push(
           {
             lex: "begin"
           }
         );
-
-        if(tokenStream[index].token === "closeBrace"){
+        if(tokenStream[index].word === "while"){
+          index+=2;
+          let parenCounter = 1;
+          while(parenCounter > 0){
+            if(tokenStream[index].word === "(") parenCounter++;
+            if(tokenStream[index].word === ")") parenCounter--;
+            index++;
+          }
+          if(tokenStream[index].word === "{") ids.push(
+            {
+              lex: "begin"
+            }
+          );
+        }
+        console.log(ids)
+        if(tokenStream[index].word === "}"){
           let deleteIndex = ids.length-1;
           while(ids[deleteIndex].lex !== "begin"){
             ids.pop();
