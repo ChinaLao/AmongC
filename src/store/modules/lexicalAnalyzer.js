@@ -909,7 +909,7 @@ export default {
           }
         } else if(dataTypes.includes(tokenStream[index].word)){
           let moreVar = true;
-          const dtype = tokenStream[index]
+          let dtype = tokenStream[index]
           while(moreVar){
             tokenStream[index+1].declared = true;
             tokenStream[index+1].editable = true;
@@ -919,15 +919,15 @@ export default {
 
             const value = tokenStream[index+2].word === "="
               ? tokenStream[index+3]
-              : dtype === "str"
-                  ? "\"\""
-                  : dtype === "bool"
-                    ? "false"
-                    : dtype === "int"
-                      ? "0"
-                      : "0.0";
+              : dtype.word === "str"
+                  ? {word: "\"\""}
+                  : dtype.word === "bool"
+                    ? {word: "false"}
+                    : dtype.word === "int"
+                      ? {word: "0"}
+                      : {word: "0.0"};
             
-            tokenStream[index+1].defined = tokenStream[index+2].word === "=";
+            tokenStream[index+1].defined = tokenStream[index+2].word === "=" || (tokenStream[index+2].word === "," && dataTypes.includes(tokenStream[index+3].word));
             const define = {
               dtype: dtype,
               varName: tokenStream[index+1],
@@ -982,6 +982,10 @@ export default {
               : tokenStream[index+2].word === ";"
                 ? moreVar = false
                 : index+=2
+            if(moreVar && dataTypes.includes(tokenStream[index+1].word)){
+              dtype = tokenStream[index+1];
+              index++;
+            }
             define.varName.location === "global"
               ? globalVar.push(define)
               : define.varName.location === "main"
@@ -1023,7 +1027,7 @@ export default {
             }
           );
         }
-        console.log(ids)
+        if(tokenStream[index].word === "task") index+=3;
         if(tokenStream[index].word === "}" || tokenStream[index].word === "kill"){
           let deleteIndex = ids.length-1;
           while(ids[deleteIndex].lex !== "begin"){
