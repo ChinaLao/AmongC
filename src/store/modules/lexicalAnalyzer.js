@@ -1008,10 +1008,13 @@ export default {
           const i = tokenStream[index+1].word === "("
             ? tasks.findIndex(task => task.lex === tokenStream[index].lex)
             : ids.findIndex(id => id.lex === tokenStream[index].lex);
+          const undeclaredMsg = tokenStream[index+1].word === "("
+            ? "task"
+            : "variable"
           if(i < 0){
             commit("SET_ERROR", {
               type: "sem-error",
-              msg: `Undeclared variable (${tokenStream[index].word})`,
+              msg: `Undeclared ${undeclaredMsg} (${tokenStream[index].word})`,
               line: tokenStream[index].line,
               col: tokenStream[index].col,
               exp: "-",
