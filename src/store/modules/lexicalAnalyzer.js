@@ -814,12 +814,36 @@ export default {
       const mainConst = [];
       const udfConst = [];
       const dataTypes = ["int", "dec", "str", "bool"];
-      const ids = [];
+      const ids = [
+        {
+          lex: "begin"
+        }
+      ];
 
       let index = 0;
       while(index < tokenStream.length){
-        if(tokenStream[index].word === "IN") location = "main"
-        else if(tokenStream[index].word === "OUT") location = "udf"
+        if(tokenStream[index].word === "IN"){
+          location = "main";
+          ids.push(
+            {
+            lex: "end"
+            },
+            {
+              lex: "begin"
+            }
+          );
+        }
+        else if(tokenStream[index].word === "OUT"){
+          location = "udf";
+          ids.push(
+            {
+            lex: "end"
+            },
+            {
+              lex: "begin"
+            }
+          );
+        }
 
         if(tokenStream[index].word === "vital"){
           let moreConst = true;
@@ -849,8 +873,6 @@ export default {
             if(typeof(constant.valuetype) === "number")
               if(constant.valuetype >= 0) constant.valuetype = ids[constant.valuetype].dtype;
               else constant.valuetype = undefined;
-            
-            if(ids[constant.valuetype]) console.log(ids[constant.valuetype].dtype)
 
             const error = {
               isError: false,
@@ -927,12 +949,9 @@ export default {
                 ? tokenStream[index+3].col
                 : tokenStream[index+1].col,
             };
-            console.log(define, ids)
             if(typeof(define.valuetype) === "number")
               if(define.valuetype >= 0) define.valuetype = ids[define.valuetype].dtype;
               else define.valuetype = undefined;
-            
-            if(ids[define.valuetype]) console.log(ids[define.valuetype].dtype)
 
             const error = {
               isError: false,
@@ -984,6 +1003,21 @@ export default {
             });
           }
           tokenStream[index].location = location;
+        }
+
+        if(tokenStream[index].token === "openBrace") ids.push(
+          {
+            lex: "begin"
+          }
+        );
+
+        if(tokenStream[index].token === "closeBrace"){
+          let deleteIndex = ids.length-1;
+          while(ids[deleteIndex].lex !== "begin"){
+            ids.pop();
+            deleteIndex--;
+          }
+          ids.pop();
         }
         index++;
       }
