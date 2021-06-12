@@ -320,14 +320,15 @@ not_choice ->
 # negative_again ->
 #         %negative negative_again
 #     |   null
-
+    
 variable_recur_assign ->
-        %equal %id variable_recur_assign
+        %equal recur_variable_choice #variable_repeat
+    |   recur_variable_assign
     |   null
 
 recur_variable_assign ->
         struct_new iterate_first_choice choice_choice
-    |    function_call_statement_choice iterate_first_choice choice_choice
+    |   function_call_statement_choice iterate_first_choice choice_choice
     |   iterate_choice choice_choice
     |   first_compute_choice 
     |   first_condition_choice
@@ -344,6 +345,18 @@ recur_variable_choice ->
     |   %negative negative_choice 
     |   %open_paren variable_choice %close_paren variable_next_null #changed choice to variable_choice
 
+variable -> #changed recur_variable to declare_choice
+        %equal recur_variable_choice #recur_variable #variable_choice recur_variable
+    |   %comma %id declare_choice #changed variable_choice to %id
+    #|   recur_variable
+    #|   null
+
+recur_variable -> #changed recur_variable to declare_choice, removed array
+        #array
+        %equal variable_choice #%id recur_variable
+        %comma %id declare_choice
+    |   null
+
 variable_choice ->
         %id choice #variable_next_choice
   # |   condition_less_choice_choice
@@ -355,18 +368,6 @@ variable_choice ->
     #|   compute_choice
     #     condition %close_paren oper_condition
     # |   compute_choice %close_paren oper_compute
-
-variable -> #changed recur_variable to declare_choice
-        %equal recur_variable_choice #variable_choice recur_variable
-    |   %comma %id declare_choice #changed variable_choice to %id
-    #|   recur_variable
-    #|   null
-
-recur_variable -> #changed recur_variable to declare_choice, removed array
-        #array
-      %equal %id recur_variable
-    |   %comma %id declare_choice
-    |   null
 
 #DI KA NA ATA KAILAGAN HOHO
 # array_size ->
