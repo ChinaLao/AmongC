@@ -835,11 +835,14 @@ export default {
           );
         }
         else if(tokenStream[index].word === "OUT"){
+          let deleteIndex = ids.length-1;
+          while(ids[deleteIndex].lex !== "begin"){
+            ids.pop();
+            deleteIndex--;
+          }
+          ids.pop();
           location = "udf";
           ids.push(
-            {
-            lex: "end"
-            },
             {
               lex: "begin"
             }
