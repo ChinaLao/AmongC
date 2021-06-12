@@ -199,7 +199,7 @@ recur_choice ->
     |   condition_notter_less oper_condition
     |   not_many not_choice #repeated !!!
     |   %negative negative_choice 
-    |   %open_paren choice %close_paren variable_next_null
+    |   %open_paren variable_choice %close_paren variable_next_null #changed choice to variable_choice
 
 #new
 recur_choice_choice ->
@@ -342,7 +342,7 @@ recur_variable_choice ->
     |   condition_notter_less oper_condition
     |   not_many not_choice #repeated !!!
     |   %negative negative_choice 
-    |   %open_paren choice %close_paren variable_next_null
+    |   %open_paren variable_choice %close_paren variable_next_null #changed choice to variable_choice
 
 variable_choice ->
         %id choice #variable_next_choice
