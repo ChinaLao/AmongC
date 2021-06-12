@@ -247,7 +247,6 @@ var grammar = {
     {"name": "id_start_statement", "symbols": [(lexer.has("id") ? {type: "id"} : id), "struct_define_choice"]},
     {"name": "id_start_statement", "symbols": ["struct_choice", "iterate_statement_choice", (lexer.has("terminator") ? {type: "terminator"} : terminator)]},
     {"name": "id_start_statement", "symbols": ["assign_statement"]},
-    {"name": "id_start_statement", "symbols": ["iterate_statement_choice", (lexer.has("terminator") ? {type: "terminator"} : terminator)]},
     {"name": "id_start_statement", "symbols": ["function_call_statement_choice", (lexer.has("terminator") ? {type: "terminator"} : terminator)]},
     {"name": "function_loop_statement", "symbols": [(lexer.has("loopFor") ? {type: "loopFor"} : loopFor), (lexer.has("open_paren") ? {type: "open_paren"} : open_paren), "for_initial", (lexer.has("terminator") ? {type: "terminator"} : terminator), "for_condition", (lexer.has("terminator") ? {type: "terminator"} : terminator), "iterate_statement", (lexer.has("close_paren") ? {type: "close_paren"} : close_paren), "statement_in_function"]},
     {"name": "function_loop_statement", "symbols": [(lexer.has("loopWhile") ? {type: "loopWhile"} : loopWhile), (lexer.has("open_paren") ? {type: "open_paren"} : open_paren), "variable_choice", (lexer.has("close_paren") ? {type: "close_paren"} : close_paren), "statement_in_function"]},
