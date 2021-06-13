@@ -987,76 +987,18 @@ export default {
           tokenStream[index+1].dtype = dtype.word;
           ids.push(tokenStream[index+1]);
 
-          const value = tokenStream[index+2].word === "="
-            ? tokenStream[index+3]
-            : dtype.word === "str"
-                ? {word: "\"\""}
-                : dtype.word === "bool"
-                  ? {word: "false"}
-                  : dtype.word === "int"
-                    ? {word: "0"}
-                    : {word: "0.0"};
-          
-          tokenStream[index+1].defined = tokenStream[index+2].word === "=" || (tokenStream[index+2].word === "," && dataTypes.includes(tokenStream[index+3].word));
-          const define = {
-            dtype: dtype,
-            varName: tokenStream[index+1],
-            valuetype: value.word.includes("\"")
-              ? "str"
-              : value.word.includes("true") || value.word.includes("false")
-                ? "bool"
-                : Number(value.word) - Math.floor(Number(value.word)) === 0
-                  ? "int"
-                  : value.word.includes(".")
-                    ? "dec"
-                    : ids.findIndex(id => id.lex === value.lex),
-            value: value,
-            line: tokenStream[index+2].word === "="
-              ? tokenStream[index+3].line
-              : tokenStream[index+1].line,
-            col: tokenStream[index+2].word === "="
-              ? tokenStream[index+3].col
-              : tokenStream[index+1].col,
-          };
-          if(typeof(define.valuetype) === "number")
-            if(define.valuetype >= 0) define.valuetype = ids[define.valuetype].dtype;
-            else define.valuetype = undefined;
-
-          const error = {
-            isError: false,
-            message: "",
-            exp: ""
-          };
-          
-          if(define.valuetype !== undefined && define.dtype.word !== define.valuetype){
-            error.isError = true;
-            error.message = `Mismatched data type (${define.dtype.word}) and value (${define.valuetype})`;
-            error.exp = `${define.dtype.word} value`;
-          } else if(define.valuetype === undefined){
-            error.isError = true;
-            error.message = `Undeclared variable (${define.value.word})`;
-            error.exp = `-`;
-          }
-          if(error.isError === true)
-            commit("SET_ERROR", {
-              type: "sem-error",
-              msg: error.message,
-              line: define.line,
-              col: define.col,
-              exp: error.exp,
-            });
-
           if(tokenStream[index+2].word === "="){
-            if(tokenStream[index].word === ";") moreVar = false;
-            index+=4;
-          } else{
-            if(tokenStream[index+2].word === ";") moreVar = false;
-            index+=2;
+            tokenStream[index+1].defined = true;
+            index = await dispatch("EXPRESSION_EVALUATOR",
+            {
+              expectedDType: dtype.word,
+              index: index+3,
+              tokenStream: tokenStream,
+              ids: ids
+            });
           }
-          if(moreVar && dataTypes.includes(tokenStream[index+1].word)){
-            dtype = tokenStream[index+1];
-            index++;
-          }
+          
+          if(tokenStream[index].word === ";") moreVar = false;
         }
       } else if(tokenStream[index].token === "id"){
         const i = tokenStream[index+1].word === "("
