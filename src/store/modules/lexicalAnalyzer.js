@@ -1015,8 +1015,20 @@ export default {
             col: tokenStream[index].col,
             exp: "-",
           });
+        } else{
+          while(tokenStream[index].word !== ";"){
+            if(tokenStream[index].word === "="){
+              index = await dispatch("EXPRESSION_EVALUATOR",
+              {
+                expectedDType: ids[i].dtype,
+                index: index+1,
+                tokenStream: tokenStream,
+                ids: ids
+              });
+            }
+            else index++;
+          }
         }
-        tokenStream[index].location = location;
       }
       return index;
     },
@@ -1040,11 +1052,12 @@ export default {
             exp: `-`,
           });
 
-          else if(ids[idIndex].dtype !== expectedDType){
+          else if((!numberDTypes.includes(ids[idIndex].dtype) || !numberDTypes.includes(expectedDType)) && ids[idIndex].dtype !== expectedDType){
             errorFound = true;
             err = ids[idIndex].dtype
           }
         } else if(numberTokens.includes(tokenStream[index].token)){
+          console.log(tokenStream[index], expectedDType)
           if(!numberDTypes.includes(expectedDType))  errorFound = true;
         } else if(tokenStream[index].token === "litStr"){
           if(expectedDType !== "str")  errorFound = true;
