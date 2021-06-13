@@ -859,23 +859,16 @@ export default {
           location = "udf";
         }
 
-        const {
-          returnedIds, 
-          returnedIndex,
-
-          } = await dispatch("TYPE_AND_DECLARATION_CHECKER", 
+        index = await dispatch("TYPE_AND_DECLARATION_CHECKER", 
             {
               index: index, 
               tokenStream: tokenStream, 
               dataTypes: dataTypes, 
               location: location,
-              currentIds: ids,
+              ids: ids,
               tasks: tasks
           }
         );
-
-        returnedIds.forEach(returnedId => ids.push(returnedId));
-        index = returnedIndex;
 
         if(beginKeywords.includes(tokenStream[index].word)) ids.push(
           {
@@ -901,7 +894,7 @@ export default {
           const taskName = taskIndex !== "undefined"
             ? tasks[taskIndex]
             : taskIndex;
-          console.log(taskName)
+          
           index+=3;
           while(tokenStream[index].word !== "{") index++;
           index++;
@@ -909,6 +902,18 @@ export default {
           while(curlyCounter > 0){
             if(tokenStream[index].word === "{") curlyCounter++;
             if(tokenStream[index].word === "}") curlyCounter--;
+
+            index = await dispatch("TYPE_AND_DECLARATION_CHECKER", 
+                {
+                  index: index, 
+                  tokenStream: tokenStream, 
+                  dataTypes: dataTypes, 
+                  location: location,
+                  ids: ids,
+                  tasks: tasks
+              }
+            );
+
             if(tokenStream[index].word === "return"){
               if(taskName !== undefined && taskName.type === "empty"){
                 commit("SET_ERROR", {
@@ -927,7 +932,13 @@ export default {
                   exp: "-",
                 });
               } else{
-                // evaluate expression here
+                index++;
+                index = await dispatch("EXPRESSION_EVALUATOR", {
+                  expectedDType: taskName.type,
+                  index: index,
+                  tokenStream: tokenStream,
+                  ids: ids,
+                })
               }
             }
             index++;
@@ -945,8 +956,7 @@ export default {
       }
     },
     async TYPE_AND_DECLARATION_CHECKER({commit}, payload){
-      let {index, tokenStream, dataTypes, location, currentIds, tasks} = payload;
-      const ids = [];
+      let {index, tokenStream, dataTypes, location, ids, tasks} = payload;
 
       if(tokenStream[index].word === "vital"){
         let moreConst = true;
@@ -957,7 +967,6 @@ export default {
           tokenStream[index+2].location = location;
           tokenStream[index+2].dtype = dtype.word;
           ids.push(tokenStream[index+2]);
-          currentIds.push(tokenStream[index+2]);
           const constant = {
             dtype: dtype,
             varName: tokenStream[index+2],
@@ -969,13 +978,13 @@ export default {
                   ? "int"
                   : tokenStream[index+4].word.includes(".")
                     ? "dec"
-                    : currentIds.findIndex(id => id.lex === tokenStream[index+4].lex),
+                    : id.findIndex(id => id.lex === tokenStream[index+4].lex),
             value: tokenStream[index+4],
             line: tokenStream[index+4].line,
             col: tokenStream[index+4].col
           };
           if(typeof(constant.valuetype) === "number")
-            if(constant.valuetype >= 0) constant.valuetype = currentIds[constant.valuetype].dtype;
+            if(constant.valuetype >= 0) constant.valuetype = id[constant.valuetype].dtype;
             else constant.valuetype = undefined;
 
           const error = {
@@ -1016,7 +1025,6 @@ export default {
           tokenStream[index+1].location = location;
           tokenStream[index+1].dtype = dtype.word;
           ids.push(tokenStream[index+1]);
-          currentIds.push(tokenStream[index+1]);
 
           const value = tokenStream[index+2].word === "="
             ? tokenStream[index+3]
@@ -1040,7 +1048,7 @@ export default {
                   ? "int"
                   : value.word.includes(".")
                     ? "dec"
-                    : currentIds.findIndex(id => id.lex === value.lex),
+                    : id.findIndex(id => id.lex === value.lex),
             value: value,
             line: tokenStream[index+2].word === "="
               ? tokenStream[index+3].line
@@ -1050,7 +1058,7 @@ export default {
               : tokenStream[index+1].col,
           };
           if(typeof(define.valuetype) === "number")
-            if(define.valuetype >= 0) define.valuetype = currentIds[define.valuetype].dtype;
+            if(define.valuetype >= 0) define.valuetype = id[define.valuetype].dtype;
             else define.valuetype = undefined;
 
           const error = {
@@ -1078,11 +1086,11 @@ export default {
             });
 
           if(tokenStream[index+2].word === "="){
-            index+=4;
             if(tokenStream[index].word === ";") moreVar = false;
+            index+=4;
           } else{
-            index+=2;
             if(tokenStream[index+2].word === ";") moreVar = false;
+            index+=2;
           }
           if(moreVar && dataTypes.includes(tokenStream[index+1].word)){
             dtype = tokenStream[index+1];
@@ -1092,7 +1100,7 @@ export default {
       } else if(tokenStream[index].token === "id"){
         const i = tokenStream[index+1].word === "("
           ? tasks.findIndex(task => task.lex === tokenStream[index].lex)
-          : currentIds.findIndex(id => id.lex === tokenStream[index].lex);
+          : id.findIndex(id => id.lex === tokenStream[index].lex);
         const undeclaredMsg = tokenStream[index+1].word === "("
           ? "task"
           : "variable"
@@ -1107,10 +1115,49 @@ export default {
         }
         tokenStream[index].location = location;
       }
-      return {
-        returnedIds: ids, 
-        returnedIndex: index,
-      };
+      return index;
+    },
+    async EXPRESSION_EVALUATOR({commit}, payload){ // return num1 + (num2 - num3 * (num4 / num5));
+      let {expectedDType, index, tokenStream, ids} = payload;
+      let matchingDType = true;
+      const numberTokens = ["litInt", "negaLitInt", "decLit"];
+      const numberDTypes = ["int", "dec"];
+      let errorFound = false;
+      let err;
+      while(tokenStream[index].word !== ";" && matchingDType){
+        errorFound = false;
+        if(tokenStream[index].token === "id"){
+          let idIndex = ids.findIndex(id => id.lex === tokenStream[index].lex);
+
+          if(idIndex < 0) commit("SET_ERROR", {
+            type: "sem-error",
+            msg: `Undeclared variable (${tokenStream[index].word})`,
+            line: tokenStream[index].line,
+            col: tokenStream[index].col,
+            exp: `-`,
+          });
+
+          else if(ids[idIndex].dtype !== expectedDType){
+            errorFound = true;
+            err = ids[idIndex].dtype
+          }
+        } else if(numberTokens.includes(tokenStream[index].token)){
+          if(!numberDTypes.includes(expectedDType))  errorFound = true;
+        } else if(tokenStream[index].token === "strLit"){
+          if(expectedDType !== "str")  errorFound = true;
+        } else if(tokenStream[index].token === "boolLit"){
+          if(expectedDType !== "bool") errorFound = true;
+        }
+        if(errorFound) commit("SET_ERROR", {
+          type: "sem-error",
+          msg: `Mismatched data type (${expectedDType}) and value (${err ? err : tokenStream[index].word})`,
+          line: tokenStream[index].line,
+          col: tokenStream[index].col,
+          exp: `${expectedDType} value`,
+        });
+        index++;
+      }
+      return index;
     },
     async WRITE_JAVASCRIPT({ state, dispatch, commit }, statements){
       const javascriptStatements = [];
