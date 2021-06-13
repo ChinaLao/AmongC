@@ -956,7 +956,7 @@ export default {
         index++;
       }
     },
-    async TYPE_AND_DECLARATION_CHECKER({commit}, payload){
+    async TYPE_AND_DECLARATION_CHECKER({commit, dispatch}, payload){
       let {index, tokenStream, dataTypes, location, ids, tasks} = payload;
 
       if(tokenStream[index].word === "vital"){
@@ -968,54 +968,14 @@ export default {
           tokenStream[index+2].location = location;
           tokenStream[index+2].dtype = dtype.word;
           ids.push(tokenStream[index+2]);
-          const constant = {
-            dtype: dtype,
-            varName: tokenStream[index+2],
-            valuetype: tokenStream[index+4].word.includes("\"")
-              ? "str"
-              : tokenStream[index+4].word.includes("true") || tokenStream[index+4].word.includes("false")
-                ? "bool"
-                : Number(tokenStream[index+4].word) - Math.floor(Number(tokenStream[index+4].word)) === 0
-                  ? "int"
-                  : tokenStream[index+4].word.includes(".")
-                    ? "dec"
-                    : id.findIndex(id => id.lex === tokenStream[index+4].lex),
-            value: tokenStream[index+4],
-            line: tokenStream[index+4].line,
-            col: tokenStream[index+4].col
-          };
-          if(typeof(constant.valuetype) === "number")
-            if(constant.valuetype >= 0) constant.valuetype = id[constant.valuetype].dtype;
-            else constant.valuetype = undefined;
-
-          const error = {
-            isError: false,
-            message: "",
-            exp: ""
-          };
-          
-          if(constant.valuetype !== undefined && constant.dtype.word !== constant.valuetype){
-            error.isError = true;
-            error.message = `Mismatched data type (${constant.dtype.word}) and value (${constant.valuetype})`;
-            error.exp = `${constant.dtype.word} value`;
-          } else if(constant.valuetype === undefined){
-            error.isError = true;
-            error.message = `Undeclared variable (${constant.value.word})`;
-            error.exp = `-`;
-          }
-          if(error.isError === true)
-            commit("SET_ERROR", {
-              type: "sem-error",
-              msg: error.message,
-              line: constant.line,
-              col: constant.col,
-              exp: error.exp,
-            });
-          if(tokenStream[index+5].word === ";"){
-            moreConst = false;
-            index+=5;
-          }
-          else index+=4;
+          index = await dispatch("EXPRESSION_EVALUATOR",
+          {
+            expectedDType: dtype.word,
+            index: index+4,
+            tokenStream: tokenStream,
+            ids: ids
+          });
+          if(tokenStream[index].word === ";") moreConst = false;
         }
       } else if(dataTypes.includes(tokenStream[index].word)){
         let moreVar = true;
@@ -1049,7 +1009,7 @@ export default {
                   ? "int"
                   : value.word.includes(".")
                     ? "dec"
-                    : id.findIndex(id => id.lex === value.lex),
+                    : ids.findIndex(id => id.lex === value.lex),
             value: value,
             line: tokenStream[index+2].word === "="
               ? tokenStream[index+3].line
@@ -1059,7 +1019,7 @@ export default {
               : tokenStream[index+1].col,
           };
           if(typeof(define.valuetype) === "number")
-            if(define.valuetype >= 0) define.valuetype = id[define.valuetype].dtype;
+            if(define.valuetype >= 0) define.valuetype = ids[define.valuetype].dtype;
             else define.valuetype = undefined;
 
           const error = {
@@ -1101,7 +1061,7 @@ export default {
       } else if(tokenStream[index].token === "id"){
         const i = tokenStream[index+1].word === "("
           ? tasks.findIndex(task => task.lex === tokenStream[index].lex)
-          : id.findIndex(id => id.lex === tokenStream[index].lex);
+          : ids.findIndex(id => id.lex === tokenStream[index].lex);
         const undeclaredMsg = tokenStream[index+1].word === "("
           ? "task"
           : "variable"
@@ -1120,12 +1080,12 @@ export default {
     },
     async EXPRESSION_EVALUATOR({commit}, payload){ // return num1 + (num2 - num3 * (num4 / num5));
       let {expectedDType, index, tokenStream, ids} = payload;
-      let matchingDType = true;
-      const numberTokens = ["litInt", "negaLitInt", "decLit"];
+      console.log(payload)
+      const numberTokens = ["litInt", "negaLitInt", "litDec"];
       const numberDTypes = ["int", "dec"];
       let errorFound = false;
       let err;
-      while(tokenStream[index].word !== ";" && matchingDType){
+      while(tokenStream[index].word !== ";" && tokenStream[index].word !== ","){
         errorFound = false;
         if(tokenStream[index].token === "id"){
           let idIndex = ids.findIndex(id => id.lex === tokenStream[index].lex);
@@ -1144,9 +1104,9 @@ export default {
           }
         } else if(numberTokens.includes(tokenStream[index].token)){
           if(!numberDTypes.includes(expectedDType))  errorFound = true;
-        } else if(tokenStream[index].token === "strLit"){
+        } else if(tokenStream[index].token === "litStr"){
           if(expectedDType !== "str")  errorFound = true;
-        } else if(tokenStream[index].token === "boolLit"){
+        } else if(tokenStream[index].token === "litBool"){
           if(expectedDType !== "bool") errorFound = true;
         }
         if(errorFound) commit("SET_ERROR", {
