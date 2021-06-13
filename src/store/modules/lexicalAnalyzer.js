@@ -967,6 +967,14 @@ export default {
           tokenStream[index+2].editable = false;
           tokenStream[index+2].location = location;
           tokenStream[index+2].dtype = dtype.word;
+          const idIndex = ids.findIndex(id => id.lex === tokenStream[index+2].lex);
+          if(idIndex >= 0) commit("SET_ERROR", {
+            type: "sem-error",
+            msg: `Duplicate declaration of variable (${tokenStream[index+2].word})`,
+            line: tokenStream[index+2].line,
+            col: tokenStream[index+2].col,
+            exp: "-",
+          });
           ids.push(tokenStream[index+2]);
           index = await dispatch("EXPRESSION_EVALUATOR",
           {
@@ -985,6 +993,14 @@ export default {
           tokenStream[index+1].editable = true;
           tokenStream[index+1].location = location;
           tokenStream[index+1].dtype = dtype.word;
+          const idIndex = ids.findIndex(id => id.lex === tokenStream[index+1].lex);
+          if(idIndex >= 0) commit("SET_ERROR", {
+            type: "sem-error",
+            msg: `Duplicate declaration of variable (${tokenStream[index+1].word})`,
+            line: tokenStream[index+2].line,
+            col: tokenStream[index+2].col,
+            exp: "-",
+          });
           ids.push(tokenStream[index+1]);
 
           if(tokenStream[index+2].word === "="){
@@ -999,6 +1015,7 @@ export default {
           }
           
           if(tokenStream[index].word === ";") moreVar = false;
+          
         }
       } else if(tokenStream[index].token === "id"){
         const i = tokenStream[index+1].word === "("
