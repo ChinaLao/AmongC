@@ -1,5 +1,6 @@
 const nearley = require("nearley");
 const grammar = require("./grammar.js");
+const colors = require('colors');
 
 const moo = require("moo");
 
@@ -626,7 +627,7 @@ export default {
           });
         }
       }
-      console.log("Lexical Errors: ", state.error);
+      console.log("%cLexical Errors: ", "color: cyan; font-size: 15px", state.error);
       commit("SET_LEXEME", final);
       if(state.error.length > 0) commit("CHANGE_ERROR", true);
       return finalToPass;
@@ -754,13 +755,13 @@ export default {
           }
           index++;
         }
-        console.log("Syntax Errors: ", state.error);
+        console.log("%cSyntax Errors: ", "color: cyan; font-size: 15px", state.error);
         if(parser.results && parser.results.length > 1)
-          console.log("AMBIGUOUS GRAMMAR DETECTED");
+          console.log("%cAMBIGUOUS GRAMMAR DETECTED", "color: red; font-size: 20px");
         if(parser.results){
-          console.log("Parser Results: ", parser.results);
+          console.log("%cParser Results: ", "color: cyan; font-size: 15px", parser.results);
           commit('SET_AST', parser.results[0]);
-          console.log("AST: ", state.ast);
+          console.log("%cAST: ", "color: cyan; font-size: 15px", state.ast);
           await dispatch('WRITE_AST');
         }
       }
