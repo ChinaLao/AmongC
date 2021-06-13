@@ -819,8 +819,20 @@ export default {
       let index = 0;
       while(index < tokenStream.length){
         if(tokenStream[index].word === "task"){
+          const taskType = tokenStream[index+1];
+
+          let counter = index+3;
+          let paramCounter = 0;
+          while(dataTypes.includes(tokenStream[counter].word) || tokenStream[counter].word !== ")"){
+            if(dataTypes.includes(tokenStream[counter].word)) paramCounter++;
+            counter++;
+          }
+
+          tokenStream[index+2].type = taskType.word;
+          tokenStream[index+2].paramCount = paramCounter;
           tasks.push(tokenStream[index+2]);
-          index++;
+          index = counter-1;
+
         }
         index++;
       }
@@ -861,6 +873,7 @@ export default {
               tasks: tasks
           }
         );
+
         returnedIds.forEach(returnedId => ids.push(returnedId));
         index = returnedIndex;
 
@@ -883,7 +896,43 @@ export default {
             }
           );
         }
-        if(tokenStream[index].word === "task") index+=3;
+        if(tokenStream[index].word === "task"){ 
+          const taskIndex = tasks.findIndex(task => task.lex === tokenStream[index+2].lex);
+          const taskName = taskIndex !== "undefined"
+            ? tasks[taskIndex]
+            : taskIndex;
+          console.log(taskName)
+          index+=3;
+          while(tokenStream[index].word !== "{") index++;
+          index++;
+          let curlyCounter = 1;
+          while(curlyCounter > 0){
+            if(tokenStream[index].word === "{") curlyCounter++;
+            if(tokenStream[index].word === "}") curlyCounter--;
+            if(tokenStream[index].word === "return"){
+              if(taskName !== undefined && taskName.type === "empty"){
+                commit("SET_ERROR", {
+                  type: "sem-error",
+                  msg: "empty task type cannot have a return",
+                  line: tokenStream[index].line,
+                  col: tokenStream[index].col,
+                  exp: "no return",
+                });
+              } else if(taskName === undefined){
+                commit("SET_ERROR", {
+                  type: "programmer-error",
+                  msg: "unhandled error in Among C. Check logs.",
+                  line: tokenStream[index].line,
+                  col: tokenStream[index].col,
+                  exp: "-",
+                });
+              } else{
+                // evaluate expression here
+              }
+            }
+            index++;
+          }
+        }
         if(tokenStream[index].word === "}" || tokenStream[index].word === "kill"){
           let deleteIndex = ids.length-1;
           while(ids[deleteIndex].lex !== "begin"){
