@@ -807,12 +807,6 @@ export default {
     },
     async SEMANTICS({state, commit, dispatch}, tokenStream){
       let location = "global";
-      const globalVar = [];
-      const mainVar = [];
-      const udfVar = [];
-      const globalConst = [];
-      const mainConst = [];
-      const udfConst = [];
       const dataTypes = ["int", "dec", "str", "bool"];
       const beginKeywords = ["vote", "switch", "task", "for", "if", "elf", "else", "do"]
       const ids = [
@@ -843,8 +837,7 @@ export default {
               lex: "begin"
             }
           );
-        }
-        else if(tokenStream[index].word === "OUT"){
+        } else if(tokenStream[index].word === "OUT"){
           let deleteIndex = ids.length-1;
           while(ids[deleteIndex].lex !== "begin"){
             ids.pop();
@@ -854,174 +847,22 @@ export default {
           location = "udf";
         }
 
-        if(tokenStream[index].word === "vital"){
-          let moreConst = true;
-          const dtype = tokenStream[index+1]
-          while(moreConst){
-            tokenStream[index+2].declared = tokenStream[index+2].defined = true;
-            tokenStream[index+2].editable = false;
-            tokenStream[index+2].location = location;
-            tokenStream[index+2].dtype = dtype.word;
-            ids.push(tokenStream[index+2]);
-            const constant = {
-              dtype: dtype,
-              varName: tokenStream[index+2],
-              valuetype: tokenStream[index+4].word.includes("\"")
-                ? "str"
-                : tokenStream[index+4].word.includes("true") || tokenStream[index+4].word.includes("false")
-                  ? "bool"
-                  : Number(tokenStream[index+4].word) - Math.floor(Number(tokenStream[index+4].word)) === 0
-                    ? "int"
-                    : tokenStream[index+4].word.includes(".")
-                      ? "dec"
-                      : ids.findIndex(id => id.lex === tokenStream[index+4].lex),
-              value: tokenStream[index+4],
-              line: tokenStream[index+4].line,
-              col: tokenStream[index+4].col
-            };
-            if(typeof(constant.valuetype) === "number")
-              if(constant.valuetype >= 0) constant.valuetype = ids[constant.valuetype].dtype;
-              else constant.valuetype = undefined;
+        const {
+          returnedIds, 
+          returnedIndex,
 
-            const error = {
-              isError: false,
-              message: "",
-              exp: ""
-            };
-            
-            if(constant.valuetype !== undefined && constant.dtype.word !== constant.valuetype){
-              error.isError = true;
-              error.message = `Mismatched data type (${constant.dtype.word}) and value (${constant.valuetype})`;
-              error.exp = `${constant.dtype.word} value`;
-            } else if(constant.valuetype === undefined){
-              error.isError = true;
-              error.message = `Undeclared variable (${constant.value.word})`;
-              error.exp = `-`;
-            }
-            if(error.isError === true)
-              commit("SET_ERROR", {
-                type: "sem-error",
-                msg: error.message,
-                line: constant.line,
-                col: constant.col,
-                exp: error.exp,
-              });
-            if(tokenStream[index+5].word === ";"){
-              moreConst = false;
-              index+=5;
-            }
-            else index+=4;
-            constant.varName.location === "global"
-              ? globalConst.push(constant)
-              : constant.varName.location === "main"
-                ? mainConst.push(constant)
-                : udfConst.push(constant);
+          } = await dispatch("TYPE_AND_DECLARATION_CHECKER", 
+            {
+              index: index, 
+              tokenStream: tokenStream, 
+              dataTypes: dataTypes, 
+              location: location,
+              currentIds: ids,
+              tasks: tasks
           }
-        } else if(dataTypes.includes(tokenStream[index].word)){
-          let moreVar = true;
-          let dtype = tokenStream[index]
-          while(moreVar){
-            tokenStream[index+1].declared = true;
-            tokenStream[index+1].editable = true;
-            tokenStream[index+1].location = location;
-            tokenStream[index+1].dtype = dtype.word;
-            ids.push(tokenStream[index+1]);
-
-            const value = tokenStream[index+2].word === "="
-              ? tokenStream[index+3]
-              : dtype.word === "str"
-                  ? {word: "\"\""}
-                  : dtype.word === "bool"
-                    ? {word: "false"}
-                    : dtype.word === "int"
-                      ? {word: "0"}
-                      : {word: "0.0"};
-            
-            tokenStream[index+1].defined = tokenStream[index+2].word === "=" || (tokenStream[index+2].word === "," && dataTypes.includes(tokenStream[index+3].word));
-            const define = {
-              dtype: dtype,
-              varName: tokenStream[index+1],
-              valuetype: value.word.includes("\"")
-                ? "str"
-                : value.word.includes("true") || value.word.includes("false")
-                  ? "bool"
-                  : Number(value.word) - Math.floor(Number(value.word)) === 0
-                    ? "int"
-                    : value.word.includes(".")
-                      ? "dec"
-                      : ids.findIndex(id => id.lex === value.lex),
-              value: value,
-              line: tokenStream[index+2].word === "="
-                ? tokenStream[index+3].line
-                : tokenStream[index+1].line,
-              col: tokenStream[index+2].word === "="
-                ? tokenStream[index+3].col
-                : tokenStream[index+1].col,
-            };
-            if(typeof(define.valuetype) === "number")
-              if(define.valuetype >= 0) define.valuetype = ids[define.valuetype].dtype;
-              else define.valuetype = undefined;
-
-            const error = {
-              isError: false,
-              message: "",
-              exp: ""
-            };
-            
-            if(define.valuetype !== undefined && define.dtype.word !== define.valuetype){
-              error.isError = true;
-              error.message = `Mismatched data type (${define.dtype.word}) and value (${define.valuetype})`;
-              error.exp = `${define.dtype.word} value`;
-            } else if(define.valuetype === undefined){
-              error.isError = true;
-              error.message = `Undeclared variable (${define.value.word})`;
-              error.exp = `-`;
-            }
-            if(error.isError === true)
-              commit("SET_ERROR", {
-                type: "sem-error",
-                msg: error.message,
-                line: define.line,
-                col: define.col,
-                exp: error.exp,
-              });
-            tokenStream[index+2].word === "="
-              ? tokenStream[index+4].word === ";"
-                ? moreVar = false
-                : index+=4
-              : tokenStream[index+2].word === ";"
-                ? moreVar = false
-                : index+=2
-            if(moreVar && dataTypes.includes(tokenStream[index+1].word)){
-              dtype = tokenStream[index+1];
-              index++;
-            }
-            define.varName.location === "global"
-              ? globalVar.push(define)
-              : define.varName.location === "main"
-                ? mainVar.push(define)
-                : udfVar.push(define);
-          }
-        }
-
-        if(tokenStream[index].token === "id"){
-          const i = tokenStream[index+1].word === "("
-            ? tasks.findIndex(task => task.lex === tokenStream[index].lex)
-            : ids.findIndex(id => id.lex === tokenStream[index].lex);
-          const undeclaredMsg = tokenStream[index+1].word === "("
-            ? "task"
-            : "variable"
-          if(i < 0){
-            commit("SET_ERROR", {
-              type: "sem-error",
-              msg: `Undeclared ${undeclaredMsg} (${tokenStream[index].word})`,
-              line: tokenStream[index].line,
-              col: tokenStream[index].col,
-              exp: "-",
-            });
-          }
-          tokenStream[index].location = location;
-        }
+        );
+        returnedIds.forEach(returnedId => ids.push(returnedId));
+        index = returnedIndex;
 
         if(beginKeywords.includes(tokenStream[index].word)) ids.push(
           {
@@ -1053,12 +894,174 @@ export default {
         }
         index++;
       }
-      console.log("Global Constants: ", globalConst);
-      console.log("Global Variables: ", globalVar);
-      console.log("Main Constants: ", mainConst);
-      console.log("Main Variables: ", mainVar);
-      console.log("UDF Constants: ", udfConst);
-      console.log("UDF Variables: ", udfVar);
+    },
+    async TYPE_AND_DECLARATION_CHECKER({commit}, payload){
+      let {index, tokenStream, dataTypes, location, currentIds, tasks} = payload;
+      const ids = [];
+
+      if(tokenStream[index].word === "vital"){
+        let moreConst = true;
+        const dtype = tokenStream[index+1]
+        while(moreConst){
+          tokenStream[index+2].declared = tokenStream[index+2].defined = true;
+          tokenStream[index+2].editable = false;
+          tokenStream[index+2].location = location;
+          tokenStream[index+2].dtype = dtype.word;
+          ids.push(tokenStream[index+2]);
+          currentIds.push(tokenStream[index+2]);
+          const constant = {
+            dtype: dtype,
+            varName: tokenStream[index+2],
+            valuetype: tokenStream[index+4].word.includes("\"")
+              ? "str"
+              : tokenStream[index+4].word.includes("true") || tokenStream[index+4].word.includes("false")
+                ? "bool"
+                : Number(tokenStream[index+4].word) - Math.floor(Number(tokenStream[index+4].word)) === 0
+                  ? "int"
+                  : tokenStream[index+4].word.includes(".")
+                    ? "dec"
+                    : currentIds.findIndex(id => id.lex === tokenStream[index+4].lex),
+            value: tokenStream[index+4],
+            line: tokenStream[index+4].line,
+            col: tokenStream[index+4].col
+          };
+          if(typeof(constant.valuetype) === "number")
+            if(constant.valuetype >= 0) constant.valuetype = currentIds[constant.valuetype].dtype;
+            else constant.valuetype = undefined;
+
+          const error = {
+            isError: false,
+            message: "",
+            exp: ""
+          };
+          
+          if(constant.valuetype !== undefined && constant.dtype.word !== constant.valuetype){
+            error.isError = true;
+            error.message = `Mismatched data type (${constant.dtype.word}) and value (${constant.valuetype})`;
+            error.exp = `${constant.dtype.word} value`;
+          } else if(constant.valuetype === undefined){
+            error.isError = true;
+            error.message = `Undeclared variable (${constant.value.word})`;
+            error.exp = `-`;
+          }
+          if(error.isError === true)
+            commit("SET_ERROR", {
+              type: "sem-error",
+              msg: error.message,
+              line: constant.line,
+              col: constant.col,
+              exp: error.exp,
+            });
+          if(tokenStream[index+5].word === ";"){
+            moreConst = false;
+            index+=5;
+          }
+          else index+=4;
+        }
+      } else if(dataTypes.includes(tokenStream[index].word)){
+        let moreVar = true;
+        let dtype = tokenStream[index]
+        while(moreVar){
+          tokenStream[index+1].declared = true;
+          tokenStream[index+1].editable = true;
+          tokenStream[index+1].location = location;
+          tokenStream[index+1].dtype = dtype.word;
+          ids.push(tokenStream[index+1]);
+          currentIds.push(tokenStream[index+1]);
+
+          const value = tokenStream[index+2].word === "="
+            ? tokenStream[index+3]
+            : dtype.word === "str"
+                ? {word: "\"\""}
+                : dtype.word === "bool"
+                  ? {word: "false"}
+                  : dtype.word === "int"
+                    ? {word: "0"}
+                    : {word: "0.0"};
+          
+          tokenStream[index+1].defined = tokenStream[index+2].word === "=" || (tokenStream[index+2].word === "," && dataTypes.includes(tokenStream[index+3].word));
+          const define = {
+            dtype: dtype,
+            varName: tokenStream[index+1],
+            valuetype: value.word.includes("\"")
+              ? "str"
+              : value.word.includes("true") || value.word.includes("false")
+                ? "bool"
+                : Number(value.word) - Math.floor(Number(value.word)) === 0
+                  ? "int"
+                  : value.word.includes(".")
+                    ? "dec"
+                    : currentIds.findIndex(id => id.lex === value.lex),
+            value: value,
+            line: tokenStream[index+2].word === "="
+              ? tokenStream[index+3].line
+              : tokenStream[index+1].line,
+            col: tokenStream[index+2].word === "="
+              ? tokenStream[index+3].col
+              : tokenStream[index+1].col,
+          };
+          if(typeof(define.valuetype) === "number")
+            if(define.valuetype >= 0) define.valuetype = currentIds[define.valuetype].dtype;
+            else define.valuetype = undefined;
+
+          const error = {
+            isError: false,
+            message: "",
+            exp: ""
+          };
+          
+          if(define.valuetype !== undefined && define.dtype.word !== define.valuetype){
+            error.isError = true;
+            error.message = `Mismatched data type (${define.dtype.word}) and value (${define.valuetype})`;
+            error.exp = `${define.dtype.word} value`;
+          } else if(define.valuetype === undefined){
+            error.isError = true;
+            error.message = `Undeclared variable (${define.value.word})`;
+            error.exp = `-`;
+          }
+          if(error.isError === true)
+            commit("SET_ERROR", {
+              type: "sem-error",
+              msg: error.message,
+              line: define.line,
+              col: define.col,
+              exp: error.exp,
+            });
+
+          if(tokenStream[index+2].word === "="){
+            index+=4;
+            if(tokenStream[index].word === ";") moreVar = false;
+          } else{
+            index+=2;
+            if(tokenStream[index+2].word === ";") moreVar = false;
+          }
+          if(moreVar && dataTypes.includes(tokenStream[index+1].word)){
+            dtype = tokenStream[index+1];
+            index++;
+          }
+        }
+      } else if(tokenStream[index].token === "id"){
+        const i = tokenStream[index+1].word === "("
+          ? tasks.findIndex(task => task.lex === tokenStream[index].lex)
+          : currentIds.findIndex(id => id.lex === tokenStream[index].lex);
+        const undeclaredMsg = tokenStream[index+1].word === "("
+          ? "task"
+          : "variable"
+        if(i < 0){
+          commit("SET_ERROR", {
+            type: "sem-error",
+            msg: `Undeclared ${undeclaredMsg} (${tokenStream[index].word})`,
+            line: tokenStream[index].line,
+            col: tokenStream[index].col,
+            exp: "-",
+          });
+        }
+        tokenStream[index].location = location;
+      }
+      return {
+        returnedIds: ids, 
+        returnedIndex: index,
+      };
     },
     async WRITE_JAVASCRIPT({ state, dispatch, commit }, statements){
       const javascriptStatements = [];
@@ -1123,5 +1126,5 @@ export default {
         });
         if(state.error.length > 0) commit("CHANGE_ERROR", true);
     }
-  }, 
+  },
 };
