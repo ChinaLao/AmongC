@@ -216,6 +216,7 @@ export default {
       return highlight(code, languages.js);
     },
     async run() {
+      console.clear();
       this.runClicked = true;
       this.clearOutput(); //clears lex table, error table, and output
 
@@ -256,6 +257,7 @@ export default {
       this.clearOutput();
     },
     clearOutput() {
+      console.clear();
       this.output = null;
       this.$store.commit("lexicalAnalyzer/CLEAR_OUTPUTS");
     },
