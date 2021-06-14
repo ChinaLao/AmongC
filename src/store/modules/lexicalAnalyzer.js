@@ -1,6 +1,5 @@
 const nearley = require("nearley");
 const grammar = require("./grammar.js");
-const colors = require('colors');
 
 const moo = require("moo");
 
@@ -955,6 +954,7 @@ export default {
         }
         index++;
       }
+      console.log("%cSemantic Errors: ", "color: cyan; font-size: 15px", state.error);
     },
     async TYPE_AND_DECLARATION_CHECKER({commit, dispatch}, payload){
       let {index, tokenStream, dataTypes, location, ids, tasks} = payload;
@@ -1051,9 +1051,11 @@ export default {
     },
     async EXPRESSION_EVALUATOR({commit}, payload){ // return num1 + (num2 - num3 * (num4 / num5));
       let {expectedDType, index, tokenStream, ids} = payload;
-      console.log(payload)
       const numberTokens = ["litInt", "negaLitInt", "litDec"];
       const numberDTypes = ["int", "dec"];
+      const numberCompareTokens = ["<", ">", "<=", ">="];
+      const boolConnector = ["and", "or"];
+
       let errorFound = false;
       let err;
       while(tokenStream[index].word !== ";" && tokenStream[index].word !== ","){
@@ -1069,17 +1071,38 @@ export default {
             exp: `-`,
           });
 
-          else if((!numberDTypes.includes(ids[idIndex].dtype) || !numberDTypes.includes(expectedDType)) && ids[idIndex].dtype !== expectedDType){
+          else if(
+            ( !numberDTypes.includes(ids[idIndex].dtype) 
+              || !numberDTypes.includes(expectedDType)
+            ) 
+            && ids[idIndex].dtype !== expectedDType 
+            && expectedDType !== "bool"
+          ){
             errorFound = true;
             err = ids[idIndex].dtype
           }
         } else if(numberTokens.includes(tokenStream[index].token)){
-          console.log(tokenStream[index], expectedDType)
-          if(!numberDTypes.includes(expectedDType))  errorFound = true;
+          if(!numberDTypes.includes(expectedDType) && expectedDType !== "bool")  errorFound = true;
         } else if(tokenStream[index].token === "litStr"){
-          if(expectedDType !== "str")  errorFound = true;
+          if(expectedDType !== "str" && expectedDType !== "bool")  errorFound = true;
         } else if(tokenStream[index].token === "litBool"){
           if(expectedDType !== "bool") errorFound = true;
+        } else if(boolConnector.includes(tokenStream[index].word)){
+          if(expectedDType !== "bool") commit("SET_ERROR", {
+            type: "sem-error",
+            msg: `Keyword (${tokenStream[index].word}) can only be used on bool data types`,
+            line: tokenStream[index].line,
+            col: tokenStream[index].col,
+            exp: "-",
+          });
+        } else if(numberCompareTokens.includes(tokenStream[index].word)){
+          if(expectedDType === "str") commit("SET_ERROR", {
+            type: "sem-error",
+            msg: `Symbol (${tokenStream[index].word}) can only be used on number and bool data types`,
+            line: tokenStream[index].line,
+            col: tokenStream[index].col,
+            exp: "-",
+          });
         }
         if(errorFound) commit("SET_ERROR", {
           type: "sem-error",
