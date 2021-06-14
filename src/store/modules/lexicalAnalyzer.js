@@ -710,7 +710,6 @@ export default {
             parser.feed(lexeme[index].token); //checks the cfg in grammar.ne
           } catch (err) {
             let type, msg = null;
-            console.log(err);
             const expectations = []; //for syntax expectations
             const results = state.results; //for the list of grouped results
 
@@ -739,6 +738,7 @@ export default {
               type = "syn-error";
               msg = `Unexpected token: ${lexeme[index].lex} (${lexeme[index].word})`;
             }else{
+              console.log(err);
               type = "programmer-error";
               msg = "Unaccounted error. Check logs";
             }
@@ -758,11 +758,11 @@ export default {
         console.log("%cSyntax Errors: ", "color: cyan; font-size: 15px", state.error);
         if(parser.results && parser.results.length > 1)
           console.log("%cAMBIGUOUS GRAMMAR DETECTED", "color: red; font-size: 20px");
-        if(parser.results){
+        if(!state.error.length && parser.results){
           console.log("%cParser Results: ", "color: cyan; font-size: 15px", parser.results);
-          commit('SET_AST', parser.results[0]);
-          console.log("%cAST: ", "color: cyan; font-size: 15px", state.ast);
-          await dispatch('WRITE_AST');
+          // commit('SET_AST', parser.results[0]);
+          // console.log("%cAST: ", "color: cyan; font-size: 15px", state.ast);
+          // await dispatch('WRITE_AST');
         }
       }
     },
@@ -959,7 +959,7 @@ export default {
     },
     async TYPE_AND_DECLARATION_CHECKER({commit, dispatch}, payload){
       let {index, tokenStream, dataTypes, location, ids, tasks} = payload;
-
+      const assignOper = ["=", "+=", "-=", "*=", "**=", "/=", "//=", "%="];
       if(tokenStream[index].word === "vital"){
         let moreConst = true;
         const dtype = tokenStream[index+1]
@@ -1035,7 +1035,7 @@ export default {
           });
         } else{
           while(tokenStream[index].word !== ";"){
-            if(tokenStream[index].word === "="){
+            if(assignOper.includes(tokenStream[index].word)){
               index = await dispatch("EXPRESSION_EVALUATOR",
               {
                 expectedDType: ids[i].dtype,
