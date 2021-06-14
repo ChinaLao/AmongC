@@ -731,8 +731,9 @@ export default {
                   //find the group of the token
                   const group = await dispatch('FIND_GROUP', expect);
                   //find the lex from deignated group
-                  const lex = results[group][expect]["lex"]; 
-                  expectations.push(lex);
+                  const lex = results[group][expect]["lex"];
+                  if(expect !== "negaLitInt")
+                    expectations.push(lex);
                 }
               }
               type = "syn-error";
