@@ -1116,12 +1116,25 @@ export default {
           if(tokenStream[index].token === "id"){
             if(tokenStream[index+1].word === "("){
               const ind = tasks.findIndex(task => task.lex === tokenStream[index].lex);
-              dtype = tasks[ind].type;
+              if(ind < 0) commit("SET_ERROR", {
+                type: "sem-error",
+                msg: `Undeclared task (${tokenStream[index].word})`,
+                line: tokenStream[index].line,
+                col: tokenStream[index].col,
+                exp: `-`,
+              });
+              else dtype = tasks[ind].type;
             } else {
               const ind = ids.findIndex(id => id.lex === tokenStream[index].lex);
-              dtype = ids[ind].type;
+              if(ind < 0) commit("SET_ERROR", {
+                type: "sem-error",
+                msg: `Undeclared variable (${tokenStream[index].word})`,
+                line: tokenStream[index].line,
+                col: tokenStream[index].col,
+                exp: `-`,
+              });
+              else dtype = ids[ind].dtype;
             }
-            console.log(dtype)
           } else if(tokenStream[index].lex.includes("Lit")){
             dtype = tokenStream[index].lex.split("Lit")[0];
           }
