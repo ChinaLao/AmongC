@@ -170,45 +170,47 @@ string_access ->
   #  |   assign_array recur_assign %equal variable_choice 
   #  |   assign_struct recur_assign %equal variable_choice
 
+#HERE
 #created new recur_assign, assign_choice
-recur_assign -> 
-        %equal %id iterate_id recur_assign #changed struct_choice to iterate_id
-    |   null
+# recur_assign -> 
+#         %equal %id iterate_id recur_assign #changed struct_choice to iterate_id
+#     |   null
 
-#new
-recur_assign_choice ->
-       struct_new iterate_first_choice choice_choice #changed choice_choice_choice to choice_choice
-    |   function_call_statement_choice iterate_first_choice choice_choice #changed choice_choice_choice to choice_choice
-    |   iterate_choice choice_choice #changed choice_choice_choice to choice_choice
-    #     struct_new choice_choice_choice #iterate_choice
-    # |   function_call_statement_choice choice_choice_choice #iterate_choice
-     #   first_choice iterate_choice choice_choice_choice #(di ka na kailangan)
-    |   first_compute_choice #variable_next_choice #added this for computes with id at the start
-    |   first_condition_choice #variable_next_choice #added this for conditions with id at the start
-    #|   null
+# #new
+# recur_assign_choice ->
+#        struct_new iterate_first_choice choice_choice #changed choice_choice_choice to choice_choice
+#     |   function_call_statement_choice iterate_first_choice choice_choice #changed choice_choice_choice to choice_choice
+#     |   iterate_choice choice_choice #changed choice_choice_choice to choice_choice
+#     #     struct_new choice_choice_choice #iterate_choice
+#     # |   function_call_statement_choice choice_choice_choice #iterate_choice
+#      #   first_choice iterate_choice choice_choice_choice #(di ka na kailangan)
+#     |   first_compute_choice #variable_next_choice #added this for computes with id at the start
+#     |   first_condition_choice #variable_next_choice #added this for conditions with id at the start
+#     #|   null
 
-#new
-assign_choice_choice ->
-        recur_assign_choice
-    |   recur_assign recur_choice_choice
+# #new
+# assign_choice_choice ->
+#         recur_assign_choice
+#     |   recur_assign recur_choice_choice
 
-#new
-recur_choice ->
-        %id assign_choice_choice #struct_choice string_access
-    #|   choice #variable_next_choice
-    |   condition_notter_less oper_condition
-    |   not_many not_choice #repeated !!!
-    |   %negative negative_choice 
-    |   %open_paren variable_choice %close_paren variable_next_null #changed choice to variable_choice
+# #new
+# recur_choice ->
+#         %id assign_choice_choice #struct_choice string_access
+#     #|   choice #variable_next_choice
+#     |   condition_notter_less oper_condition
+#     |   not_many not_choice #repeated !!!
+#     |   %negative negative_choice 
+#     |   %open_paren variable_choice %close_paren variable_next_null #changed choice to variable_choice
 
-#new
-recur_choice_choice ->
-        %equal variable_choice
-    |   null
+# #new
+# recur_choice_choice ->
+#         %equal variable_choice
+#     |   null
+#UP TO HERE COMMENTED BC I USED RECUR_VARIABLE INSTEAD
 
 #added string_access
 assign_choice -> #temporarily changed assign_struct to struct_choice
-        iterate_id string_access %equal recur_choice #variable_choice #changed struct_choice to iterate_id
+        iterate_id string_access %equal recur_variable #variable_choice #changed struct_choice to iterate_id #changed recur_choice to recur_variable
        
 assign_statement ->
         assign_choice %terminator 

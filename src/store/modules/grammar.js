@@ -125,7 +125,7 @@ var grammar = {
     {"name": "recur_choice", "symbols": [(lexer.has("open_paren") ? {type: "open_paren"} : open_paren), "variable_choice", (lexer.has("close_paren") ? {type: "close_paren"} : close_paren), "variable_next_null"]},
     {"name": "recur_choice_choice", "symbols": [(lexer.has("equal") ? {type: "equal"} : equal), "variable_choice"]},
     {"name": "recur_choice_choice", "symbols": []},
-    {"name": "assign_choice", "symbols": ["iterate_id", "string_access", (lexer.has("equal") ? {type: "equal"} : equal), "recur_choice"]},
+    {"name": "assign_choice", "symbols": ["iterate_id", "string_access", (lexer.has("equal") ? {type: "equal"} : equal), "recur_variable"]},
     {"name": "assign_statement", "symbols": ["assign_choice", (lexer.has("terminator") ? {type: "terminator"} : terminator)]},
     {"name": "iterate_id", "symbols": ["struct_new"]},
     {"name": "iterate_id", "symbols": []},
