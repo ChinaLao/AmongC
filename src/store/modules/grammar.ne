@@ -172,7 +172,7 @@ string_access ->
 
 #created new recur_assign, assign_choice
 recur_assign -> 
-        %equal %id struct_choice recur_assign
+        %equal %id iterate_id recur_assign #changed struct_choice to iterate_id
     |   null
 
 #new
@@ -208,7 +208,7 @@ recur_choice_choice ->
 
 #added string_access
 assign_choice -> #temporarily changed assign_struct to struct_choice
-        struct_choice string_access %equal recur_choice #variable_choice
+        iterate_id string_access %equal recur_choice #variable_choice #changed struct_choice to iterate_id
        
 assign_statement ->
         assign_choice %terminator 
@@ -329,19 +329,19 @@ not_choice ->
 
 variable_again ->
         %equal recur_variable
-    |   %comma %id variable_again
+    #|   %comma %id declare_choice
     |   null
 
-recur_choice ->
-        struct_new iterate_first_choice choice_choice
-    |   function_call_statement_choice iterate_first_choice choice_choice
+variable_recur ->
+        iterate_id iterate_first_choice choice_choice variable_again #changed struct_new to iterate_id
+    |   function_call_statement_choice iterate_first_choice choice_choice variable_again
     |   iterate_choice choice_choice
     |   first_compute_choice 
     |   first_condition_choice
-    |   %comma %id variable_again
+    #|   variable_again #changed %comma %id variable_again to variable_again
 
 recur_variable ->
-        %id recur_choice 
+        %id variable_recur
     |   condition_notter_less oper_condition 
     |   not_many not_choice 
     |   %negative negative_choice 
@@ -416,9 +416,11 @@ struct_unary -> #changed iterate_choice to iterate_intdec
 
 #added this to remove ambiguity with id
 struct_size_choice ->
-        struct_new iterate_unary #changed id_array to struct_new iterate_unary
-    |   function_call_statement_choice iterate_unary
+        iterate_id iterate_unary_null #changed id_array to struct_new iterate_unary #changed struct_new to iterate_id
+    |   function_call_statement_choice iterate_unary_null
     |   first_compute_choice #added this for computes with id at the start
+    |   %unary_oper unary_choice
+    #|   null
     #|   struct_unary 
 
 #added struct_size_choice
@@ -427,7 +429,7 @@ struct_size ->
         %id struct_size_choice
     #|   %posi_int_literal (removed bc of ambiguity)
     |   compute_choice_less #changed compute_choice to compute_choice_less
-    |   %unary_oper %id struct_choice #changed id_array to struct_choice
+    |   %unary_oper %id iterate_id #changed id_array to struct_choice #changed struct_choice to iterate_id
 
 assign_struct_2D ->
         %open_bracket struct_size %close_bracket
@@ -496,15 +498,16 @@ statement_choice ->
     |   if_statement 
     |   switch_statement 
     |   %id id_start_statement
-    |   %unary_oper %id assign_next_choice %terminator #kulang to
+    |   %unary_oper %id iterate_id %terminator #kulang to #changed assign_next_choice to iterate_id
     #|   return_statement #removed for main functio
     |   control_statement 
     |   %clean %open_paren %close_paren %terminator
     |   %singleComment
 
-assign_next_choice ->
-        struct_choice
-    |   null
+#removed bc unused
+# assign_next_choice ->
+#         struct_choice
+#     |   null
 
 statement_in_function ->
         #function_statement_choice #temporarily removed
@@ -525,7 +528,7 @@ function_statement_choice ->
     |   function_if_statement 
     |   function_switch_statement 
     |   %id id_start_statement
-    |   %unary_oper %id assign_next_choice %terminator #kulang to
+    |   %unary_oper %id iterate_id %terminator #kulang to #changed assign_next_choice to iterate_id
     |   return_statement
     |   control_statement 
     |   %clean %open_paren %close_paren %terminator
@@ -533,7 +536,7 @@ function_statement_choice ->
 
 id_start_statement ->
         %id struct_define_choice
-    |   struct_choice iterate_statement_choice %terminator
+    |   iterate_id iterate_statement_choice %terminator #changed struct_choice to iterate_id
     |   assign_statement
     #|   iterate_statement_choice %terminator #removed bc of ambiguity
     |   function_call_statement_choice %terminator
@@ -617,11 +620,12 @@ digit_another_choice ->
     |   struct_new
     |   null
 
+#TEKA LANG, COMMENT LANG SAGLIT TONG DIGIT_NOTTER KASI GUMAWA AKO BAGO
 #moved function_call_statement, struct_statement to digit_another_choice
-digit_notter ->
-        int_literal
-    |   %dec_literal
-    |   negation %id digit_another_choice #this is still an ambiguity (di ba hindi na????)
+# digit_notter ->
+#         int_literal
+#     |   %dec_literal
+#     |   negation %id digit_another_choice #this is still an ambiguity (di ba hindi na????)
 
 # compute_choice -> 
 #         digit_choice %arith_oper compute_choice recur_compute
@@ -650,17 +654,42 @@ compute_choice ->
 computation ->
         digit_choice oper_compute
 
-oper_compute ->
-        arith_oper compute_choice
-    |   null
+#TEKA COMMENT KA LANG SAGLIT KASI MAY BAGO
+# oper_compute ->
+#         arith_oper compute_choice
+#     |   null
 
 # close ->
 #         %close_paren
 #     |   null
 
+oper_compute ->
+        %arith_oper compute_choice
+    |   %append append_choice
+    |   null
+
+digit_notter ->
+        int_literal
+    |   %dec_literal
+    |   %negative %id digit_another_choice
+    |   %id digit_another_choice
+
+append_choice ->
+        compute_choice
+    |   %str_literal string_append
+
+string_append ->
+        %append string_append_choice append_again
+    |   null
+
+first_compute_choice ->
+        %arith_oper compute_choice variable_next_choice
+    |   %append append_choice
+
+#TEKA LANG COMMENT KO LANG TO SAGLIT KASI MAY BAGO HA
 #added this for computes that have id at the start
-first_compute_choice -> 
-        arith_oper compute_choice variable_next_choice #close #changed %arith_oper to arith_oper
+# first_compute_choice -> 
+#         arith_oper compute_choice variable_next_choice #close #changed %arith_oper to arith_oper
 
 digit_notter_less ->
         int_literal
@@ -777,12 +806,16 @@ condition_notter_less ->
     #iterate_statement_extra #ambiguity on iterate_statement_extra (dugtong to sa taas pero baka di na)
     #|   compute_choice_less_less
 
+string_append_choice ->
+        %str_literal
+    |   %id in_choice_choice
+
 string_choice ->
         string_access
-    |   %append %str_literal append_again
+    |   %append string_append_choice append_again #changed %str_literal to string_append_choice
 
 append_again ->
-        %append %str_literal append_again
+        %append string_append_choice append_again #changed %str_literal to string_append_choice
     |   null
 
 # condition_extra_less ->
@@ -846,12 +879,17 @@ iterate_statement_extra ->
 #     |   %id digit_another_choice 
 
 unary_choice -> #changed struct_statement_choice to struct_choice
-        %id struct_choice
+        %id iterate_id #changed struct_choice to iterate_id
     #|   struct_statement_choice
 
 iterate_statement ->
         unary_choice iterate_unary
     |   %unary_oper unary_choice iterate_statement_extra
+    |   null
+
+iterate_unary_null -> #changed iterate_choice to iterate_intdec
+        %unary_oper iterate_statement_extra
+    |   %assign_oper iterate_intdec iterate_statement_extra
     |   null
 
 #changed unary to %unary_oper
