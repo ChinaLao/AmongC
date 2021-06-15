@@ -218,9 +218,15 @@ assign_statement ->
 #         assign_array
 #     |   null
 
+#added for iterate with ids
+iterate_id ->
+       struct_new
+    |   null
+
 iterate_intdec ->
         int_literal
     |   %dec_literal
+    |   %id iterate_id #added this for ids
 
 #not used so removed
 # first_choice ->
