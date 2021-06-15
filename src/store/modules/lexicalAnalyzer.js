@@ -709,6 +709,7 @@ export default {
           try {
             parser.feed(lexeme[index].token); //checks the cfg in grammar.ne
           } catch (err) {
+            console.log(err);
             let type, msg = null;
             const expectations = []; //for syntax expectations
             const results = state.results; //for the list of grouped results
@@ -977,13 +978,30 @@ export default {
             exp: "-",
           });
           ids.push(tokenStream[index+2]);
-          index = await dispatch("EXPRESSION_EVALUATOR",
-          {
-            expectedDType: dtype.word,
-            index: index+4,
-            tokenStream: tokenStream,
-            ids: ids
-          });
+          if(tokenStream[index+3].word === "["){
+            index += 3;
+            while(tokenStream[index].word !== "{") index++;
+            index++;
+            while(tokenStream[index].word !== ";"){
+              if(tokenStream[index].word === "{") index++;
+              else if(tokenStream[index].word !== ",")
+                index = await dispatch("EXPRESSION_EVALUATOR",
+                {
+                  expectedDType: dtype.word,
+                  index: index,
+                  tokenStream: tokenStream,
+                  ids: ids
+                });
+            }
+          }
+          else
+            index = await dispatch("EXPRESSION_EVALUATOR",
+            {
+              expectedDType: dtype.word,
+              index: index+4,
+              tokenStream: tokenStream,
+              ids: ids
+            });
           if(tokenStream[index].word === ";") moreConst = false;
         }
       } else if(dataTypes.includes(tokenStream[index].word)){
