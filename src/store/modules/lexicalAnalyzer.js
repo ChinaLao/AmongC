@@ -935,12 +935,13 @@ export default {
                 });
               } else{
                 index++;
-                index = await dispatch("EXPRESSION_EVALUATOR", {
+                const {i, counter} = await dispatch("EXPRESSION_EVALUATOR", {
                   expectedDType: taskName.type,
                   index: index,
                   tokenStream: tokenStream,
                   ids: ids,
-                })
+                });
+                index = i;
               }
             }
             index++;
@@ -980,29 +981,34 @@ export default {
           ids.push(tokenStream[index+2]);
           if(tokenStream[index+3].word === "["){
             index += 3;
+            let curlyCounter = 1;
             while(tokenStream[index].word !== "{") index++;
-            index++;
-            while(tokenStream[index].word !== ";"){
+            while(tokenStream[index].word !== ";" && curlyCounter > 0){
               if(tokenStream[index].word === "{") index++;
-              else if(tokenStream[index].word !== ",")
-                index = await dispatch("EXPRESSION_EVALUATOR",
+              else if(tokenStream[index].word !== ","){
+                const {i, counter} = await dispatch("EXPRESSION_EVALUATOR",
                 {
                   expectedDType: dtype.word,
                   index: index,
                   tokenStream: tokenStream,
                   ids: ids
                 });
+                index = i;
+                curlyCounter = counter;
+              }
               else index++;
             }
           }
-          else
-            index = await dispatch("EXPRESSION_EVALUATOR",
+          else{
+            const {i, counter} = await dispatch("EXPRESSION_EVALUATOR",
             {
               expectedDType: dtype.word,
               index: index+4,
               tokenStream: tokenStream,
               ids: ids
             });
+            index = i;
+          }
           if(tokenStream[index].word === ";") moreConst = false;
         }
       } else if(dataTypes.includes(tokenStream[index].word)){
@@ -1025,33 +1031,37 @@ export default {
 
           if(tokenStream[index+2].word === "["){
             index += 2;
+            let curlyCounter = 1;
             while(tokenStream[index].word !== "=" && tokenStream[index].word !== ";") index++;
             if(tokenStream[index].word !== ";")
               index++;
-            while(tokenStream[index].word !== ";"){
+            while(tokenStream[index].word !== ";" && curlyCounter > 0){
               if(tokenStream[index].word === "{") index++;
-              else if(tokenStream[index].word !== ",")
-                index = await dispatch("EXPRESSION_EVALUATOR",
+              else if(tokenStream[index].word !== ","){
+                const {i, counter} = await dispatch("EXPRESSION_EVALUATOR",
                 {
                   expectedDType: dtype.word,
                   index: index,
                   tokenStream: tokenStream,
                   ids: ids
                 });
+                index = i;
+                curlyCounter = counter;
+              }
               else index++;
             }
           }
           else if(tokenStream[index+2].word === "="){
             tokenStream[index+1].defined = true;
-            index = await dispatch("EXPRESSION_EVALUATOR",
+            const {i, counter} = await dispatch("EXPRESSION_EVALUATOR",
             {
               expectedDType: dtype.word,
               index: index+3,
               tokenStream: tokenStream,
               ids: ids
             });
+            index = i;
           }
-          console.log(index)
           if(tokenStream[index].word === ";") moreVar = false;
           
         }
@@ -1073,13 +1083,14 @@ export default {
         } else{
           while(tokenStream[index].word !== ";"){
             if(assignOper.includes(tokenStream[index].word)){
-              index = await dispatch("EXPRESSION_EVALUATOR",
+              const {i, counter} = await dispatch("EXPRESSION_EVALUATOR",
               {
                 expectedDType: ids[i].dtype,
                 index: index+1,
                 tokenStream: tokenStream,
                 ids: ids
               });
+              index = i;
             }
             else index++;
           }
@@ -1096,7 +1107,8 @@ export default {
 
       let errorFound = false;
       let err;
-      while(tokenStream[index].word !== ";" && tokenStream[index].word !== ","){
+      let curlyCounter = 1;
+      while(tokenStream[index].word !== ";" && tokenStream[index].word !== "," && curlyCounter > 0){
         errorFound = false;
         if(tokenStream[index].token === "id"){
           let idIndex = ids.findIndex(id => id.lex === tokenStream[index].lex);
@@ -1149,9 +1161,20 @@ export default {
           col: tokenStream[index].col,
           exp: `${expectedDType} value`,
         });
-        index++;
+        index++; 
+        if(tokenStream[index].word === "{"){
+          curlyCounter++;
+          index++;
+        }
+        else if(tokenStream[index].word === "}"){
+          curlyCounter--;
+          index++;
+        }
       }
-      return index;
+      return {
+        i: index,
+        counter: curlyCounter
+      };
     },
     async WRITE_JAVASCRIPT({ state, dispatch, commit }, statements){
       const javascriptStatements = [];
