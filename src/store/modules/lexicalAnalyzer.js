@@ -709,6 +709,7 @@ export default {
           try {
             parser.feed(lexeme[index].token); //checks the cfg in grammar.ne
           } catch (err) {
+            console.log(err);
             let type, msg = null;
             const expectations = []; //for syntax expectations
             const results = state.results; //for the list of grouped results
@@ -934,12 +935,13 @@ export default {
                 });
               } else{
                 index++;
-                index = await dispatch("EXPRESSION_EVALUATOR", {
+                const {i, counter} = await dispatch("EXPRESSION_EVALUATOR", {
                   expectedDType: taskName.type,
                   index: index,
                   tokenStream: tokenStream,
                   ids: ids,
-                })
+                });
+                index = i;
               }
             }
             index++;
@@ -964,6 +966,7 @@ export default {
         let moreConst = true;
         const dtype = tokenStream[index+1]
         while(moreConst){
+          if(tokenStream[index+2].word === "[") index--;
           tokenStream[index+2].declared = tokenStream[index+2].defined = true;
           tokenStream[index+2].editable = false;
           tokenStream[index+2].location = location;
@@ -977,19 +980,43 @@ export default {
             exp: "-",
           });
           ids.push(tokenStream[index+2]);
-          index = await dispatch("EXPRESSION_EVALUATOR",
-          {
-            expectedDType: dtype.word,
-            index: index+4,
-            tokenStream: tokenStream,
-            ids: ids
-          });
+          if(tokenStream[index+3].word === "["){
+            index += 3;
+            let curlyCounter = 1;
+            while(tokenStream[index].word !== "{") index++;
+            while(tokenStream[index].word !== ";" && curlyCounter > 0){
+              if(tokenStream[index].word === "{") index++;
+              else if(tokenStream[index].word !== ","){
+                const {i, counter} = await dispatch("EXPRESSION_EVALUATOR",
+                {
+                  expectedDType: dtype.word,
+                  index: index,
+                  tokenStream: tokenStream,
+                  ids: ids
+                });
+                index = i;
+                curlyCounter = counter;
+              }
+              else index++;
+            }
+          }
+          else{
+            const {i, counter} = await dispatch("EXPRESSION_EVALUATOR",
+            {
+              expectedDType: dtype.word,
+              index: index+4,
+              tokenStream: tokenStream,
+              ids: ids
+            });
+            index = i;
+          }
           if(tokenStream[index].word === ";") moreConst = false;
         }
       } else if(dataTypes.includes(tokenStream[index].word)){
         let moreVar = true;
         let dtype = tokenStream[index]
         while(moreVar){
+          if(tokenStream[index+1].word === "[") index--;
           tokenStream[index+1].declared = true;
           tokenStream[index+1].editable = true;
           tokenStream[index+1].location = location;
@@ -1004,28 +1031,50 @@ export default {
           });
           ids.push(tokenStream[index+1]);
 
-          if(tokenStream[index+2].word === "="){
+          if(tokenStream[index+2].word === "["){
+            index += 2;
+            let curlyCounter = 1;
+            while(tokenStream[index].word !== "=" && tokenStream[index].word !== ";") index++;
+            if(tokenStream[index].word !== ";")
+              index++;
+            while(tokenStream[index].word !== ";" && curlyCounter > 0){
+              if(tokenStream[index].word === "{") index++;
+              else if(tokenStream[index].word !== ","){
+                const {i, counter} = await dispatch("EXPRESSION_EVALUATOR",
+                {
+                  expectedDType: dtype.word,
+                  index: index,
+                  tokenStream: tokenStream,
+                  ids: ids
+                });
+                index = i;
+                curlyCounter = counter;
+              }
+              else index++;
+            }
+          }
+          else if(tokenStream[index+2].word === "="){
             tokenStream[index+1].defined = true;
-            index = await dispatch("EXPRESSION_EVALUATOR",
+            const {i, counter} = await dispatch("EXPRESSION_EVALUATOR",
             {
               expectedDType: dtype.word,
               index: index+3,
               tokenStream: tokenStream,
               ids: ids
             });
-          }
-          
+            index = i;
+          } else index+=2;
           if(tokenStream[index].word === ";") moreVar = false;
           
         }
       } else if(tokenStream[index].token === "id"){
-        const i = tokenStream[index+1].word === "("
+        const ind = tokenStream[index+1].word === "("
           ? tasks.findIndex(task => task.lex === tokenStream[index].lex)
           : ids.findIndex(id => id.lex === tokenStream[index].lex);
         const undeclaredMsg = tokenStream[index+1].word === "("
           ? "task"
           : "variable"
-        if(i < 0){
+        if(ind < 0){
           commit("SET_ERROR", {
             type: "sem-error",
             msg: `Undeclared ${undeclaredMsg} (${tokenStream[index].word})`,
@@ -1034,18 +1083,52 @@ export default {
             exp: "-",
           });
         } else{
+          if(!ids[ind].editable) commit("SET_ERROR", {
+            type: "sem-error",
+            msg: `Illegal re-assignment of vital id (${ids[ind].word})`,
+            line: tokenStream[index].line,
+            col: tokenStream[index].col,
+            exp: "-",
+          });
           while(tokenStream[index].word !== ";"){
             if(assignOper.includes(tokenStream[index].word)){
-              index = await dispatch("EXPRESSION_EVALUATOR",
+              const {i, counter} = await dispatch("EXPRESSION_EVALUATOR",
               {
-                expectedDType: ids[i].dtype,
+                expectedDType: ids[ind].dtype,
                 index: index+1,
                 tokenStream: tokenStream,
                 ids: ids
               });
+              index = i;
             }
             else index++;
           }
+        }
+      } else if(tokenStream[index].word === "shoot"){
+        while(tokenStream[index].word !== ";"){
+          let dtype;
+          if(tokenStream[index].token === "id"){
+            if(tokenStream[index+1].word === "("){
+              const ind = tasks.findIndex(task => task.lex === tokenStream[index].lex);
+              dtype = tasks[ind].type;
+            } else {
+              const ind = ids.findIndex(id => id.lex === tokenStream[index].lex);
+              dtype = ids[ind].type;
+            }
+            console.log(dtype)
+          } else if(tokenStream[index].lex.includes("Lit")){
+            dtype = tokenStream[index].lex.split("Lit")[0];
+          }
+          if(dtype){
+            const {i, counter} = await dispatch("EXPRESSION_EVALUATOR",
+            {
+              expectedDType: dtype,
+              index: index+1,
+              tokenStream: tokenStream,
+              ids: ids
+            });
+            index = i;
+          } else index++;
         }
       }
       return index;
@@ -1059,7 +1142,8 @@ export default {
 
       let errorFound = false;
       let err;
-      while(tokenStream[index].word !== ";" && tokenStream[index].word !== ","){
+      let curlyCounter = 1;
+      while(tokenStream[index].word !== ";" && tokenStream[index].word !== "," && curlyCounter > 0){
         errorFound = false;
         if(tokenStream[index].token === "id"){
           let idIndex = ids.findIndex(id => id.lex === tokenStream[index].lex);
@@ -1112,9 +1196,20 @@ export default {
           col: tokenStream[index].col,
           exp: `${expectedDType} value`,
         });
-        index++;
+        index++; 
+        if(tokenStream[index].word === "{"){
+          curlyCounter++;
+          index++;
+        }
+        else if(tokenStream[index].word === "}"){
+          curlyCounter--;
+          index++;
+        }
       }
-      return index;
+      return {
+        i: index,
+        counter: curlyCounter
+      };
     },
     async WRITE_JAVASCRIPT({ state, dispatch, commit }, statements){
       const javascriptStatements = [];
