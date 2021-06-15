@@ -940,6 +940,7 @@ export default {
                   index: index,
                   tokenStream: tokenStream,
                   ids: ids,
+                  tasks: tasks,
                 });
                 index = i;
               }
@@ -992,7 +993,8 @@ export default {
                   expectedDType: dtype.word,
                   index: index,
                   tokenStream: tokenStream,
-                  ids: ids
+                  ids: ids,
+                  tasks: tasks,
                 });
                 index = i;
                 curlyCounter = counter;
@@ -1006,7 +1008,8 @@ export default {
               expectedDType: dtype.word,
               index: index+4,
               tokenStream: tokenStream,
-              ids: ids
+              ids: ids,
+              tasks: tasks,
             });
             index = i;
           }
@@ -1045,7 +1048,8 @@ export default {
                   expectedDType: dtype.word,
                   index: index,
                   tokenStream: tokenStream,
-                  ids: ids
+                  ids: ids,
+                  tasks: tasks,
                 });
                 index = i;
                 curlyCounter = counter;
@@ -1060,7 +1064,8 @@ export default {
               expectedDType: dtype.word,
               index: index+3,
               tokenStream: tokenStream,
-              ids: ids
+              ids: ids,
+              tasks: tasks,
             });
             index = i;
           } else index+=2;
@@ -1097,7 +1102,8 @@ export default {
                 expectedDType: ids[ind].dtype,
                 index: index+1,
                 tokenStream: tokenStream,
-                ids: ids
+                ids: ids,
+                tasks: tasks,
               });
               index = i;
             }
@@ -1125,7 +1131,8 @@ export default {
               expectedDType: dtype,
               index: index+1,
               tokenStream: tokenStream,
-              ids: ids
+              ids: ids,
+              tasks: tasks,
             });
             index = i;
           } else index++;
@@ -1134,7 +1141,7 @@ export default {
       return index;
     },
     async EXPRESSION_EVALUATOR({commit}, payload){ // return num1 + (num2 - num3 * (num4 / num5));
-      let {expectedDType, index, tokenStream, ids} = payload;
+      let {expectedDType, index, tokenStream, ids, tasks} = payload;
       const numberTokens = ["litInt", "negaLitInt", "litDec"];
       const numberDTypes = ["int", "dec"];
       const numberCompareTokens = ["<", ">", "<=", ">="];
@@ -1146,25 +1153,37 @@ export default {
       while(tokenStream[index].word !== ";" && tokenStream[index].word !== "," && curlyCounter > 0){
         errorFound = false;
         if(tokenStream[index].token === "id"){
-          let idIndex = ids.findIndex(id => id.lex === tokenStream[index].lex);
+          let idIndex = tokenStream[index+1].word === "("
+            ? tasks.findIndex(task => task.lex === tokenStream[index].lex)
+            : ids.findIndex(id => id.lex === tokenStream[index].lex);
+          
+          let dtype = idIndex < 0
+            ? null
+            : tokenStream[index+1].word === "("
+              ? tasks[idIndex].type
+              : ids[idIndex].dtype;
+
+          const undeclaredMsg = tokenStream[index+1].word === "("
+            ? "task"
+            : "variable"
 
           if(idIndex < 0) commit("SET_ERROR", {
             type: "sem-error",
-            msg: `Undeclared variable (${tokenStream[index].word})`,
+            msg: `Undeclared ${undeclaredMsg} (${tokenStream[index].word})`,
             line: tokenStream[index].line,
             col: tokenStream[index].col,
             exp: `-`,
           });
 
           else if(
-            ( !numberDTypes.includes(ids[idIndex].dtype) 
+            ( !numberDTypes.includes(dtype) 
               || !numberDTypes.includes(expectedDType)
             ) 
-            && ids[idIndex].dtype !== expectedDType 
+            && dtype !== expectedDType 
             && expectedDType !== "bool"
           ){
             errorFound = true;
-            err = ids[idIndex].dtype
+            err = dtype
           }
         } else if(numberTokens.includes(tokenStream[index].token)){
           if(!numberDTypes.includes(expectedDType) && expectedDType !== "bool")  errorFound = true;
