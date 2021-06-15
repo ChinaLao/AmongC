@@ -966,6 +966,7 @@ export default {
         let moreConst = true;
         const dtype = tokenStream[index+1]
         while(moreConst){
+          if(tokenStream[index+2].word === "[") index--;
           tokenStream[index+2].declared = tokenStream[index+2].defined = true;
           tokenStream[index+2].editable = false;
           tokenStream[index+2].location = location;
@@ -1015,6 +1016,7 @@ export default {
         let moreVar = true;
         let dtype = tokenStream[index]
         while(moreVar){
+          if(tokenStream[index+1].word === "[") index--;
           tokenStream[index+1].declared = true;
           tokenStream[index+1].editable = true;
           tokenStream[index+1].location = location;
