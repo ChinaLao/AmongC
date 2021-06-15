@@ -326,42 +326,66 @@ not_choice ->
 # negative_again ->
 #         %negative negative_again
 #     |   null
-    
-variable_recur_assign ->
-        %equal recur_variable_choice #variable_repeat
-    |   recur_variable_assign
+
+variable_again ->
+        %equal recur_variable
+    |   %comma %id variable_again
     |   null
 
-recur_variable_assign ->
+recur_choice ->
         struct_new iterate_first_choice choice_choice
     |   function_call_statement_choice iterate_first_choice choice_choice
     |   iterate_choice choice_choice
     |   first_compute_choice 
     |   first_condition_choice
+    |   %comma %id variable_again
 
-recur_id_choices ->
-        recur_variable_assign
-    |   variable_recur_assign recur_variable
-
-recur_variable_choice ->
-        %id recur_id_choices
-    #|   choice #variable_next_choice
-    |   condition_notter_less oper_condition
-    |   not_many not_choice #repeated !!!
+recur_variable ->
+        %id recur_choice 
+    |   condition_notter_less oper_condition 
+    |   not_many not_choice 
     |   %negative negative_choice 
-    |   %open_paren variable_choice %close_paren variable_next_null #changed choice to variable_choice
+    |   %open_paren variable_choice %close_paren variable_next_null 
 
-variable -> #changed recur_variable to declare_choice
-        %equal recur_variable_choice #recur_variable #variable_choice recur_variable
-    |   %comma %id declare_choice #changed variable_choice to %id
-    #|   recur_variable
-    #|   null
+variable ->
+        %equal recur_variable recur_array
+    |   %comma %id declare_choice 
 
-recur_variable -> #changed recur_variable to declare_choice, removed array
-        #array
-        %equal variable_choice #%id recur_variable
-        %comma %id declare_choice
-    |   null
+# variable_recur_assign ->
+#         %equal recur_variable_choice #variable_repeat
+#     |   recur_variable_assign
+#     |   null
+
+# recur_variable_assign ->
+#         struct_new iterate_first_choice choice_choice
+#     |   function_call_statement_choice iterate_first_choice choice_choice
+#     |   iterate_choice choice_choice
+#     |   first_compute_choice 
+#     |   first_condition_choice
+
+# recur_id_choices ->
+#         recur_variable_assign
+#     |   variable_recur_assign recur_variable
+
+# recur_variable_choice ->
+#         %id recur_id_choices
+#     #|   choice #variable_next_choice
+#     |   condition_notter_less oper_condition
+#     |   not_many not_choice #repeated !!!
+#     |   %negative negative_choice 
+#     |   %open_paren variable_choice %close_paren variable_next_null #changed choice to variable_choice
+
+# variable -> #changed recur_variable to declare_choice
+#         %equal recur_variable_choice #recur_variable #variable_choice recur_variable
+#     |   %comma %id declare_choice #changed variable_choice to %id
+#     #|   recur_variable
+#     #|   null
+
+# recur_variable -> #changed recur_variable to declare_choice, removed array
+#         #array
+#         %equal variable_choice #%id recur_variable
+#         %comma %id declare_choice
+#     |   null
 
 variable_choice ->
         %id choice #variable_next_choice
@@ -392,10 +416,10 @@ struct_unary -> #changed iterate_choice to iterate_intdec
 
 #added this to remove ambiguity with id
 struct_size_choice ->
-        id_array
-    |   function_call_statement_choice
+        struct_new iterate_unary #changed id_array to struct_new iterate_unary
+    |   function_call_statement_choice iterate_unary
     |   first_compute_choice #added this for computes with id at the start
-    |   struct_unary
+    #|   struct_unary 
 
 #added struct_size_choice
 #changed unary to %unary_oper
@@ -443,7 +467,7 @@ array_define_first ->
 
 array_define_second ->
         %equal %open_brace %open_brace condition additional_literal_1D %close_brace additional_literal_2D %close_brace
-    #|   null (di ko alam bakit dapat wala to, i am so confused but it fixed it)
+    |   null #(di ko alam bakit dapat wala to, i am so confused but it fixed it)
 
 additional_literal_1D ->
         %comma condition additional_literal_1D
@@ -637,9 +661,6 @@ oper_compute ->
 #added this for computes that have id at the start
 first_compute_choice -> 
         arith_oper compute_choice variable_next_choice #close #changed %arith_oper to arith_oper
-
-# digit_choice_less -> #removed notter
-#         digit_notter_less
 
 digit_notter_less ->
         int_literal
