@@ -1086,8 +1086,8 @@ export default {
           if(!ids[ind].editable) commit("SET_ERROR", {
             type: "sem-error",
             msg: `Illegal re-assignment of vital id (${ids[ind].word})`,
-            line: ids[ind].line,
-            col: ids[ind].col,
+            line: tokenStream[index].line,
+            col: tokenStream[index].col,
             exp: "-",
           });
           while(tokenStream[index].word !== ";"){
