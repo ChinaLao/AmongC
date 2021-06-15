@@ -992,6 +992,7 @@ export default {
                   tokenStream: tokenStream,
                   ids: ids
                 });
+              else index++;
             }
           }
           else
@@ -1022,7 +1023,25 @@ export default {
           });
           ids.push(tokenStream[index+1]);
 
-          if(tokenStream[index+2].word === "="){
+          if(tokenStream[index+2].word === "["){
+            index += 2;
+            while(tokenStream[index].word !== "=" && tokenStream[index].word !== ";") index++;
+            if(tokenStream[index].word !== ";")
+              index++;
+            while(tokenStream[index].word !== ";"){
+              if(tokenStream[index].word === "{") index++;
+              else if(tokenStream[index].word !== ",")
+                index = await dispatch("EXPRESSION_EVALUATOR",
+                {
+                  expectedDType: dtype.word,
+                  index: index,
+                  tokenStream: tokenStream,
+                  ids: ids
+                });
+              else index++;
+            }
+          }
+          else if(tokenStream[index+2].word === "="){
             tokenStream[index+1].defined = true;
             index = await dispatch("EXPRESSION_EVALUATOR",
             {
@@ -1032,7 +1051,7 @@ export default {
               ids: ids
             });
           }
-          
+          console.log(index)
           if(tokenStream[index].word === ";") moreVar = false;
           
         }
