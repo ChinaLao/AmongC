@@ -1104,6 +1104,32 @@ export default {
             else index++;
           }
         }
+      } else if(tokenStream[index].word === "shoot"){
+        while(tokenStream[index].word !== ";"){
+          let dtype;
+          if(tokenStream[index].token === "id"){
+            if(tokenStream[index+1].word === "("){
+              const ind = tasks.findIndex(task => task.lex === tokenStream[index].lex);
+              dtype = tasks[ind].type;
+            } else {
+              const ind = ids.findIndex(id => id.lex === tokenStream[index].lex);
+              dtype = ids[ind].type;
+            }
+            console.log(dtype)
+          } else if(tokenStream[index].lex.includes("Lit")){
+            dtype = tokenStream[index].lex.split("Lit")[0];
+          }
+          if(dtype){
+            const {i, counter} = await dispatch("EXPRESSION_EVALUATOR",
+            {
+              expectedDType: dtype,
+              index: index+1,
+              tokenStream: tokenStream,
+              ids: ids
+            });
+            index = i;
+          } else index++;
+        }
       }
       return index;
     },
