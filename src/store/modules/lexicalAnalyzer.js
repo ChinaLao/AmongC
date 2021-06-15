@@ -1083,6 +1083,13 @@ export default {
             exp: "-",
           });
         } else{
+          if(!ids[ind].editable) commit("SET_ERROR", {
+            type: "sem-error",
+            msg: `Illegal re-assignment of vital id (${ids[ind].word})`,
+            line: ids[ind].line,
+            col: ids[ind].col,
+            exp: "-",
+          });
           while(tokenStream[index].word !== ";"){
             if(assignOper.includes(tokenStream[index].word)){
               const {i, counter} = await dispatch("EXPRESSION_EVALUATOR",
