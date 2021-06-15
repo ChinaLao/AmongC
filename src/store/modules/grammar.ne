@@ -90,16 +90,16 @@ vital_define -> #changed %equal literal recur_vital to declare_choice
         %vital data_type %id vital_declare_choice %terminator
 
 vital_declare_choice ->
-        variable recur_vital
-    |   array recur_vital
+        vital_variable recur_vital
+    |   vital_array recur_vital
 
 recur_vital ->  #changed %id %equal literal recur_vital to variable, array
-        %comma vital_choices recur_vital
+        %comma %id vital_choices recur_vital
     |   null
 
 vital_choices ->
-        variable
-    |   array
+        vital_variable
+    |   vital_array
 
 #temporarily moved %id to declare_choice
 data_declare -> 
@@ -353,6 +353,11 @@ variable ->
         %equal recur_variable recur_array
     |   %comma %id declare_choice 
 
+vital_variable ->
+        %equal recur_variable recur_array
+    #|   %comma %id declare_choice 
+
+
 # variable_recur_assign ->
 #         %equal recur_variable_choice #variable_repeat
 #     |   recur_variable_assign
@@ -454,10 +459,25 @@ assign_array ->
 #         %comma declare_choice
 #     |   null
 
+
+vital_array -> #changed recur_variable to recur_array
+        %open_bracket struct_size %close_bracket vital_array_define_first #recur_array
+
+#changed array_size to struct_size
+vital_array_define_first ->
+        %equal %open_brace condition additional_literal_1D %close_brace
+    |   %open_bracket struct_size %close_bracket vital_array_define_second
+    #|   null
+
+vital_array_define_second ->
+        %equal %open_brace %open_brace condition additional_literal_1D %close_brace additional_literal_2D %close_brace
+    #|   null #(di ko alam bakit dapat wala to, i am so confused but it fixed it)
+
 #added this for array
 recur_array ->
         %comma %id declare_choice
     |   null
+
 
 #changed array_size to struct_size
 array -> #changed recur_variable to recur_array
