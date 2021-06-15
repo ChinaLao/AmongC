@@ -1068,13 +1068,13 @@ export default {
           
         }
       } else if(tokenStream[index].token === "id"){
-        const i = tokenStream[index+1].word === "("
+        const ind = tokenStream[index+1].word === "("
           ? tasks.findIndex(task => task.lex === tokenStream[index].lex)
           : ids.findIndex(id => id.lex === tokenStream[index].lex);
         const undeclaredMsg = tokenStream[index+1].word === "("
           ? "task"
           : "variable"
-        if(i < 0){
+        if(ind < 0){
           commit("SET_ERROR", {
             type: "sem-error",
             msg: `Undeclared ${undeclaredMsg} (${tokenStream[index].word})`,
@@ -1087,7 +1087,7 @@ export default {
             if(assignOper.includes(tokenStream[index].word)){
               const {i, counter} = await dispatch("EXPRESSION_EVALUATOR",
               {
-                expectedDType: ids[i].dtype,
+                expectedDType: ids[ind].dtype,
                 index: index+1,
                 tokenStream: tokenStream,
                 ids: ids
