@@ -1063,7 +1063,7 @@ export default {
               ids: ids
             });
             index = i;
-          }
+          } else index+=2;
           if(tokenStream[index].word === ";") moreVar = false;
           
         }
