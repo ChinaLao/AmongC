@@ -1175,7 +1175,7 @@ export default {
       } else if(tokenStream[index].token === "id"){
         const taskIndex = tasks.findIndex(task => task.lex === tokenStream[index].lex);
         const idIndex   = ids.findIndex(id => id.lex === tokenStream[index].lex);
-        console.log(tokenStream[index], tasks, taskIndex, ids, idIndex)
+        console.log(tokenStream[index], tasks, taskIndex, ids, idIndex, ids[idIndex])
         const undeclaredMsg = tokenStream[index+1].word === "("
           ? "task"
           : "variable"
@@ -1207,6 +1207,19 @@ export default {
                 elements: elements
               });
               index = i;
+            } else if(tokenStream[index].token === "id" && tokenStream[index-1].word === "."){
+              let counter = index-1;
+              while(tokenStream[counter].token !== "id") counter--;
+              const idIndex = ids.findIndex(id => id.lex === tokenStream[counter].lex);
+              const elementIndex = elements.findIndex(element => element.lex === tokenStream[index].lex && ids[idIndex].dtype === element.struct);
+              if(elementIndex < 0) commit("SET_ERROR", {
+                type: "sem-error",
+                msg: `Undeclared element (${tokenStream[index].word})`,
+                line: tokenStream[index].line,
+                col: tokenStream[index].col,
+                exp: "-",
+              });
+              index++;
             }
             else index++;
           }
