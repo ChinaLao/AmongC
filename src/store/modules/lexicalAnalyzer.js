@@ -903,6 +903,9 @@ export default {
           );
         }
         if(tokenStream[index].word === "task"){ 
+          ids.push({
+            lex: "begin"
+          });
           const taskIndex = tasks.findIndex(task => task.lex === tokenStream[index+2].lex);
           const taskName = taskIndex !== "undefined"
             ? tasks[taskIndex]
@@ -981,6 +984,7 @@ export default {
             }
             index++;
           }
+          index--;
         }
         if(tokenStream[index].word === "}" || tokenStream[index].word === "kill"){
           let deleteIndex = ids.length-1;
