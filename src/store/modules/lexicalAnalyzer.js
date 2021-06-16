@@ -1175,7 +1175,6 @@ export default {
       } else if(tokenStream[index].token === "id"){
         const taskIndex = tasks.findIndex(task => task.lex === tokenStream[index].lex);
         const idIndex   = ids.findIndex(id => id.lex === tokenStream[index].lex);
-        console.log(tokenStream[index], tasks, taskIndex, ids, idIndex, ids[idIndex])
         const undeclaredMsg = tokenStream[index+1].word === "("
           ? "task"
           : "variable"
