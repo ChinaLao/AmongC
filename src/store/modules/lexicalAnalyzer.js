@@ -825,8 +825,16 @@ export default {
 
           let counter = index+3;
           let paramCounter = 0;
-          while(dataTypes.includes(tokenStream[counter].word) || tokenStream[counter].word !== ")"){
-            if(dataTypes.includes(tokenStream[counter].word)) paramCounter++;
+          tokenStream[index+2].parameters = [];
+          while(
+                dataTypes.includes(tokenStream[counter].word) 
+            ||  tokenStream[counter].word !== ")" 
+            ||  (tokenStream[counter].token === "id" && tokenStream[counter+1].token === "id")
+          ){
+            if(dataTypes.includes(tokenStream[counter].word) || tokenStream[counter].token === "id"){
+              paramCounter++;
+              tokenStream[index+2].parameters.push(tokenStream[counter].word);
+            }
             counter++;
           }
 
