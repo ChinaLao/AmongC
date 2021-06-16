@@ -816,7 +816,9 @@ export default {
           lex: "begin"
         }
       ];
-      const tasks = []
+      const tasks = [];
+      const structs = [];
+      const elements = [];
 
       let index = 0;
       while(index < tokenStream.length){
@@ -860,6 +862,26 @@ export default {
 
       index = 0;
       while(index < tokenStream.length){
+        if (tokenStream[index].word === "struct") {
+          structs.push(tokenStream[index + 1]);
+          index += 3;
+          while (tokenStream[index].word !== "}") {
+            while (!dataTypes.includes(tokenStream[index].word) && tokenStream[index].word !== "}") index++;
+            if (dataTypes.includes(tokenStream[index].word)) {
+              const dtype = tokenStream[index].word;
+              index++;
+              while (tokenStream[index].token === "id") {
+                tokenStream[index].dtype = dtype;
+                elements.push(tokenStream[index]);
+                index += tokenStream[index+1].word === ","
+                  ? 3
+                  : 1;
+              }
+            }
+          }
+          index++;
+        }
+
         if(tokenStream[index].word === "IN"){
           location = "main";
           ids.push(
@@ -1002,7 +1024,8 @@ export default {
           }
           ids.pop();
         }
-        index++;
+        if(tokenStream[index].word !== "struct")
+          index++;
       }
       console.log("%cSemantic Errors: ", "color: cyan; font-size: 15px", state.error);
     },
