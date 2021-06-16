@@ -843,6 +843,14 @@ export default {
 
           tokenStream[index+2].type = taskType.word;
           tokenStream[index+2].paramCount = paramCounter;
+          const taskIndex = tasks.findIndex(task => task.lex === tokenStream[index+2].lex);
+          if(taskIndex >= 0) commit("SET_ERROR", {
+            type: "sem-error",
+            msg: `Duplicate declaration of task (${tokenStream[index+2].word})`,
+            line: tokenStream[index+2].line,
+            col: tokenStream[index+2].col,
+            exp: "-",
+          });
           tasks.push(tokenStream[index+2]);
           index = counter-1;
 
