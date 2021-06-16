@@ -831,7 +831,10 @@ export default {
             ||  tokenStream[counter].word !== ")" 
             ||  (tokenStream[counter].token === "id" && tokenStream[counter+1].token === "id")
           ){
-            if(dataTypes.includes(tokenStream[counter].word) || tokenStream[counter].token === "id"){
+            if(
+                  dataTypes.includes(tokenStream[counter].word) 
+                ||(tokenStream[counter].token === "id" && tokenStream[counter+1].token === "id")
+              ){
               paramCounter++;
               tokenStream[index+2].parameters.push(tokenStream[counter].word);
             }
@@ -1104,13 +1107,13 @@ export default {
           
         }
       } else if(tokenStream[index].token === "id"){
-        const ind = tokenStream[index+1].word === "("
-          ? tasks.findIndex(task => task.lex === tokenStream[index].lex)
-          : ids.findIndex(id => id.lex === tokenStream[index].lex);
+        const taskIndex = tasks.findIndex(task => task.lex === tokenStream[index].lex);
+        const idIndex   = ids.findIndex(id => id.lex === tokenStream[index].lex);
+        console.log(tokenStream[index], tasks, taskIndex, ids, idIndex)
         const undeclaredMsg = tokenStream[index+1].word === "("
           ? "task"
           : "variable"
-        if(ind < 0){
+        if(taskIndex < 0 && idIndex < 0){
           commit("SET_ERROR", {
             type: "sem-error",
             msg: `Undeclared ${undeclaredMsg} (${tokenStream[index].word})`,
@@ -1118,10 +1121,10 @@ export default {
             col: tokenStream[index].col,
             exp: "-",
           });
-        } else{
-          if(!ids[ind].editable) commit("SET_ERROR", {
+        } else if(tokenStream[index+1].word !== "("){
+          if(!ids[idIndex].editable) commit("SET_ERROR", {
             type: "sem-error",
-            msg: `Illegal re-assignment of vital id (${ids[ind].word})`,
+            msg: `Illegal re-assignment of vital id (${ids[idIndex].word})`,
             line: tokenStream[index].line,
             col: tokenStream[index].col,
             exp: "-",
@@ -1130,7 +1133,7 @@ export default {
             if(assignOper.includes(tokenStream[index].word)){
               const {i, counter} = await dispatch("EXPRESSION_EVALUATOR",
               {
-                expectedDType: ids[ind].dtype,
+                expectedDType: ids[idIndex].dtype,
                 index: index+1,
                 tokenStream: tokenStream,
                 ids: ids,
@@ -1139,6 +1142,34 @@ export default {
               index = i;
             }
             else index++;
+          }
+        } else if(tokenStream[index+1].word === "("){
+          let counter = index += 1;
+          let paramCounter = tokenStream[counter+1].word === ")"
+            ? 0
+            : 1;
+          while(tokenStream[counter].word !== ";"){
+            console.log(tokenStream[counter])
+            if(tokenStream[counter].word === ",") paramCounter++;
+            counter++;
+          }
+          if(paramCounter !== tasks[taskIndex].paramCount) commit("SET_ERROR", {
+            type: "sem-error",
+            msg: `Mismatched number of parameters (${paramCounter})`,
+            line: tokenStream[index].line,
+            col: tokenStream[index].col,
+            exp: `${tasks[taskIndex].paramCount} parameters`,
+          });
+          for(const paramDtype of tasks[taskIndex].parameters){
+            const {i, counter} = await dispatch("EXPRESSION_EVALUATOR",
+            {
+              expectedDType: paramDtype,
+              index: index,
+              tokenStream: tokenStream,
+              ids: ids,
+              tasks: tasks,
+            });
+            index = i;
           }
         }
       } else if(tokenStream[index].word === "shoot"){
