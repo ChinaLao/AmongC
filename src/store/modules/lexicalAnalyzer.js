@@ -931,7 +931,9 @@ export default {
               dataTypes: dataTypes, 
               location: location,
               ids: ids,
-              tasks: tasks
+              tasks: tasks,
+              structs: structs,
+              elements: elements
           }
         );
 
@@ -1001,7 +1003,9 @@ export default {
                   dataTypes: dataTypes, 
                   location: location,
                   ids: ids,
-                  tasks: tasks
+                  tasks: tasks,
+                  structs: structs,
+                  elements: elements
               }
             );
 
@@ -1052,7 +1056,7 @@ export default {
       console.log("%cSemantic Errors: ", "color: cyan; font-size: 15px", state.error);
     },
     async TYPE_AND_DECLARATION_CHECKER({commit, dispatch}, payload){
-      let {index, tokenStream, dataTypes, location, ids, tasks} = payload;
+      let {index, tokenStream, dataTypes, location, ids, tasks, structs, elements} = payload;
       const assignOper = ["=", "+=", "-=", "*=", "**=", "/=", "//=", "%="];
       if(tokenStream[index].word === "vital"){
         let moreConst = true;
@@ -1106,7 +1110,7 @@ export default {
           }
           if(tokenStream[index].word === ";") moreConst = false;
         }
-      } else if(dataTypes.includes(tokenStream[index].word)){
+      } else if (dataTypes.includes(tokenStream[index].word) || (tokenStream[index].token === "id" && tokenStream[index+1].token === "id")){
         let moreVar = true;
         let dtype = tokenStream[index]
         while(moreVar){
