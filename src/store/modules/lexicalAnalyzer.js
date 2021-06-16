@@ -1034,6 +1034,7 @@ export default {
                   tokenStream: tokenStream,
                   ids: ids,
                   tasks: tasks,
+                  elements: elements
                 });
                 index = i;
               }
@@ -1090,6 +1091,7 @@ export default {
                   tokenStream: tokenStream,
                   ids: ids,
                   tasks: tasks,
+                  elements: elements
                 });
                 index = i;
                 curlyCounter = counter;
@@ -1105,6 +1107,7 @@ export default {
               tokenStream: tokenStream,
               ids: ids,
               tasks: tasks,
+              elements: elements
             });
             index = i;
           }
@@ -1145,6 +1148,7 @@ export default {
                   tokenStream: tokenStream,
                   ids: ids,
                   tasks: tasks,
+                  elements: elements
                 });
                 index = i;
                 curlyCounter = counter;
@@ -1161,6 +1165,7 @@ export default {
               tokenStream: tokenStream,
               ids: ids,
               tasks: tasks,
+              elements: elements
             });
             index = i;
           } else index+=2;
@@ -1199,6 +1204,7 @@ export default {
                 tokenStream: tokenStream,
                 ids: ids,
                 tasks: tasks,
+                elements: elements
               });
               index = i;
             }
@@ -1229,6 +1235,7 @@ export default {
               tokenStream: tokenStream,
               ids: ids,
               tasks: tasks,
+              elements: elements
             });
             index = i;
           }
@@ -1256,7 +1263,24 @@ export default {
                 col: tokenStream[index].col,
                 exp: `-`,
               });
-              else dtype = ids[ind].dtype;
+              else{
+                dtype = ids[ind].dtype;
+                if(!dataTypes.includes(dtype)){
+                  while(tokenStream[index].word !== ".") index++;
+                  index++;
+                  const elementIndex = elements.findIndex(element => element.lex === tokenStream[index].lex && dtype === element.struct)
+                  if(elementIndex < 0) commit("SET_ERROR", {
+                    type: "sem-error",
+                    msg: `Undeclared element (${tokenStream[index].word})`,
+                    line: tokenStream[index].line,
+                    col: tokenStream[index].col,
+                    exp: `-`,
+                  });
+                  dtype = elementIndex < 0
+                    ? undefined
+                    : elements[elementIndex].dtype;
+                }
+              }
             }
           } else if(tokenStream[index].lex.includes("Lit")){
             dtype = tokenStream[index].lex.split("Lit")[0];
@@ -1269,6 +1293,7 @@ export default {
               tokenStream: tokenStream,
               ids: ids,
               tasks: tasks,
+              elements: elements
             });
             index = i;
           } else index++;
@@ -1276,33 +1301,47 @@ export default {
       }
       return index;
     },
-    async EXPRESSION_EVALUATOR({commit}, payload){ // return num1 + (num2 - num3 * (num4 / num5));
-      let {expectedDType, index, tokenStream, ids, tasks} = payload;
+    async EXPRESSION_EVALUATOR({commit}, payload){
+      let {expectedDType, index, tokenStream, ids, tasks, elements} = payload;
       const numberTokens = ["litInt", "negaLitInt", "litDec"];
       const numberDTypes = ["int", "dec"];
       const numberCompareTokens = ["<", ">", "<=", ">="];
       const boolConnector = ["and", "or"];
+      const dataTypes = ["int", "dec", "str", "bool"];
 
       let errorFound = false;
       let err;
       let curlyCounter = 1;
+      let prevStruct;
       while(tokenStream[index].word !== ";" && tokenStream[index].word !== "," && curlyCounter > 0){
         errorFound = false;
         if(tokenStream[index].token === "id"){
           let idIndex = tokenStream[index+1].word === "("
             ? tasks.findIndex(task => task.lex === tokenStream[index].lex)
             : ids.findIndex(id => id.lex === tokenStream[index].lex);
+
+          idIndex = idIndex < 0
+            ? elements.findIndex(element => element.lex === tokenStream[index].lex && prevStruct === element.struct)
+            : idIndex;
           
           let dtype = idIndex < 0
             ? null
             : tokenStream[index+1].word === "("
               ? tasks[idIndex].type
               : ids[idIndex].dtype;
+          
+          dtype = dtype
+            ? dtype
+            : elements[idIndex].dtype
+
+            prevStruct = dataTypes.includes(dtype)
+              ? null
+              : dtype;
 
           const undeclaredMsg = tokenStream[index+1].word === "("
             ? "task"
             : "variable"
-
+          console.log(dtype, expectedDType)
           if(idIndex < 0) commit("SET_ERROR", {
             type: "sem-error",
             msg: `Undeclared ${undeclaredMsg} (${tokenStream[index].word})`,
@@ -1317,6 +1356,7 @@ export default {
             ) 
             && dtype !== expectedDType 
             && expectedDType !== "bool"
+            && dataTypes.includes(dtype)
           ){
             errorFound = true;
             err = dtype
