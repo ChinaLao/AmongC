@@ -873,13 +873,14 @@ for_int ->
 
 for_choice -> 
         compute_choice
-    |   notter for_notter 
+    |   notter iterate_statement
 
+#removed bc unused
 #changed for_notter_choice (deleted) to digit_another_choice
-for_notter -> 
-        #literal
-       #negation %id digit_another_choice string_access
-       iterate_statement
+# for_notter -> 
+#         #literal
+#        #negation %id digit_another_choice string_access
+#        iterate_statement
 
 for_initial ->
         for_int %id %equal for_choice for_initial_extra
