@@ -863,7 +863,16 @@ export default {
       index = 0;
       while(index < tokenStream.length){
         if (tokenStream[index].word === "struct") {
+          const structIndex = structs.findIndex(struct => struct.lex === tokenStream[index + 1].lex);
+          if (structIndex >= 0) commit("SET_ERROR", {
+            type: "sem-error",
+            msg: `Duplicate declaration of struct (${tokenStream[index + 1].word})`,
+            line: tokenStream[index + 1].line,
+            col: tokenStream[index + 1].col,
+            exp: "-",
+          });
           structs.push(tokenStream[index + 1]);
+          const struct = tokenStream[index + 1].word;
           index += 3;
           while (tokenStream[index].word !== "}") {
             while (!dataTypes.includes(tokenStream[index].word) && tokenStream[index].word !== "}") index++;
@@ -872,9 +881,22 @@ export default {
               index++;
               while (tokenStream[index].token === "id") {
                 tokenStream[index].dtype = dtype;
+                tokenStream[index].struct = struct;
+                const elementIndex = elements.findIndex(
+                  element => 
+                  element.lex === tokenStream[index].lex 
+                  && element.struct === tokenStream[index].struct
+                );
+                if(elementIndex >= 0) commit("SET_ERROR", {
+                  type: "sem-error",
+                  msg: `Duplicate declaration of element (${tokenStream[index].word})`,
+                  line: tokenStream[index].line,
+                  col: tokenStream[index].col,
+                  exp: "-",
+                });
                 elements.push(tokenStream[index]);
                 index += tokenStream[index+1].word === ","
-                  ? 3
+                  ? 2
                   : 1;
               }
             }
