@@ -905,9 +905,32 @@ export default {
             ? tasks[taskIndex]
             : taskIndex;
           
-          index+=3;
-          while(tokenStream[index].word !== "{") index++;
-          index++;
+          let counter = index+=4;
+          let parenCounter = 1;
+          while(parenCounter > 0){
+            if(tokenStream[counter].word === "(") parenCounter++;
+            else if(tokenStream[counter].word === ")") parenCounter--;
+            else if(
+                  dataTypes.includes(tokenStream[counter].word) 
+              ||  (tokenStream[counter].token === "id" && tokenStream[counter+1].token === "id")
+            ){
+              tokenStream[counter+1].declared = tokenStream[counter+1].defined = true;
+              tokenStream[counter+1].editable = true;
+              tokenStream[counter+1].location = location;
+              tokenStream[counter+1].dtype = tokenStream[counter].word;
+              const idIndex = ids.findIndex(id => id.lex === tokenStream[counter+1].lex);
+              if(idIndex >= 0) commit("SET_ERROR", {
+                type: "sem-error",
+                msg: `Duplicate declaration of variable (${tokenStream[counter+1].word})`,
+                line: tokenStream[counter+1].line,
+                col: tokenStream[counter+1].col,
+                exp: "-",
+              });
+              ids.push(tokenStream[counter+1]);
+              counter+=2;
+            } else counter++;
+          }
+          index = counter+2;
           let curlyCounter = 1;
           while(curlyCounter > 0){
             if(tokenStream[index].word === "{") curlyCounter++;
@@ -1036,8 +1059,8 @@ export default {
           if(idIndex >= 0) commit("SET_ERROR", {
             type: "sem-error",
             msg: `Duplicate declaration of variable (${tokenStream[index+1].word})`,
-            line: tokenStream[index+2].line,
-            col: tokenStream[index+2].col,
+            line: tokenStream[index+1].line,
+            col: tokenStream[index+1].col,
             exp: "-",
           });
           ids.push(tokenStream[index+1]);
