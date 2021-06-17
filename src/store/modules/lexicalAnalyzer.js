@@ -823,7 +823,6 @@ export default {
       let index = 0;
       while(index < tokenStream.length){
         if (tokenStream[index].word === "struct") {
-          console.log(structs, tokenStream[index+1])
           const structIndex = structs.findIndex(struct => struct.lex === tokenStream[index + 1].lex);
           if (structIndex >= 0) commit("SET_ERROR", {
             type: "sem-error",
@@ -832,7 +831,7 @@ export default {
             col: tokenStream[index + 1].col,
             exp: "-",
           });
-          structs.push(tokenStream[index + 1]); console.log(structs)
+          structs.push(tokenStream[index + 1]);
           const struct = tokenStream[index + 1].word;
           index += 3;
           while (tokenStream[index].word !== "}") {
@@ -1123,6 +1122,16 @@ export default {
           if(tokenStream[index].word === ";") moreConst = false;
         }
       } else if (dataTypes.includes(tokenStream[index].word) || (tokenStream[index].token === "id" && tokenStream[index+1].token === "id")){
+        if(tokenStream[index].token === "id"){
+          const structIndex = structs.findIndex(struct => struct.lex === tokenStream[index].lex);
+          if (structIndex < 0) commit("SET_ERROR", {
+            type: "sem-error",
+            msg: `Undeclared struct (${tokenStream[index].word})`,
+            line: tokenStream[index].line,
+            col: tokenStream[index].col,
+            exp: "-",
+          });
+        }
         let moreVar = true;
         let dtype = tokenStream[index]
         while(moreVar){
