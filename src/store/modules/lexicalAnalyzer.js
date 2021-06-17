@@ -822,6 +822,47 @@ export default {
 
       let index = 0;
       while(index < tokenStream.length){
+        if (tokenStream[index].word === "struct") {
+          const structIndex = structs.findIndex(struct => struct.lex === tokenStream[index + 1].lex);
+          if (structIndex >= 0) commit("SET_ERROR", {
+            type: "sem-error",
+            msg: `Duplicate declaration of struct (${tokenStream[index + 1].word})`,
+            line: tokenStream[index + 1].line,
+            col: tokenStream[index + 1].col,
+            exp: "-",
+          });
+          structs.push(tokenStream[index + 1]);
+          const struct = tokenStream[index + 1].word;
+          index += 3;
+          while (tokenStream[index].word !== "}") {
+            while (!dataTypes.includes(tokenStream[index].word) && tokenStream[index].word !== "}") index++;
+            if (dataTypes.includes(tokenStream[index].word)) {
+              const dtype = tokenStream[index].word;
+              index++;
+              while (tokenStream[index].token === "id") {
+                tokenStream[index].dtype = dtype;
+                tokenStream[index].struct = struct;
+                const elementIndex = elements.findIndex(
+                  element =>
+                    element.lex === tokenStream[index].lex
+                    && element.struct === tokenStream[index].struct
+                );
+                if (elementIndex >= 0) commit("SET_ERROR", {
+                  type: "sem-error",
+                  msg: `Duplicate declaration of element (${tokenStream[index].word})`,
+                  line: tokenStream[index].line,
+                  col: tokenStream[index].col,
+                  exp: "-",
+                });
+                elements.push(tokenStream[index]);
+                index += tokenStream[index + 1].word === ","
+                  ? 2
+                  : 1;
+              }
+            }
+          }
+          index++;
+        }
         if(tokenStream[index].word === "task"){
           const taskType = tokenStream[index+1];
 
@@ -837,6 +878,14 @@ export default {
                   dataTypes.includes(tokenStream[counter].word) 
                 ||(tokenStream[counter].token === "id" && tokenStream[counter+1].token === "id")
               ){
+              const structIndex = structs.findIndex(struct => struct.lex === tokenStream[counter].lex);
+              if (structIndex < 0) commit("SET_ERROR", {
+                type: "sem-error",
+                msg: `Undeclared struct (${tokenStream[counter].word})`,
+                line: tokenStream[counter].line,
+                col: tokenStream[counter].col,
+                exp: "-",
+              });
               paramCounter++;
               tokenStream[index+2].parameters.push(tokenStream[counter].word);
             }
@@ -862,47 +911,6 @@ export default {
 
       index = 0;
       while(index < tokenStream.length){
-        if (tokenStream[index].word === "struct") {
-          const structIndex = structs.findIndex(struct => struct.lex === tokenStream[index + 1].lex);
-          if (structIndex >= 0) commit("SET_ERROR", {
-            type: "sem-error",
-            msg: `Duplicate declaration of struct (${tokenStream[index + 1].word})`,
-            line: tokenStream[index + 1].line,
-            col: tokenStream[index + 1].col,
-            exp: "-",
-          });
-          structs.push(tokenStream[index + 1]);
-          const struct = tokenStream[index + 1].word;
-          index += 3;
-          while (tokenStream[index].word !== "}") {
-            while (!dataTypes.includes(tokenStream[index].word) && tokenStream[index].word !== "}") index++;
-            if (dataTypes.includes(tokenStream[index].word)) {
-              const dtype = tokenStream[index].word;
-              index++;
-              while (tokenStream[index].token === "id") {
-                tokenStream[index].dtype = dtype;
-                tokenStream[index].struct = struct;
-                const elementIndex = elements.findIndex(
-                  element => 
-                  element.lex === tokenStream[index].lex 
-                  && element.struct === tokenStream[index].struct
-                );
-                if(elementIndex >= 0) commit("SET_ERROR", {
-                  type: "sem-error",
-                  msg: `Duplicate declaration of element (${tokenStream[index].word})`,
-                  line: tokenStream[index].line,
-                  col: tokenStream[index].col,
-                  exp: "-",
-                });
-                elements.push(tokenStream[index]);
-                index += tokenStream[index+1].word === ","
-                  ? 2
-                  : 1;
-              }
-            }
-          }
-          index++;
-        }
 
         if(tokenStream[index].word === "IN"){
           location = "main";
