@@ -823,6 +823,7 @@ export default {
       let index = 0;
       while(index < tokenStream.length){
         if (tokenStream[index].word === "struct") {
+          console.log(structs, tokenStream[index+1])
           const structIndex = structs.findIndex(struct => struct.lex === tokenStream[index + 1].lex);
           if (structIndex >= 0) commit("SET_ERROR", {
             type: "sem-error",
@@ -831,7 +832,7 @@ export default {
             col: tokenStream[index + 1].col,
             exp: "-",
           });
-          structs.push(tokenStream[index + 1]);
+          structs.push(tokenStream[index + 1]); console.log(structs)
           const struct = tokenStream[index + 1].word;
           index += 3;
           while (tokenStream[index].word !== "}") {
@@ -906,7 +907,8 @@ export default {
           index = counter-1;
 
         }
-        index++;
+        if(tokenStream[index].word !== "struct")
+          index++;
       }
 
       index = tokenStream.findIndex(token => token.word === "IN");
@@ -933,15 +935,15 @@ export default {
         }
 
         index = await dispatch("TYPE_AND_DECLARATION_CHECKER", 
-            {
-              index: index, 
-              tokenStream: tokenStream, 
-              dataTypes: dataTypes, 
-              location: location,
-              ids: ids,
-              tasks: tasks,
-              structs: structs,
-              elements: elements
+          {
+            index: index, 
+            tokenStream: tokenStream, 
+            dataTypes: dataTypes, 
+            location: location,
+            ids: ids,
+            tasks: tasks,
+            structs: structs,
+            elements: elements
           }
         );
 
