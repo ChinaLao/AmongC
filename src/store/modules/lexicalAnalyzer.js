@@ -1285,20 +1285,36 @@ export default {
               });
               else{
                 dtype = ids[ind].dtype;
+                const struct = tokenStream[index];
                 if(!dataTypes.includes(dtype)){
-                  while(tokenStream[index].word !== ".") index++;
-                  index++;
-                  const elementIndex = elements.findIndex(element => element.lex === tokenStream[index].lex && dtype === element.struct)
-                  if(elementIndex < 0) commit("SET_ERROR", {
-                    type: "sem-error",
-                    msg: `Undeclared element (${tokenStream[index].word})`,
-                    line: tokenStream[index].line,
-                    col: tokenStream[index].col,
-                    exp: `-`,
-                  });
-                  dtype = elementIndex < 0
-                    ? undefined
-                    : elements[elementIndex].dtype;
+                  const legal = ["[", "]"]
+                  while(
+                    tokenStream[index].word !== "." 
+                    && (legal.includes(tokenStream[index].word) || tokenStream[index].token === "litInt")
+                  ) index++;
+                  if (tokenStream[index].word === "."){
+                    index++;
+                    const elementIndex = elements.findIndex(element => element.lex === tokenStream[index].lex && dtype === element.struct)
+                    if(elementIndex < 0) commit("SET_ERROR", {
+                      type: "sem-error",
+                      msg: `Undeclared element (${tokenStream[index].word})`,
+                      line: tokenStream[index].line,
+                      col: tokenStream[index].col,
+                      exp: `-`,
+                    });
+                    dtype = elementIndex < 0
+                      ? undefined
+                      : elements[elementIndex].dtype;
+                  } else{
+                    dtype = undefined;
+                    commit("SET_ERROR", {
+                      type: "sem-error",
+                      msg: `Illegal access of object struct (${struct.word})`,
+                      line: struct.line,
+                      col: struct.col,
+                      exp: `element access`,
+                    });
+                  }
                 }
               }
             }
