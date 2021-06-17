@@ -1212,7 +1212,7 @@ export default {
             col: tokenStream[index].col,
             exp: "-",
           });
-          while(tokenStream[index].word !== ";"){
+          while(tokenStream[index].word !== ";" && tokenStream[index].word !== "{"){
             if(assignOper.includes(tokenStream[index].word)){
               const {i, counter} = await dispatch("EXPRESSION_EVALUATOR",
               {
@@ -1246,7 +1246,6 @@ export default {
             ? 0
             : 1;
           while(tokenStream[counter].word !== ";"){
-            console.log(tokenStream[counter])
             if(tokenStream[counter].word === ",") paramCounter++;
             counter++;
           }
@@ -1387,7 +1386,6 @@ export default {
           const undeclaredMsg = tokenStream[index+1].word === "("
             ? "task"
             : "variable"
-          console.log(dtype, expectedDType)
           if(idIndex < 0) commit("SET_ERROR", {
             type: "sem-error",
             msg: `Undeclared ${undeclaredMsg} (${tokenStream[index].word})`,
