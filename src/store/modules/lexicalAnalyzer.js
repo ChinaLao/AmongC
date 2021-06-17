@@ -909,7 +909,7 @@ export default {
         index++;
       }
 
-      index = 0;
+      index = tokenStream.findIndex(token => token.word === "IN");
       while(index < tokenStream.length){
 
         if(tokenStream[index].word === "IN"){
@@ -1059,8 +1059,7 @@ export default {
           }
           ids.pop();
         }
-        if(tokenStream[index].word !== "struct")
-          index++;
+        index++;
       }
       console.log("%cSemantic Errors: ", "color: cyan; font-size: 15px", state.error);
     },
