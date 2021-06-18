@@ -855,6 +855,14 @@ export default {
                   exp: "-",
                 });
                 elements.push(tokenStream[index]);
+                if(tokenStream[index+1].word === "[") index = await dispatch("ARRAY_EVALUATOR", {
+                  index: index+2,
+                  tokenStream: tokenStream,
+                  ids: ids,
+                  tasks: tasks,
+                  structs: structs,
+                  elements: elements
+                }) - 1;
                 index += tokenStream[index + 1].word === ","
                   ? 2
                   : 1;
@@ -910,8 +918,17 @@ export default {
           index++;
       }
 
-      index = tokenStream.findIndex(token => token.word === "IN");
+      index = 0;
       while(index < tokenStream.length){
+        if(tokenStream[index].word === "struct"){
+          index += 3;
+          let curlyCounter = 1;
+          while(curlyCounter > 0){
+            if(tokenStream[index].word === "{") curlyCounter++;
+            else if(tokenStream[index].word === "}") curlyCounter--;
+            index++;
+          }
+        }
 
         if(tokenStream[index].word === "IN"){
           location = "main";
@@ -1539,6 +1556,34 @@ export default {
         i: index,
         counter: curlyCounter
       };
+    }, 
+    async ARRAY_EVALUATOR({ commit }, payload) {
+
+      let {index, tokenStream, ids, tasks, structs, elements} = payload;
+      let bracketCounter = 1;
+      while(bracketCounter > 0){
+        if(tokenStream[index].word === "[") bracketCounter++;
+        else if(tokenStream[index].word === "]") bracketCounter--;
+        else if(tokenStream[index].token === "id"){
+          const idIndex = ids.findIndex(id => id.lex === tokenStream[index].lex);
+          if (idIndex < 0) commit("SET_ERROR", {
+            type: "sem-error",
+            msg: `Undeclared variable (${tokenStream[index].word})`,
+            line: tokenStream[index].line,
+            col: tokenStream[index].col,
+            exp: `-`,
+          });
+          else if (ids[idIndex].dtype !== "int") commit("SET_ERROR", {
+            type: "sem-error",
+            msg: `Cannot access using variable with ${ids[idIndex].dtype} value (${tokenStream[index].word})`,
+            line: tokenStream[index].line,
+            col: tokenStream[index].col,
+            exp: `-`,
+          });
+        }
+        index++;
+      }
+      return index;
     },
     async WRITE_JAVASCRIPT({ state, dispatch, commit }, statements){
       const javascriptStatements = [];
