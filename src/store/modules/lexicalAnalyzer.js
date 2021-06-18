@@ -1068,6 +1068,7 @@ export default {
     async TYPE_AND_DECLARATION_CHECKER({commit, dispatch}, payload){
       let {index, tokenStream, dataTypes, location, ids, tasks, structs, elements} = payload;
       const assignOper = ["=", "+=", "-=", "*=", "**=", "/=", "//=", "%="];
+      const iterate = ["++", "--"]
       if(tokenStream[index].word === "vital"){
         let moreConst = true;
         const dtype = tokenStream[index+1]
@@ -1239,8 +1240,8 @@ export default {
             else index++;
           }
         } else if(tokenStream[index+1].word !== "("){
-          if(!ids[idIndex].editable) commit("SET_ERROR", {
-            type: "sem-error",
+          if(!ids[idIndex].editable && (assignOper.includes(tokenStream[index+1].word) || iterate.includes(tokenStream[index+1].word))) commit("SET_ERROR", {
+            type: "sem-error", //+ - * ** / // %
             msg: `Illegal re-assignment of vital id (${ids[idIndex].word})`,
             line: tokenStream[index].line,
             col: tokenStream[index].col,
