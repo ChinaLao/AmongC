@@ -1566,9 +1566,9 @@ export default {
       };
     }, 
     async ARRAY_EVALUATOR({ commit }, payload) {
-
       let {index, tokenStream, ids, tasks, structs, elements} = payload;
       let bracketCounter = 1;
+      const dataTypes = ["int", "dec", "str", "bool"];
       while(bracketCounter > 0){
         if(tokenStream[index].word === "[") bracketCounter++;
         else if(tokenStream[index].word === "]") bracketCounter--;
@@ -1577,14 +1577,40 @@ export default {
           const taskIndex = tokenStream[index+1].word === "("
             ? tasks.findIndex(task => task.lex === tokenStream[index].lex)
             : -1;
-          if (idIndex < 0 && taskIndex < 0) commit("SET_ERROR", {
+          let elementIndex;
+          if (tokenStream[index-1].word === "."){
+            let counter = index-2;
+            while(tokenStream[counter].token !== "id") counter--;
+            const ind = ids.findIndex(id => id.lex === tokenStream[counter].lex);
+            if(ind >= 0){
+              elementIndex = elements.findIndex(element => 
+                element.lex === tokenStream[index].lex
+                && ids[ind].dtype === element.struct
+              )
+              if (elementIndex < 0) commit("SET_ERROR", {
+                type: "sem-error",
+                msg: `Undeclared element (${tokenStream[index].word})`,
+                line: tokenStream[index].line,
+                col: tokenStream[index].col,
+                exp: `-`,
+              });
+              else if (elements[elementIndex].dtype !== "int") commit("SET_ERROR", {
+                type: "sem-error",
+                msg: `Cannot access using variable with ${elements[elementIndex].dtype} value (${tokenStream[index].word})`,
+                line: tokenStream[index].line,
+                col: tokenStream[index].col,
+                exp: `-`,
+              });
+            }
+          }
+          if (idIndex < 0 && taskIndex < 0 && elementIndex < 0) commit("SET_ERROR", {
             type: "sem-error",
             msg: `Undeclared ${tokenStream[index + 1].word === "(" ? 'task' : 'variable'} (${tokenStream[index].word})`,
             line: tokenStream[index].line,
             col: tokenStream[index].col,
             exp: `-`,
           });
-          else if (idIndex >= 0 && ids[idIndex].dtype !== "int") commit("SET_ERROR", {
+          else if (idIndex >= 0 && ids[idIndex].dtype !== "int" && dataTypes.includes(ids[idIndex].dtype)) commit("SET_ERROR", {
             type: "sem-error",
             msg: `Cannot access using variable with ${ids[idIndex].dtype} value (${tokenStream[index].word})`,
             line: tokenStream[index].line,
