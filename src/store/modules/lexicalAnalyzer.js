@@ -1204,6 +1204,34 @@ export default {
             col: tokenStream[index].col,
             exp: "-",
           });
+          while(tokenStream[index].word !== ";" && tokenStream[index].word !== "{"){
+            if(assignOper.includes(tokenStream[index].word)){
+              const {i, counter} = await dispatch("EXPRESSION_EVALUATOR",
+              {
+                expectedDType: undefined,
+                index: index+1,
+                tokenStream: tokenStream,
+                ids: ids,
+                tasks: tasks,
+                elements: elements
+              });
+              index = i;
+            } else if(tokenStream[index].token === "id" && tokenStream[index-1].word === "."){
+              let counter = index-1;
+              while(tokenStream[counter].token !== "id") counter--;
+              const idIndex = ids.findIndex(id => id.lex === tokenStream[counter].lex);
+              const elementIndex = elements.findIndex(element => element.lex === tokenStream[index].lex && ids[idIndex].dtype === element.struct);
+              if(elementIndex < 0) commit("SET_ERROR", {
+                type: "sem-error",
+                msg: `Undeclared element (${tokenStream[index].word})`,
+                line: tokenStream[index].line,
+                col: tokenStream[index].col,
+                exp: "-",
+              });
+              index++;
+            }
+            else index++;
+          }
         } else if(tokenStream[index+1].word !== "("){
           if(!ids[idIndex].editable) commit("SET_ERROR", {
             type: "sem-error",
@@ -1349,6 +1377,7 @@ export default {
     async EXPRESSION_EVALUATOR({commit}, payload){
       let {expectedDType, index, tokenStream, ids, tasks, elements} = payload;
       const numberTokens = ["litInt", "negaLitInt", "litDec"];
+      const legal = ["litInt", "negaLitInt", "litDec", "litBool", "litStr", "id"];
       const numberDTypes = ["int", "dec"];
       const numberCompareTokens = ["<", ">", "<=", ">="];
       const boolConnector = ["and", "or"];
@@ -1360,7 +1389,7 @@ export default {
       let prevStruct;
       while(tokenStream[index].word !== ";" && tokenStream[index].word !== "," && curlyCounter > 0){
         errorFound = false;
-        if(tokenStream[index].token === "id"){
+        if(tokenStream[index].token === "id" && expectedDType !== undefined){
           let idIndex = tokenStream[index+1].word === "("
             ? tasks.findIndex(task => task.lex === tokenStream[index].lex)
             : ids.findIndex(id => id.lex === tokenStream[index].lex);
@@ -1405,11 +1434,11 @@ export default {
             errorFound = true;
             err = dtype
           }
-        } else if(numberTokens.includes(tokenStream[index].token)){
+        } else if (numberTokens.includes(tokenStream[index].token) && expectedDType !== undefined){
           if(!numberDTypes.includes(expectedDType) && expectedDType !== "bool")  errorFound = true;
-        } else if(tokenStream[index].token === "litStr"){
+        } else if (tokenStream[index].token === "litStr" && expectedDType !== undefined){
           if(expectedDType !== "str" && expectedDType !== "bool")  errorFound = true;
-        } else if(tokenStream[index].token === "litBool"){
+        } else if (tokenStream[index].token === "litBool" && expectedDType !== undefined){
           if(expectedDType !== "bool") errorFound = true;
         } else if(boolConnector.includes(tokenStream[index].word)){
           if(expectedDType !== "bool") commit("SET_ERROR", {
@@ -1428,7 +1457,30 @@ export default {
             exp: "-",
           });
         }
-        if(errorFound) commit("SET_ERROR", {
+        if(tokenStream[index].token === "id"){
+          const idIndex = ids.findIndex(id => id.lex === tokenStream[index].lex);
+          const taskIndex = tokenStream[index+1].word === "("
+            ? tasks.findIndex(task => task.lex === tokenStream[index].lex)
+            : -1;
+          let elementIndex = -1;
+          if(tokenStream[index-1].word === "."){
+            let counter = index-2;
+            while(tokenStream[counter].token !== "id") counter--;
+            const structIndex = structs.findIndex(struct => struct.lex === tokenStream[counter].lex);
+            if(structIndex >= 0) elementIndex = elements.findIndex(element => 
+              element.lex === tokenStream[index].lex 
+              && structs[structIndex].dtype === element.struct
+            );
+          }
+          if (idIndex < 0 && taskIndex < 0 && elementIndex < 0) commit("SET_ERROR", {
+            type: "sem-error",
+            msg: `Undeclared variable (${tokenStream[index].word})`,
+            line: tokenStream[index].line,
+            col: tokenStream[index].col,
+            exp: `-`,
+          });
+        }
+        if ((errorFound || expectedDType === undefined) && legal.includes(tokenStream[index].token)) commit("SET_ERROR", {
           type: "sem-error",
           msg: `Mismatched data type (${expectedDType}) and value (${err ? err : tokenStream[index].word})`,
           line: tokenStream[index].line,
