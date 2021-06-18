@@ -1205,7 +1205,7 @@ export default {
         if(taskIndex < 0 && idIndex < 0){
           commit("SET_ERROR", {
             type: "sem-error",
-            msg: `Undeclared ${undeclaredMsg} (${tokenStream[index].word})a`,
+            msg: `Undeclared ${undeclaredMsg} (${tokenStream[index].word})`,
             line: tokenStream[index].line,
             col: tokenStream[index].col,
             exp: "-",
@@ -1227,10 +1227,17 @@ export default {
               let counter = index-1;
               while(tokenStream[counter].token !== "id") counter--;
               const idIndex = ids.findIndex(id => id.lex === tokenStream[counter].lex);
+              if (idIndex < 0) commit("SET_ERROR", {
+                type: "sem-error",
+                msg: `Variable (${tokenStream[counter].word}) is not a struct`,
+                line: tokenStream[counter].line,
+                col: tokenStream[counter].col,
+                exp: `-`,
+              });
               const elementIndex = elements.findIndex(element => element.lex === tokenStream[index].lex && ids[idIndex].dtype === element.struct);
               if(elementIndex < 0) commit("SET_ERROR", {
                 type: "sem-error",
-                msg: `Undeclared element (${tokenStream[index].word})a`,
+                msg: `Undeclared element (${tokenStream[index].word})`,
                 line: tokenStream[index].line,
                 col: tokenStream[index].col,
                 exp: "-",
@@ -1248,10 +1255,21 @@ export default {
             exp: "-",
           });
           while(tokenStream[index].word !== ";" && tokenStream[index].word !== "{"){
+            let dtype;
             if(assignOper.includes(tokenStream[index].word)){
+              if(!dataTypes.includes(ids[idIndex].dtype)){
+                let counter = index-1;
+                while(tokenStream[counter].token !== "id") counter--;
+                const ind = elements.findIndex(element => 
+                  element.lex === tokenStream[counter].lex
+                  && element.struct === ids[idIndex].dtype
+                );
+                if(ind >= 0) dtype = elements[ind].dtype;
+                else dtype = "undefined";
+              }
               const {i, counter} = await dispatch("EXPRESSION_EVALUATOR",
               {
-                expectedDType: ids[idIndex].dtype,
+                expectedDType: dtype || ids[idIndex].dtype,
                 index: index+1,
                 tokenStream: tokenStream,
                 ids: ids,
@@ -1264,10 +1282,17 @@ export default {
               let counter = index-1;
               while(tokenStream[counter].token !== "id") counter--;
               const idIndex = ids.findIndex(id => id.lex === tokenStream[counter].lex);
+              if (idIndex >= 0 && dataTypes.includes(ids[idIndex].dtype)) commit("SET_ERROR", {
+                type: "sem-error",
+                msg: `Variable (${tokenStream[counter].word}) is not a struct`,
+                line: tokenStream[counter].line,
+                col: tokenStream[counter].col,
+                exp: `-`,
+              });
               const elementIndex = elements.findIndex(element => element.lex === tokenStream[index].lex && ids[idIndex].dtype === element.struct);
               if(elementIndex < 0) commit("SET_ERROR", {
                 type: "sem-error",
-                msg: `Undeclared element (${tokenStream[index].word})b`,
+                msg: `Undeclared element (${tokenStream[index].word})`,
                 line: tokenStream[index].line,
                 col: tokenStream[index].col,
                 exp: "-",
@@ -1324,7 +1349,7 @@ export default {
               const ind = ids.findIndex(id => id.lex === tokenStream[index].lex);
               if(ind < 0) commit("SET_ERROR", {
                 type: "sem-error",
-                msg: `Undeclared variable (${tokenStream[index].word})b`,
+                msg: `Undeclared variable (${tokenStream[index].word})`,
                 line: tokenStream[index].line,
                 col: tokenStream[index].col,
                 exp: `-`,
@@ -1343,7 +1368,7 @@ export default {
                     const elementIndex = elements.findIndex(element => element.lex === tokenStream[index].lex && dtype === element.struct)
                     if(elementIndex < 0) commit("SET_ERROR", {
                       type: "sem-error",
-                      msg: `Undeclared element (${tokenStream[index].word})c`,
+                      msg: `Undeclared element (${tokenStream[index].word})`,
                       line: tokenStream[index].line,
                       col: tokenStream[index].col,
                       exp: `-`,
@@ -1433,9 +1458,6 @@ export default {
 
           prevStruct = dtype;
 
-          const undeclaredMsg = tokenStream[index+1].word === "("
-            ? "task"
-            : "variable"
           if(
             ( !numberDTypes.includes(dtype) 
               || !numberDTypes.includes(expectedDType)
@@ -1488,7 +1510,7 @@ export default {
           }
           if (idIndex < 0 && taskIndex < 0 && elementIndex < 0) commit("SET_ERROR", {
             type: "sem-error",
-            msg: `Undeclared variable (${tokenStream[index].word})d`,
+            msg: `Undeclared variable (${tokenStream[index].word})`,
             line: tokenStream[index].line,
             col: tokenStream[index].col,
             exp: `-`,
