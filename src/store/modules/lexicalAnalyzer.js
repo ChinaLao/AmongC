@@ -1043,6 +1043,7 @@ export default {
                   tokenStream: tokenStream,
                   ids: ids,
                   tasks: tasks,
+                  structs: structs,
                   elements: elements
                 });
                 index = i;
@@ -1099,6 +1100,7 @@ export default {
                   tokenStream: tokenStream,
                   ids: ids,
                   tasks: tasks,
+                  structs: structs,
                   elements: elements
                 });
                 index = i;
@@ -1115,6 +1117,7 @@ export default {
               tokenStream: tokenStream,
               ids: ids,
               tasks: tasks,
+              structs: structs,
               elements: elements
             });
             index = i;
@@ -1166,6 +1169,7 @@ export default {
                   tokenStream: tokenStream,
                   ids: ids,
                   tasks: tasks,
+                  structs: structs,
                   elements: elements
                 });
                 index = i;
@@ -1183,6 +1187,7 @@ export default {
               tokenStream: tokenStream,
               ids: ids,
               tasks: tasks,
+              structs: structs,
               elements: elements
             });
             index = i;
@@ -1213,6 +1218,7 @@ export default {
                 tokenStream: tokenStream,
                 ids: ids,
                 tasks: tasks,
+                structs: structs,
                 elements: elements
               });
               index = i;
@@ -1249,6 +1255,7 @@ export default {
                 tokenStream: tokenStream,
                 ids: ids,
                 tasks: tasks,
+                structs: structs,
                 elements: elements
               });
               index = i;
@@ -1292,6 +1299,7 @@ export default {
               tokenStream: tokenStream,
               ids: ids,
               tasks: tasks,
+              structs: structs,
               elements: elements
             });
             index = i;
@@ -1366,6 +1374,7 @@ export default {
               tokenStream: tokenStream,
               ids: ids,
               tasks: tasks,
+              structs: structs,
               elements: elements
             });
             index = i;
@@ -1375,7 +1384,7 @@ export default {
       return index;
     },
     async EXPRESSION_EVALUATOR({commit}, payload){
-      let {expectedDType, index, tokenStream, ids, tasks, elements} = payload;
+      let {expectedDType, index, tokenStream, ids, tasks, structs, elements} = payload;
       const numberTokens = ["litInt", "negaLitInt", "litDec"];
       const legal = ["litInt", "negaLitInt", "litDec", "litBool", "litStr", "id"];
       const numberDTypes = ["int", "dec"];
@@ -1485,7 +1494,9 @@ export default {
           msg: `Mismatched data type (${expectedDType}) and value (${err ? err : tokenStream[index].word})`,
           line: tokenStream[index].line,
           col: tokenStream[index].col,
-          exp: `${expectedDType} value`,
+          exp: expectedDType === undefined
+            ? "-"
+            : `${expectedDType} value`,
         });
         index++; 
         if(tokenStream[index].word === "{"){
