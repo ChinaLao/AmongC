@@ -1413,14 +1413,23 @@ export default {
             : tokenStream[index+1].word === "("
               ? tasks[idIndex].type
               : ids[idIndex].dtype;
-          
-          dtype = dtype
-            ? dtype
-            : elements[idIndex].dtype
+          console.log(tokenStream[index])
+          if (idIndex < 0) commit("SET_ERROR", {
+            type: "sem-error",
+            msg: `Undeclared element (${tokenStream[index].word})`,
+            line: tokenStream[index].line,
+            col: tokenStream[index].col,
+            exp: `-`,
+          });
 
-            prevStruct = dataTypes.includes(dtype)
-              ? null
-              : dtype;
+          else
+            dtype = dtype
+              ? dtype
+              : elements[idIndex].dtype
+
+          prevStruct = dataTypes.includes(dtype)
+            ? null
+            : dtype;
 
           const undeclaredMsg = tokenStream[index+1].word === "("
             ? "task"
