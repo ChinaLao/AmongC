@@ -1172,7 +1172,15 @@ export default {
           ids.push(tokenStream[index+1]);
 
           if(tokenStream[index+2].word === "["){
-            index += 2;
+            index = await dispatch("ARRAY_EVALUATOR", {
+              index: index + 3,
+              tokenStream: tokenStream,
+              ids: ids,
+              tasks: tasks,
+              structs: structs,
+              elements: elements
+            }) - 1;
+            //here
             let curlyCounter = 1;
             while(tokenStream[index].word !== "=" && tokenStream[index].word !== ";") index++;
             if(tokenStream[index].word !== ";")
@@ -1566,16 +1574,26 @@ export default {
         else if(tokenStream[index].word === "]") bracketCounter--;
         else if(tokenStream[index].token === "id"){
           const idIndex = ids.findIndex(id => id.lex === tokenStream[index].lex);
-          if (idIndex < 0) commit("SET_ERROR", {
+          const taskIndex = tokenStream[index+1].word === "("
+            ? tasks.findIndex(task => task.lex === tokenStream[index].lex)
+            : -1;
+          if (idIndex < 0 && taskIndex < 0) commit("SET_ERROR", {
             type: "sem-error",
-            msg: `Undeclared variable (${tokenStream[index].word})`,
+            msg: `Undeclared ${tokenStream[index + 1].word === "(" ? 'task' : 'variable'} (${tokenStream[index].word})`,
             line: tokenStream[index].line,
             col: tokenStream[index].col,
             exp: `-`,
           });
-          else if (ids[idIndex].dtype !== "int") commit("SET_ERROR", {
+          else if (idIndex >= 0 && ids[idIndex].dtype !== "int") commit("SET_ERROR", {
             type: "sem-error",
             msg: `Cannot access using variable with ${ids[idIndex].dtype} value (${tokenStream[index].word})`,
+            line: tokenStream[index].line,
+            col: tokenStream[index].col,
+            exp: `-`,
+          });
+          else if (taskIndex >= 0 && ids[taskIndex].dtype !== "int") commit("SET_ERROR", {
+            type: "sem-error",
+            msg: `Cannot access using variable with ${tasks[taskIndex].type} task (${tokenStream[index].word})`,
             line: tokenStream[index].line,
             col: tokenStream[index].col,
             exp: `-`,
