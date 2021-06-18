@@ -1426,15 +1426,7 @@ export default {
               ? tasks[idIndex].type
               : ids[idIndex].dtype;
           
-          if (idIndex < 0) commit("SET_ERROR", {
-            type: "sem-error",
-            msg: `Undeclared element (${tokenStream[index].word})d`,
-            line: tokenStream[index].line,
-            col: tokenStream[index].col,
-            exp: `-`,
-          });
-
-          else
+          if (idIndex >= 0)
             dtype = dtype
               ? dtype
               : elements[idIndex].dtype
@@ -1444,21 +1436,14 @@ export default {
           const undeclaredMsg = tokenStream[index+1].word === "("
             ? "task"
             : "variable"
-          if(idIndex < 0) commit("SET_ERROR", {
-            type: "sem-error",
-            msg: `Undeclared ${undeclaredMsg} (${tokenStream[index].word})c`,
-            line: tokenStream[index].line,
-            col: tokenStream[index].col,
-            exp: `-`,
-          });
-
-          else if(
+          if(
             ( !numberDTypes.includes(dtype) 
               || !numberDTypes.includes(expectedDType)
             ) 
             && dtype !== expectedDType 
             && expectedDType !== "bool"
             && dataTypes.includes(dtype)
+            && idIndex >= 0
           ){
             errorFound = true;
             err = dtype
