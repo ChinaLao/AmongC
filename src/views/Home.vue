@@ -221,20 +221,20 @@ export default {
       this.clearOutput(); //clears lex table, error table, and output
 
       this.output = "Checking Lexical...";
-      const tokens = await this.$store.dispatch("lexicalAnalyzer/LEXICAL", this.code); //gets tokenized with spaces
-
+      const tokens = await this.$store.dispatch("lexical/ANALYZE", this.code); //gets tokenized with spaces
+      console.log(this.error, this.error.length)
       if(this.error.length <= 0){ //if no lex-error
 
-        this.output += "\nNo Lexical Error\n\nChecking Syntax...";
-        await this.$store.dispatch("lexicalAnalyzer/SYNTAX", tokens); //check syntax and pass the tokens with spaces
+        // this.output += "\nNo Lexical Error\n\nChecking Syntax...";
+        // await this.$store.dispatch("lexicalAnalyzer/SYNTAX", tokens); //check syntax and pass the tokens with spaces
 
-        if(this.error.length <= 0){ //if no syn-error
+        // if(this.error.length <= 0){ //if no syn-error
 
-          this.output += "\nNo Syntax Error\n\nChecking Semantics...";
-          await this.$store.dispatch("lexicalAnalyzer/SEMANTICS", tokens); 
+          // this.output += "\nNo Syntax Error\n\nChecking Semantics...";
+          // await this.$store.dispatch("lexicalAnalyzer/SEMANTICS", tokens); 
 
-          if(this.error.length <= 0) this.output += "\nNo Semantics Error"
-          else this.output += "\nSemantics Error Found"
+          // if(this.error.length <= 0) this.output += "\nNo Semantics Error"
+          // else this.output += "\nSemantics Error Found"
 
           // const ast = JSON.stringify(this.$store.getters["lexicalAnalyzer/OUTPUT"], null, "  "); //create AST from nearley output and convert to string
           // let output = "\n\nAST:\n" + ast;
@@ -244,7 +244,7 @@ export default {
 
           // if(this.error.length <= 0) this.output += "\nNo Semantics Error" + output
           // else this.output += "\nSemantics Error Found" + output
-        }else this.output += "\nSyntax Error Found";
+        // }else this.output += "\nSyntax Error Found";
       }
       else this.output += "\nLexical Error Found";
       this.runClicked = false;
@@ -259,15 +259,15 @@ export default {
     clearOutput() {
       console.clear();
       this.output = null;
-      this.$store.commit("lexicalAnalyzer/CLEAR_OUTPUTS");
+      this.$store.dispatch("main/CLEAR_OUTPUTS");
     },
   },
   computed: {
     lexeme() {
-      return this.$store.getters["lexicalAnalyzer/LEXEME"];
+      return this.$store.getters["lexical/LEXEME"];
     },
     error() {
-      return this.$store.getters["lexicalAnalyzer/ERROR"];
+      return this.$store.getters["main/ERROR"];
     },
   },
 };
