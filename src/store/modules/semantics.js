@@ -83,6 +83,23 @@ export default {
                 forDeclare: true
               });
 
+              index++;
+              if (tokenStream[index].word === "[") {
+                index++;
+                const { i, expr } = await dispatch("ADD_TO_EXPRESSION_SET", {
+                  tokenStream: tokenStream,
+                  index: index,
+                  open: "[",
+                  close: "]"
+                });
+                index = i;
+                await dispatch("EXPRESSION_EVALUATOR", {
+                  expectedDtype: "int",
+                  expression: expr,
+                  evaluateArray: true
+                });
+              }
+
               if(idIndex < 0) commit("ADD_GLOBAL", global); //if no duplicate
 
               while(tokenStream[index].word !== "," && tokenStream[index].word !== ";") index++; //for next id
@@ -124,6 +141,23 @@ export default {
                     location: "element",
                     forDeclare: true
                   });
+
+                  index++;
+                  if (tokenStream[index].word === "[") {
+                    index++;
+                    const { i, expr } = await dispatch("ADD_TO_EXPRESSION_SET", {
+                      tokenStream: tokenStream,
+                      index: index,
+                      open: "[",
+                      close: "]"
+                    });
+                    index = i;
+                    await dispatch("EXPRESSION_EVALUATOR", {
+                      expectedDtype: "int",
+                      expression: expr,
+                      evaluateArray: true
+                    });
+                  }
 
                   if(elementIndex < 0) commit("ADD_ELEMENT", element); //if no duplicate
 
@@ -175,12 +209,13 @@ export default {
       }
 
       //second loop to check everything else
-      index = 0;
-      let globalPosition = true;
+      index = tokenStream.findIndex(token => token.word === "IN");
       while(index < tokenStream.length){
         let editable = true;
 
-        if(tokenStream[index].word === "IN") globalPosition = false;
+        if(tokenStream[index].word === "IN"){
+
+        }
         else{
           if(tokenStream[index].word === "vital") { //if global const
             editable = false;
@@ -197,20 +232,16 @@ export default {
               const variable = tokenStream[index];
               variable.dtype = dtype;
               variable.editable = editable;
-              if(!globalPosition){ //skip checking if in global
-                const idIndex = await dispatch("FIND_INDEX", { //find the index
-                  idStream: ids,
-                  variable: variable,
-                  struct: undefined,
-                  location: "variable",
-                  forDeclare: true
-                });
-
-                if (idIndex < 0) commit("ADD_ID", variable); //if no duplicate
-              }
+              const idIndex = await dispatch("FIND_INDEX", { //find the index
+                idStream: ids,
+                variable: variable,
+                struct: undefined,
+                location: "variable",
+                forDeclare: true
+              });
 
               index++;
-              if(tokenStream[index].word === "["){
+              if (tokenStream[index].word === "[") {
                 index++;
                 const { i, expr } = await dispatch("ADD_TO_EXPRESSION_SET", {
                   tokenStream: tokenStream,
@@ -226,41 +257,11 @@ export default {
                 });
               }
 
+              if (idIndex < 0) commit("ADD_ID", variable); //if no duplicate
+
               while (tokenStream[index].word !== "," && tokenStream[index].word !== ";") index++; //for next id
               if (tokenStream[index].word === ";") moreDeclare = false; //end of declaration
               else index++; //more declaration; found a comma
-            }
-          } else if (tokenStream[index].word === "struct") { //if struct declarations
-            index += 3; //move forward to dtype
-
-            while (tokenStream[index].word !== "}") { //while struct is not yet done
-              if (dataTypes.includes(tokenStream[index].word)) {
-                const dtype = tokenStream[index].word; //to get the data type
-                index+=2; //move forward to [
-                let moreElement = true;
-                while (moreElement) {
-                  if(tokenStream[index].word === "["){
-                    index++;
-                    const {i, expr} = await dispatch("ADD_TO_EXPRESSION_SET", {
-                      tokenStream: tokenStream,
-                      index: index,
-                      open: "[",
-                      close: "]"
-                    });
-                    index = i;
-                    await dispatch("EXPRESSION_EVALUATOR", {
-                      expectedDtype: "int",
-                      expression: expr,
-                      evaluateArray: true
-                    });
-                  }
-
-                  while (tokenStream[index].word !== "," && tokenStream[index].word !== ";") index++;
-                  if (tokenStream[index].word === ";") moreElement = false;
-                  else index+=2;
-                }
-              }
-              index++;
             }
           }
         }
