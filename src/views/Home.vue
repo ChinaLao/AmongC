@@ -218,11 +218,9 @@ export default {
     async run() {
       console.clear();
       this.runClicked = true;
-      this.clearOutput(); //clears lex table, error table, and output
 
       this.output = "Checking Lexical...";
       const tokens = await this.$store.dispatch("lexical/ANALYZE", this.code); //gets tokenized with spaces
-      console.log(this.error, this.error.length)
       if(this.error.length <= 0){ //if no lex-error
 
         // this.output += "\nNo Lexical Error\n\nChecking Syntax...";
@@ -246,7 +244,10 @@ export default {
           // else this.output += "\nSemantics Error Found" + output
         // }else this.output += "\nSyntax Error Found";
       }
-      else this.output += "\nLexical Error Found";
+      else{
+        this.output += "\nLexical Error Found";
+        console.log("%cLexical Errors: ", "color: cyan; font-size: 15px", this.error);
+      }
       this.runClicked = false;
     },
     stop() {
@@ -257,10 +258,14 @@ export default {
       this.clearOutput();
     },
     clearOutput() {
-      console.clear();
       this.output = null;
       this.$store.dispatch("main/CLEAR_OUTPUTS");
     },
+  },
+  watch: {
+    code() {
+      this.clearOutput()
+    }
   },
   computed: {
     lexeme() {
