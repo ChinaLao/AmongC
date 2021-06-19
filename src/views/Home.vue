@@ -227,23 +227,15 @@ export default {
         this.output += "\nNo Lexical Error\n\nChecking Syntax...";
         await this.$store.dispatch("syntax/ANALYZE", tokens); //check syntax and pass the tokens with spaces
 
-        // if(this.error.length <= 0){ //if no syn-error
+        if(this.error.length <= 0){ //if no syn-error
 
-          // this.output += "\nNo Syntax Error\n\nChecking Semantics...";
-          // await this.$store.dispatch("lexicalAnalyzer/SEMANTICS", tokens); 
+          this.output += "\nNo Syntax Error\n\nChecking Semantics...";
+          await this.$store.dispatch("semantics/ANALYZE", tokens); 
 
-          // if(this.error.length <= 0) this.output += "\nNo Semantics Error"
-          // else this.output += "\nSemantics Error Found"
+          if(this.error.length <= 0) this.output += "\nNo Semantics Error"
+          else this.output += "\nSemantics Error Found"
 
-          // const ast = JSON.stringify(this.$store.getters["lexicalAnalyzer/OUTPUT"], null, "  "); //create AST from nearley output and convert to string
-          // let output = "\n\nAST:\n" + ast;
-
-          // const statements = JSON.parse(ast); //convert ast to object
-          // output += await this.$store.dispatch('lexicalAnalyzer/WRITE_JAVASCRIPT', statements); //write js from statements
-
-          // if(this.error.length <= 0) this.output += "\nNo Semantics Error" + output
-          // else this.output += "\nSemantics Error Found" + output
-        // }else this.output += "\nSyntax Error Found";
+        }else this.output += "\nSyntax Error Found";
       }
       else{
         this.output += "\nLexical Error Found";
@@ -262,6 +254,7 @@ export default {
       this.output = null;
       this.$store.commit("lexical/CLEAR");
       this.$store.commit("main/CLEAR");
+      this.$store.commit("semantics/CLEAR");
     },
   },
   computed: {
