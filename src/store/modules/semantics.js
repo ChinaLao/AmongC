@@ -33,7 +33,11 @@ export default {
       state.tasks.push(variable);
     },
     CLEAR(state){
-      state.ids = state.globalIds = state.structs = state.elements = state.tasks = [];
+      state.ids = [];
+      state.globalIds = [];
+      state.structs = [];
+      state.elements = [];
+      state.tasks = [];
     }
   },
   actions: {
@@ -226,6 +230,39 @@ export default {
               while (tokenStream[index].word !== "," && tokenStream[index].word !== ";") index++; //for next id
               if (tokenStream[index].word === ";") moreDeclare = false; //end of declaration
               else index++; //more declaration; found a comma
+            }
+          } else if (tokenStream[index].word === "struct") { //if struct declarations
+            index += 3; //move forward to dtype
+
+            while (tokenStream[index].word !== "}") { //while struct is not yet done
+              if (dataTypes.includes(tokenStream[index].word)) {
+                const dtype = tokenStream[index].word; //to get the data type
+                index+=2; //move forward to [
+                let moreElement = true;
+                while (moreElement) {
+                  if(tokenStream[index].word === "["){
+                    index++;
+                    let bracketCounter = 1;
+                    const expression = [];
+                    while (bracketCounter > 0) {
+                      if (tokenStream[index].word === "[") bracketCounter++;
+                      else if (tokenStream[index].word === "]") bracketCounter--;
+                      else expression.push(tokenStream[index]);
+                      index++;
+                    }
+                    await dispatch("EXPRESSION_EVALUATOR", {
+                      expectedDtype: "int",
+                      expression: expression,
+                      evaluateArray: true
+                    });
+                  }
+
+                  while (tokenStream[index].word !== "," && tokenStream[index].word !== ";") index++;
+                  if (tokenStream[index].word === ";") moreElement = false;
+                  else index+=2;
+                }
+              }
+              index++;
             }
           }
         }
