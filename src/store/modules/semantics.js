@@ -199,13 +199,10 @@ export default {
             if(taskIndex < 0) commit("ADD_TASK", task); //if no duplicate
 
             index += 2; //move forward after opening brace
-            let curlyCounter = 1;
-            while(curlyCounter > 0){ //skips the entire task
-              if(tokenStream[index].word === "{") curlyCounter++;
-              else if(tokenStream[index].word === "}") curlyCounter--;
-              if(curlyCounter > 0)
-                index++;
-            }
+            index = await dispatch("FUNCTION_BLOCK_EVALUATOR", {
+              tokenStream: tokenStream,
+              index: index
+            });
           }
         }
         index++;
@@ -216,9 +213,9 @@ export default {
       index = await dispatch("FUNCTION_BLOCK_EVALUATOR", {
         tokenStream: tokenStream,
         index: index+1
-      })
+      });
     },
-    async FIND_INDEX({ commit }, payload){
+    async FIND_INDEX({ commit }, payload){ //returns index to be used if no idea where it is
       const { idStream, variable, struct, location, forDeclare } = payload;
       let index = -1;
 
@@ -243,6 +240,7 @@ export default {
     },
     async EXPRESSION_EVALUATOR({ state, commit, dispatch }, payload){
       const { expectedDtype, expression, evaluateArray } = payload;
+      console.log(payload)
       const dataTypes = state.dataTypes;
       if(evaluateArray){
         let index = 0;
@@ -255,7 +253,7 @@ export default {
               expression: expression,
               index: index
             });
-            if(dtype !== expectedDtype && dataTypes.includes(dtype)) commit("main/SET_ERROR", {
+            if(dtype !== expectedDtype && (dataTypes.includes(dtype) || dtype === undefined)) commit("main/SET_ERROR", {
               type: "sem-error",
               msg: `Cannot access using ${dtype} (${expression[index].word})`,
               line: expression[index].line,
@@ -268,9 +266,66 @@ export default {
           }
           index++;
         }
+      } else{
+        if(expectedDtype === "int" || expectedDtype === undefined){
+          const illegalWords = ["<", ">", "<=", ">=", "==", "and", "or"];
+          const legalIds = ["int", "dec"];
+          const illegalTokens = ["litStr", "litBool"];
+          let index = 0;
+          if(expectedDtype === undefined) commit("main/SET_ERROR", {
+            type: "sem-error",
+            msg: `Cannot set value of ${expectedDtype}`,
+            line: expression[0].line,
+            col: expression[0].col,
+            exp: `${expectedDtype} value`
+          },
+          {
+            root: true
+          });
+          while(index < expression.length){
+            if (illegalWords.includes(expression[index].word)) commit("main/SET_ERROR", {
+              type: "sem-error",
+              msg: `Cannot use symbol ${expression[index].word} on int`,
+              line: expression[index].line,
+              col: expression[index].col,
+              exp: `-`
+            },
+            {
+              root: true
+            });
+            else {
+              const dtype = expression[index].token === "id"
+                ? await dispatch("FIND_GROUP", {
+                    previous: expression[index - 1],
+                    current: expression[index],
+                    next: expression[index + 1],
+                    expression: expression,
+                    index: index
+                  })
+                : null;
+              if (!legalIds.includes(dtype) 
+                  && (dataTypes.includes(dtype) 
+                  || dtype === "empty"
+                  || (dtype === undefined && expectedDtype !== undefined) 
+                  || illegalTokens.includes(expression[index].token))
+              ) commit("main/SET_ERROR", {
+                type: "sem-error",
+                msg: `Mismatched types of ${expectedDtype} and ${dtype === null ? expression[index].token : dtype} (${expression[index].word})`,
+                line: expression[index].line,
+                col: expression[index].col,
+                exp: `${expectedDtype} value`
+              },
+              {
+                root: true
+              });
+
+            }
+            index++;
+          }
+        }
       }
     },
-    async FIND_GROUP({ state, commit }, payload){
+    async FIND_GROUP({ state, commit }, payload){ //returns data type or undefined
       let { previous, current, next, expression, index } = payload;
       const dataTypes = state.dataTypes;
       const globals = state.globalIds;
@@ -358,11 +413,9 @@ export default {
         }
       }
     },
-    async CHECK_STRUCT({ state, commit }, id){
-      console.log(id)
+    async CHECK_STRUCT({ state, commit }, id){ //returns the struct or undefined\
       const structs = state.structs;
       const structIndex = structs.findIndex(struct => struct.lex === id.lex);
-      console.log(structIndex)
       if(structIndex < 0){
         commit("main/SET_ERROR", {
           type: "sem-error",
@@ -394,14 +447,12 @@ export default {
     },
     async FUNCTION_BLOCK_EVALUATOR({ state, commit, dispatch }, payload){
       let { tokenStream, index } = payload;
-      console.log(payload)
       const open = ["vote", "switch", "task", "for", "if", "elf", "else", "do", "IN"];
       const close = ["}", "OUT"]
       const dataTypes = state.dataTypes;
       const ids = state.ids;
       let blockCounter = 1;
       while (blockCounter > 0) {
-        console.log(blockCounter)
         let editable = true;
 
         if (open.includes(tokenStream[index].word)){
@@ -465,6 +516,51 @@ export default {
               if (tokenStream[index].word === ";") moreDeclare = false; //end of declaration
               else index++; //more declaration; found a comma
             }
+          } else if(tokenStream[index].token === "id"){
+            const idIndex = ids.findIndex(id => id.lex === tokenStream[index].lex);
+            if (idIndex < 0) commit("main/SET_ERROR", {
+              type: "sem-error",
+              msg: `Undeclared variable (${tokenStream[index].word})`,
+              line: tokenStream[index].line,
+              col: tokenStream[index].col,
+              exp: "-"
+            },
+            {
+              root: true
+            });
+
+            const dtype = idIndex < 0
+              ? undefined
+              : ids[idIndex].dtype;
+
+            index++;
+            if (tokenStream[index].word === "[") {
+              index++;
+              const { i, expr } = await dispatch("ADD_TO_EXPRESSION_SET", {
+                tokenStream: tokenStream,
+                index: index,
+                open: "[",
+                close: "]"
+              });
+              index = i;
+              await dispatch("EXPRESSION_EVALUATOR", {
+                expectedDtype: "int",
+                expression: expr,
+                evaluateArray: true
+              });
+            }
+
+            const expr = [];
+            while(tokenStream[index].word !== ";"){
+              expr.push(tokenStream[index]);
+              index++;
+            }
+            await dispatch("EXPRESSION_EVALUATOR", {
+              expectedDtype: dtype,
+              expression: expr,
+              evaluateArray: false
+            });
+
           }
         }
         index++;
