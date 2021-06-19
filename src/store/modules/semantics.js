@@ -212,17 +212,16 @@ export default {
               index++;
               if(tokenStream[index].word === "["){
                 index++;
-                let bracketCounter = 1;
-                const expression = [];
-                while(bracketCounter > 0){
-                  if (tokenStream[index].word === "[") bracketCounter++;
-                  else if (tokenStream[index].word === "]") bracketCounter--;
-                  else expression.push(tokenStream[index]);
-                  index++;
-                }
+                const { i, expr } = await dispatch("ADD_TO_EXPRESSION_SET", {
+                  tokenStream: tokenStream,
+                  index: index,
+                  open: "[",
+                  close: "]"
+                });
+                index = i;
                 await dispatch("EXPRESSION_EVALUATOR", {
                   expectedDtype: "int",
-                  expression: expression,
+                  expression: expr,
                   evaluateArray: true
                 });
               }
@@ -242,17 +241,16 @@ export default {
                 while (moreElement) {
                   if(tokenStream[index].word === "["){
                     index++;
-                    let bracketCounter = 1;
-                    const expression = [];
-                    while (bracketCounter > 0) {
-                      if (tokenStream[index].word === "[") bracketCounter++;
-                      else if (tokenStream[index].word === "]") bracketCounter--;
-                      else expression.push(tokenStream[index]);
-                      index++;
-                    }
+                    const {i, expr} = await dispatch("ADD_TO_EXPRESSION_SET", {
+                      tokenStream: tokenStream,
+                      index: index,
+                      open: "[",
+                      close: "]"
+                    });
+                    index = i;
                     await dispatch("EXPRESSION_EVALUATOR", {
                       expectedDtype: "int",
-                      expression: expression,
+                      expression: expr,
                       evaluateArray: true
                     });
                   }
@@ -427,6 +425,21 @@ export default {
           });
         return undefined;
       } else return structs[structIndex].word;
+    },
+    async ADD_TO_EXPRESSION_SET({}, payload){
+      let { tokenStream, index, open, close } = payload;
+      let setCounter = 1;
+      const expression = [];
+      while (setCounter > 0) {
+        if (tokenStream[index].word === open) setCounter++;
+        else if (tokenStream[index].word === close) setCounter--;
+        else expression.push(tokenStream[index]);
+        index++;
+      }
+      return{
+        i: index,
+        expr: expression
+      };
     }
 
 
