@@ -632,15 +632,20 @@ export default {
 
       //there is more than one delimiter applicable
       else{
-        while(i < delimiters.length && i < 3){ //only three expectations to be shown
-          expectations +=  delimiters[i] !== "whitespace" && delimiters[i] !== "newline"
-            ? results[await dispatch('FIND_GROUP', delimiters[i])].lex //find the group of the delimiter token
-            : delimiters[i];
+        while (i < delimiters.length) { //only three expectations to be shown
+          let group; //re-initialize group as undefined
+          if ( //finding the group
+            delimiters[i] !== "whitespace" 
+            && delimiters[i] !== "newline"
+          ) group = await dispatch('FIND_GROUP', delimiters[i]);
 
-          if(i < delimiters.length-1 && i < 2) expectations += " / "; //add separator if the delimiter is more than one
+          //add expectations
+          if(group) expectations += results[group][delimiters[i]].lex;
+          else expectations += delimiters[i];
+
+          if(i < delimiters.length-1) expectations += ", "; //add separator if the delimiter is more than one
           i++;
         }
-        if (delimiters.length > 3) expectations += " etc..." //add etc for delimiters exceeding three
       }
       return expectations;
     },
