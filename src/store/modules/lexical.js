@@ -447,7 +447,7 @@ export default {
               ? await dispatch('FIND_GROUP', token.type)
               : null;
 
-            if(group){ //if gr
+            if(group){ //if group
               const lex = results[group][token.type].lex; //find the lex from deignated group
               res.lex = lex === "id"
                 ? lex + await dispatch('FOUND_ID', token.value) //number ID

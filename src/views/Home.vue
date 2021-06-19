@@ -224,8 +224,8 @@ export default {
       const tokens = await this.$store.dispatch("lexical/ANALYZE", this.code); //gets tokenized with spaces
       if(this.error.length <= 0){ //if no lex-error
 
-        // this.output += "\nNo Lexical Error\n\nChecking Syntax...";
-        // await this.$store.dispatch("lexicalAnalyzer/SYNTAX", tokens); //check syntax and pass the tokens with spaces
+        this.output += "\nNo Lexical Error\n\nChecking Syntax...";
+        await this.$store.dispatch("syntax/ANALYZE", tokens); //check syntax and pass the tokens with spaces
 
         // if(this.error.length <= 0){ //if no syn-error
 
