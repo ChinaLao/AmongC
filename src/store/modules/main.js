@@ -10,14 +10,8 @@ export default {
     SET_ERROR(state, error) {
       state.error.push(error);
     },
-    CLEAR_ERRORS(state){
+    CLEAR(state){
       state.error = [];
     },
-  },
-  actions: {
-    async CLEAR_OUTPUTS({ dispatch, commit }){
-      await dispatch("lexical/CLEAR", null, { root: true });
-      commit("CLEAR_ERRORS");
-    }
   },
 };

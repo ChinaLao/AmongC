@@ -217,6 +217,7 @@ export default {
     },
     async run() {
       console.clear();
+      this.clearOutput();
       this.runClicked = true;
 
       this.output = "Checking Lexical...";
@@ -259,13 +260,9 @@ export default {
     },
     clearOutput() {
       this.output = null;
-      this.$store.dispatch("main/CLEAR_OUTPUTS");
+      this.$store.commit("lexical/CLEAR");
+      this.$store.commit("main/CLEAR");
     },
-  },
-  watch: {
-    code() {
-      this.clearOutput()
-    }
   },
   computed: {
     lexeme() {

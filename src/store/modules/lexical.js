@@ -416,15 +416,12 @@ export default {
     SET_ID(state, payload){
       state.id.push(payload);
     },
-    CLEAR_LEXICAL(state){
+    CLEAR(state){
       state.lexeme = [];
       state.id.splice(0, state.id.length);
     },
   },
   actions: {
-    async CLEAR({ commit }){
-      commit("CLEAR_LEXICAL");
-    },
     async ANALYZE({ state, commit, dispatch }, code){
       const results = state.results;
       const tokenStream = [];
@@ -622,9 +619,8 @@ export default {
       commit("SET_LEXEME", final);
       return finalToPass;
     },
-    async GET_EXPECTATIONS({ state }, delimiters){ //for delimiters
+    async GET_EXPECTATIONS({ state, dispatch }, delimiters){ //for delimiters
       const results = state.results;
-      console.log(results, delimiters)
       let i = 0;
       let expectations = "";
 
@@ -638,7 +634,7 @@ export default {
       else{
         while(i < delimiters.length && i < 3){ //only three expectations to be shown
           expectations +=  delimiters[i] !== "whitespace" && delimiters[i] !== "newline"
-            ? results[await dispatch('FIND_GROUP', delimiter[i])].lex //find the group of the delimiter token
+            ? results[await dispatch('FIND_GROUP', delimiters[i])].lex //find the group of the delimiter token
             : delimiters[i];
 
           if(i < delimiters.length-1 && i < 2) expectations += " / "; //add separator if the delimiter is more than one
