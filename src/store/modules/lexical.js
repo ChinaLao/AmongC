@@ -544,7 +544,7 @@ export default {
                   : currentToken;
 
                 message = `Invalid delimiter: ${nextWord} after: ${currentWord}`;
-                expectations =  await dispatch('GET_EXPECTATIONS', results, currentDelims);
+                expectations =  await dispatch('GET_EXPECTATIONS', currentDelims);
               }
 
               //dedicated for invalid keywords
@@ -597,7 +597,7 @@ export default {
                 msg: `Invalid delimiter: ${nextWord} after: ${currentWord}`,
                 line: current.line,
                 col: current.col,
-                exp: await dispatch('GET_EXPECTATIONS', results, currentDelims)
+                exp: await dispatch('GET_EXPECTATIONS', currentDelims)
               },
               {
                 root: true
@@ -622,7 +622,9 @@ export default {
       commit("SET_LEXEME", final);
       return finalToPass;
     },
-    async GET_EXPECTATIONS(results, delimiters){ //for delimiters
+    async GET_EXPECTATIONS({ state }, delimiters){ //for delimiters
+      const results = state.results;
+      console.log(results, delimiters)
       let i = 0;
       let expectations = "";
 
