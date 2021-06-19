@@ -17,7 +17,10 @@ export default {
     REMOVE_IDS(state){
       const ids = state.ids;
       let deleteIndex = ids.length-1;
-      while(ids[deleteIndex].lex !== "begin") ids.pop();
+      while(deleteIndex >= 0 && ids[deleteIndex].lex !== "begin"){
+        ids.pop();
+        deleteIndex--;
+      }
       ids.pop();
     },
     ADD_GLOBAL(state, variable){
@@ -210,63 +213,10 @@ export default {
 
       //second loop to check everything else
       index = tokenStream.findIndex(token => token.word === "IN");
-      while(index < tokenStream.length){
-        let editable = true;
-
-        if(tokenStream[index].word === "IN"){
-
-        }
-        else{
-          if(tokenStream[index].word === "vital") { //if global const
-            editable = false;
-            index++;
-          }
-          if(dataTypes.includes(tokenStream[index].word) || (tokenStream[index].token === "id" && tokenStream[index+1].token === "id")){
-            const dtype = tokenStream[index].token === "id"
-              ? await dispatch("CHECK_STRUCT", tokenStream[index])
-              : tokenStream[index].word;
-            index++; //moves forward to the id
-            let moreDeclare = true; //for single-line declarations
-
-            while (moreDeclare) {
-              const variable = tokenStream[index];
-              variable.dtype = dtype;
-              variable.editable = editable;
-              const idIndex = await dispatch("FIND_INDEX", { //find the index
-                idStream: ids,
-                variable: variable,
-                struct: undefined,
-                location: "variable",
-                forDeclare: true
-              });
-
-              index++;
-              if (tokenStream[index].word === "[") {
-                index++;
-                const { i, expr } = await dispatch("ADD_TO_EXPRESSION_SET", {
-                  tokenStream: tokenStream,
-                  index: index,
-                  open: "[",
-                  close: "]"
-                });
-                index = i;
-                await dispatch("EXPRESSION_EVALUATOR", {
-                  expectedDtype: "int",
-                  expression: expr,
-                  evaluateArray: true
-                });
-              }
-
-              if (idIndex < 0) commit("ADD_ID", variable); //if no duplicate
-
-              while (tokenStream[index].word !== "," && tokenStream[index].word !== ";") index++; //for next id
-              if (tokenStream[index].word === ";") moreDeclare = false; //end of declaration
-              else index++; //more declaration; found a comma
-            }
-          }
-        }
-        index++;
-      }
+      index = await dispatch("FUNCTION_BLOCK_EVALUATOR", {
+        tokenStream: tokenStream,
+        index: index+1
+      })
     },
     async FIND_INDEX({ commit }, payload){
       const { idStream, variable, struct, location, forDeclare } = payload;
@@ -441,6 +391,85 @@ export default {
         i: index,
         expr: expression
       };
+    },
+    async FUNCTION_BLOCK_EVALUATOR({ state, commit, dispatch }, payload){
+      let { tokenStream, index } = payload;
+      console.log(payload)
+      const open = ["vote", "switch", "task", "for", "if", "elf", "else", "do", "IN"];
+      const close = ["}", "OUT"]
+      const dataTypes = state.dataTypes;
+      const ids = state.ids;
+      let blockCounter = 1;
+      while (blockCounter > 0) {
+        console.log(blockCounter)
+        let editable = true;
+
+        if (open.includes(tokenStream[index].word)){
+          blockCounter++;
+          commit("ADD_ID", { lex: "begin" })
+        } else if (close.includes(tokenStream[index].word)){
+          if(tokenStream[index+1].word === "while"){
+            let counter = index+1;
+            while(tokenStream[counter] !== ";" && tokenStream[counter].word !== "{") counter++;
+            if (tokenStream[counter] !== ";"){
+              //evaluate content of while
+              index = counter+1;
+            }
+          }
+          commit("REMOVE_IDS");
+          blockCounter--;
+        } else {
+          if (tokenStream[index].word === "vital") { //if global const
+            editable = false;
+            index++;
+          }
+          if (dataTypes.includes(tokenStream[index].word) || (tokenStream[index].token === "id" && tokenStream[index + 1].token === "id")) {
+            const dtype = tokenStream[index].token === "id"
+              ? await dispatch("CHECK_STRUCT", tokenStream[index])
+              : tokenStream[index].word;
+            index++; //moves forward to the id
+            let moreDeclare = true; //for single-line declarations
+
+            while (moreDeclare) {
+              const variable = tokenStream[index];
+              variable.dtype = dtype;
+              variable.editable = editable;
+              const idIndex = await dispatch("FIND_INDEX", { //find the index
+                idStream: ids,
+                variable: variable,
+                struct: undefined,
+                location: "variable",
+                forDeclare: true
+              });
+
+              index++;
+              if (tokenStream[index].word === "[") {
+                index++;
+                const { i, expr } = await dispatch("ADD_TO_EXPRESSION_SET", {
+                  tokenStream: tokenStream,
+                  index: index,
+                  open: "[",
+                  close: "]"
+                });
+                index = i;
+                await dispatch("EXPRESSION_EVALUATOR", {
+                  expectedDtype: "int",
+                  expression: expr,
+                  evaluateArray: true
+                });
+              }
+
+              if (idIndex < 0) commit("ADD_ID", variable); //if no duplicate
+
+              while (tokenStream[index].word !== "," && tokenStream[index].word !== ";") index++; //for next id
+              if (tokenStream[index].word === ";") moreDeclare = false; //end of declaration
+              else index++; //more declaration; found a comma
+            }
+          }
+        }
+        index++;
+      }
+      return index;
     }
 
 
