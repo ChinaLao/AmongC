@@ -691,6 +691,29 @@ export default {
         && (tokenStream[index].word !== ")" 
         && tokenStream[index + 1].word !== "{")
       ) {
+        if (tokenStream[index].word === "[") {
+          let moreArray = true;
+          while (moreArray) {
+            index++;
+            const { i, expr } = await dispatch("ADD_TO_EXPRESSION_SET", {
+              tokenStream: tokenStream,
+              index: index,
+              open: "[",
+              close: "]"
+            });
+            index = i;
+            console.log("here func blk (shoot array id): ", expr)
+            await dispatch("EXPRESSION_EVALUATOR", {
+              expectedDtype: "int",
+              expression: expr,
+              evaluateArray: true,
+              illegalTokens: [],
+              legalIds: [],
+            });
+            if (tokenStream[index].word !== "[") moreArray = false;
+          }
+          console.log(tokenStream[index])
+        }
         expr.push(tokenStream[index]);
         index++;
       }
