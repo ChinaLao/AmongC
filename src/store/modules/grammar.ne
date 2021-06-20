@@ -335,12 +335,12 @@ variable_again ->
     |   null
 
 variable_recur ->
-        iterate_id iterate_first_choice choice_choice variable_again #changed struct_new to iterate_id
+        struct_new iterate_first_choice choice_choice variable_again #changed iterate_id back to struct_new
     |   function_call_statement_choice iterate_first_choice choice_choice variable_again
     |   iterate_choice choice_choice
     |   first_compute_choice 
     |   first_condition_choice
-    #|   variable_again #changed %comma %id variable_again to variable_again
+    |   variable_again #changed %comma %id variable_again to variable_again
 
 recur_variable ->
         %id variable_recur
