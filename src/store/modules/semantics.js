@@ -95,6 +95,7 @@ export default {
                     close: "]"
                   });
                   index = i;
+                  console.log("here analyze (arrray declare): ", expr);
                   await dispatch("EXPRESSION_EVALUATOR", {
                     expectedDtype: "int",
                     expression: expr,
@@ -160,6 +161,7 @@ export default {
                         close: "]"
                       });
                       index = i;
+                      console.log("here analyze (array struct): ", expr)
                       await dispatch("EXPRESSION_EVALUATOR", {
                         expectedDtype: "int",
                         expression: expr,
@@ -253,7 +255,7 @@ export default {
     },
     async EXPRESSION_EVALUATOR({ state, commit, dispatch }, payload){
       const { expectedDtype, expression, evaluateArray, illegalTokens, legalIds } = payload;
-      console.log("expression payload: ", payload)
+      // console.log("expression payload: ", payload)
       const dataTypes = state.dataTypes;
       if(evaluateArray){
         let index = 0;
@@ -452,7 +454,7 @@ export default {
       let blockCounter = 1;
       while (blockCounter > 0) {
         let editable = true;
-        console.log(tokenStream[index].line, tokenStream[index].word, blockCounter)
+        // console.log(tokenStream[index].line, tokenStream[index].word, blockCounter)
         if (open.includes(tokenStream[index].word)){
           blockCounter++;
           commit("ADD_ID", { lex: "begin" })
@@ -503,6 +505,7 @@ export default {
                   close: "]"
                 });
                 index = i;
+                console.log("here func blk (array declare): ", expr)
                 await dispatch("EXPRESSION_EVALUATOR", {
                   expectedDtype: "int",
                   expression: expr,
@@ -554,6 +557,7 @@ export default {
                 close: "]"
               });
               index = i;
+              console.log("here func blk (array id): ", expr)
               await dispatch("EXPRESSION_EVALUATOR", {
                 expectedDtype: "int",
                 expression: expr,
@@ -583,17 +587,40 @@ export default {
           index += 2;
           let parenCounter = 1;
           while(parenCounter > 0){
-            const expr = [];
+            const expression = [];
             while(tokenStream[index].word !== "," && parenCounter > 0){
+              if(tokenStream[index].word === "["){
+                let moreArray = true;
+                while (moreArray) {
+                  index++;
+                  const { i, expr } = await dispatch("ADD_TO_EXPRESSION_SET", {
+                    tokenStream: tokenStream,
+                    index: index,
+                    open: "[",
+                    close: "]"
+                  });
+                  index = i;
+                  console.log("here func blk (shoot array id): ", expr)
+                  await dispatch("EXPRESSION_EVALUATOR", {
+                    expectedDtype: "int",
+                    expression: expr,
+                    evaluateArray: true,
+                    illegalTokens: [],
+                    legalIds: [],
+                  });
+                  if (tokenStream[index].word !== "[") moreArray = false;
+                }
+                console.log(tokenStream[index])
+              }
               if(tokenStream[index].word === "(") parenCounter++;
               else if(tokenStream[index].word === ")") parenCounter--;
-              if(parenCounter > 0) expr.push(tokenStream[index]);
+              if(parenCounter > 0) expression.push(tokenStream[index]);
               index++;
             }
-            await dispatch("SHOOT_EVALUATOR", expr);
+            await dispatch("SHOOT_EVALUATOR", expression);
             if(parenCounter > 0) index++;
           }
-          console.log(index)
+          // console.log(index)
         } else if(tokenStream[index].token === "task"){
           index += 4;
           let parenCounter = 1;
@@ -639,7 +666,7 @@ export default {
     },
     async VALUE_EVALUATOR({ dispatch, commit }, payload){
       let { tokenStream, index, dtype, editable, variable } = payload;
-      console.log("value payload: ", payload)
+      // console.log("value payload: ", payload)
       const assign = ["-=", "*=", "**=", "/=", "//=", "%="];
       const notBool = [...assign, "++", "--", "="];
 
@@ -682,7 +709,8 @@ export default {
             ? []
             : subDtype;
 
-      if (expr.length > 0)
+      if (expr.length > 0){
+        console.log("here val eval: ", expr)
         await dispatch("EXPRESSION_EVALUATOR", {
           expectedDtype: subDtype,
           expression: expr,
@@ -690,6 +718,7 @@ export default {
           illegalTokens: illegalTokens,
           legalIds: legalIds,
         });
+      }
       return index;
     },
     async SHOOT_EVALUATOR({ state, commit, dispatch }, expression){
@@ -735,6 +764,7 @@ export default {
           : expression[counter].token === "litStr"
             ? "str"
             : "bool";
+      console.log("here shoot eval: ", expression);
       await dispatch("EXPRESSION_EVALUATOR", {
         expectedDtype: dtype,
         expression: expression,
