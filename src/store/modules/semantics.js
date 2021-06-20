@@ -221,7 +221,7 @@ export default {
       index = tokenStream.findIndex(token => token.word === "IN");
       index = await dispatch("FUNCTION_BLOCK_EVALUATOR", {
         tokenStream: tokenStream,
-        index: index+1
+        index: index
       });
     },
     async FIND_INDEX({ state, commit }, payload){ //returns index to be used if no idea where it is
@@ -443,7 +443,7 @@ export default {
     async FUNCTION_BLOCK_EVALUATOR({ state, commit, dispatch }, payload){
       let { tokenStream, index } = payload;
       const open = ["vote", "switch", "task", "for", "if", "elf", "else", "do", "IN"];
-      const close = ["}", "OUT", "kill"]
+      const close = ["}", "OUT", "kill", "EOF"]
       const dataTypes = state.dataTypes;
       const ids = state.ids;
       const globals = state.globalIds;
@@ -455,7 +455,7 @@ export default {
           blockCounter++;
           commit("ADD_ID", { lex: "begin" })
         } else if (close.includes(tokenStream[index].word)){
-          if(tokenStream[index+1].word === "while"){
+          if(tokenStream[index+1] && tokenStream[index+1].word === "while"){
             let counter = index+1;
             while(tokenStream[counter] !== ";" && tokenStream[counter].word !== "{") counter++;
             if (tokenStream[counter] !== ";"){
@@ -465,84 +465,33 @@ export default {
           }
           commit("REMOVE_IDS");
           blockCounter--;
-        } else {
-          if (tokenStream[index].word === "vital") { //if global const
-            editable = false;
-            index++;
-          }
-          if (dataTypes.includes(tokenStream[index].word) || (tokenStream[index].token === "id" && tokenStream[index + 1].token === "id")) {
-            const dtype = tokenStream[index].token === "id"
-              ? await dispatch("CHECK_STRUCT", tokenStream[index])
-              : tokenStream[index].word;
-            index++; //moves forward to the id
-            let moreDeclare = true; //for single-line declarations
+        }
+        if (tokenStream[index].word === "vital") { //if global const
+          editable = false;
+          index++;
+        }
+        if (dataTypes.includes(tokenStream[index].word) || (tokenStream[index].token === "id" && tokenStream[index + 1].token === "id")) {
+          const dtype = tokenStream[index].token === "id"
+            ? await dispatch("CHECK_STRUCT", tokenStream[index])
+            : tokenStream[index].word;
+          index++; //moves forward to the id
+          let moreDeclare = true; //for single-line declarations
 
-            while (moreDeclare) {
-              const variable = tokenStream[index];
-              variable.dtype = dtype;
-              variable.editable = editable;
-              const idIndex = await dispatch("FIND_INDEX", { //find the index
-                idStream: ids,
-                variable: variable,
-                struct: undefined,
-                location: "variable",
-                forDeclare: true
-              });
-
-              let moreArray = true;
-              index++;
-              if (tokenStream[index].word === "[") {
-                while(moreArray){
-                  index++;
-                  const { i, expr } = await dispatch("ADD_TO_EXPRESSION_SET", {
-                    tokenStream: tokenStream,
-                    index: index,
-                    open: "[",
-                    close: "]"
-                  });
-                  index = i;
-                  await dispatch("EXPRESSION_EVALUATOR", {
-                    expectedDtype: "int",
-                    expression: expr,
-                    evaluateArray: true,
-                    illegalTokens: [],
-                    legalIds: [],
-                  });
-                  if (tokenStream[index].word !== "[") moreArray = false;
-                }
-              }
-              index = await dispatch("VALUE_EVALUATOR", {
-                tokenStream: tokenStream,
-                index: index,
-                dtype: dtype,
-                editable: true,
-                variable: variable,
-              });
-
-              if (idIndex < 0) commit("ADD_ID", variable); //if no duplicate
-
-              while (tokenStream[index].word !== "," && tokenStream[index].word !== ";") index++; //for next id
-              if (tokenStream[index].word === ";") moreDeclare = false; //end of declaration
-              else index++; //more declaration; found a comma
-            }
-          } else if(tokenStream[index].token === "id"){
+          while (moreDeclare) {
             const variable = tokenStream[index];
-            const variableIndex = index;
-            let idIndex = ids.findIndex(id => id.lex === variable.lex);
-            let searchList;
-            if(idIndex >= 0) searchList = ids;
-            else{
-              idIndex = globals.findIndex(global => global.lex === variable.lex);
-              if(idIndex >= 0) searchList = globals;
-            } 
+            variable.dtype = dtype;
+            variable.editable = editable;
+            const idIndex = await dispatch("FIND_INDEX", { //find the index
+              idStream: ids,
+              variable: variable,
+              struct: undefined,
+              location: "variable",
+              forDeclare: true
+            });
 
-            const dtype = idIndex < 0
-              ? undefined
-              : searchList[idIndex].dtype;
-
+            let moreArray = true;
             index++;
             if (tokenStream[index].word === "[") {
-              let moreArray = true;
               while(moreArray){
                 index++;
                 const { i, expr } = await dispatch("ADD_TO_EXPRESSION_SET", {
@@ -559,40 +508,128 @@ export default {
                   illegalTokens: [],
                   legalIds: [],
                 });
-                if(tokenStream[index].word !== "[") moreArray = false;
+                if (tokenStream[index].word !== "[") moreArray = false;
               }
             }
-            const editable = idIndex >= 0 
-              ? searchList[idIndex].editable
-                ? true
-                : tokenStream[index].word === "="
-              : true;
-
             index = await dispatch("VALUE_EVALUATOR", {
               tokenStream: tokenStream,
-              index: tokenStream[index].word === "."
-                ? variableIndex
-                : index,
+              index: index,
               dtype: dtype,
-              editable: editable,
-              variable: variable
+              editable: true,
+              variable: variable,
             });
-          } else if(tokenStream[index].token === "shoot"){
-            index += 2;
-            let parenCounter = 1;
-            while(parenCounter > 0){
-              const expr = [];
-              while(tokenStream[index].word !== "," && parenCounter > 0){
-                if(tokenStream[index].word === "(") parenCounter++;
-                else if(tokenStream[index].word === ")") parenCounter--;
-                if(parenCounter > 0) expr.push(tokenStream[index]);
-                index++;
-              }
-              await dispatch("SHOOT_EVALUATOR", expr);
-              if(parenCounter > 0) index++;
+
+            if (idIndex < 0) commit("ADD_ID", variable); //if no duplicate
+
+            while (tokenStream[index].word !== "," && tokenStream[index].word !== ";") index++; //for next id
+            if (tokenStream[index].word === ";") moreDeclare = false; //end of declaration
+            else index++; //more declaration; found a comma
+          }
+        } else if(tokenStream[index].token === "id"){
+          const variable = tokenStream[index];
+          const variableIndex = index;
+          let idIndex = ids.findIndex(id => id.lex === variable.lex);
+          let searchList;
+          if(idIndex >= 0) searchList = ids;
+          else{
+            idIndex = globals.findIndex(global => global.lex === variable.lex);
+            if(idIndex >= 0) searchList = globals;
+          } 
+
+          const dtype = idIndex < 0
+            ? undefined
+            : searchList[idIndex].dtype;
+
+          index++;
+          if (tokenStream[index].word === "[") {
+            let moreArray = true;
+            while(moreArray){
+              index++;
+              const { i, expr } = await dispatch("ADD_TO_EXPRESSION_SET", {
+                tokenStream: tokenStream,
+                index: index,
+                open: "[",
+                close: "]"
+              });
+              index = i;
+              await dispatch("EXPRESSION_EVALUATOR", {
+                expectedDtype: "int",
+                expression: expr,
+                evaluateArray: true,
+                illegalTokens: [],
+                legalIds: [],
+              });
+              if(tokenStream[index].word !== "[") moreArray = false;
             }
           }
+          const editable = idIndex >= 0 
+            ? searchList[idIndex].editable
+              ? true
+              : tokenStream[index].word === "="
+            : true;
+
+          index = await dispatch("VALUE_EVALUATOR", {
+            tokenStream: tokenStream,
+            index: tokenStream[index].word === "."
+              ? variableIndex
+              : index,
+            dtype: dtype,
+            editable: editable,
+            variable: variable
+          });
+        } else if(tokenStream[index].token === "shoot"){
+          index += 2;
+          let parenCounter = 1;
+          while(parenCounter > 0){
+            const expr = [];
+            while(tokenStream[index].word !== "," && parenCounter > 0){
+              if(tokenStream[index].word === "(") parenCounter++;
+              else if(tokenStream[index].word === ")") parenCounter--;
+              if(parenCounter > 0) expr.push(tokenStream[index]);
+              index++;
+            }
+            await dispatch("SHOOT_EVALUATOR", expr);
+            if(parenCounter > 0) index++;
+          }
+        } else if(tokenStream[index].token === "task"){
+          index += 4;
+          let parenCounter = 1;
+          while(parenCounter > 0){
+            if(tokenStream[index].word === "(") parenCounter++;
+            else if(tokenStream[index].word === ")") parenCounter--;
+            else if (dataTypes.includes(tokenStream[index].word) || (tokenStream[index].token === "id" && tokenStream[index + 1].token === "id")) {
+              const dtype = tokenStream[index].token === "id"
+                ? await dispatch("CHECK_STRUCT", tokenStream[index])
+                : tokenStream[index].word;
+              index++; //moves forward to the id
+              const variable = tokenStream[index];
+              variable.dtype = dtype;
+              variable.editable = editable;
+              const idIndex = await dispatch("FIND_INDEX", { //find the index
+                idStream: ids,
+                variable: variable,
+                struct: undefined,
+                location: "variable",
+                forDeclare: true
+              });
+
+              let moreArray = true;
+              index++;
+              if (tokenStream[index].word === "[") {
+                while (moreArray) {
+                  index+=2;
+                  if (tokenStream[index].word !== "[") moreArray = false;
+                }
+              }
+              if (idIndex < 0) commit("ADD_ID", variable); //if no duplicate
+
+              while (tokenStream[index].word !== "," && tokenStream[index].word !== ")") index++; //for next id
+            }
+            if(tokenStream[index].word !== ")")
+              index++;
+          }
         }
+        
         index++;
       }
       return index;
