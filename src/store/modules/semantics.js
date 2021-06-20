@@ -88,22 +88,26 @@ export default {
 
               index++;
               if (tokenStream[index].word === "[") {
-                index++;
-                const { i, expr } = await dispatch("ADD_TO_EXPRESSION_SET", {
-                  tokenStream: tokenStream,
-                  index: index,
-                  open: "[",
-                  close: "]"
-                });
-                index = i;
-                await dispatch("EXPRESSION_EVALUATOR", {
-                  expectedDtype: "int",
-                  expression: expr,
-                  evaluateArray: true,
-                  illegalWords: [],
-                  illegalTokens: [],
-                  legalIds: [],
-                });
+                let moreArray = true;
+                while(moreArray){
+                  index++;
+                  const { i, expr } = await dispatch("ADD_TO_EXPRESSION_SET", {
+                    tokenStream: tokenStream,
+                    index: index,
+                    open: "[",
+                    close: "]"
+                  });
+                  index = i;
+                  await dispatch("EXPRESSION_EVALUATOR", {
+                    expectedDtype: "int",
+                    expression: expr,
+                    evaluateArray: true,
+                    illegalWords: [],
+                    illegalTokens: [],
+                    legalIds: [],
+                  });
+                  if(tokenStream[index].word !== "[") moreArray = false;
+                }
               }
 
               if(idIndex < 0) commit("ADD_GLOBAL", global); //if no duplicate
@@ -150,22 +154,26 @@ export default {
 
                   index++;
                   if (tokenStream[index].word === "[") {
-                    index++;
-                    const { i, expr } = await dispatch("ADD_TO_EXPRESSION_SET", {
-                      tokenStream: tokenStream,
-                      index: index,
-                      open: "[",
-                      close: "]"
-                    });
-                    index = i;
-                    await dispatch("EXPRESSION_EVALUATOR", {
-                      expectedDtype: "int",
-                      expression: expr,
-                      evaluateArray: true,
-                      illegalWords: [],
-                      illegalTokens: [],
-                      legalIds: [],
-                    });
+                    let moreArray = true;
+                    while(moreArray){
+                      index++;
+                      const { i, expr } = await dispatch("ADD_TO_EXPRESSION_SET", {
+                        tokenStream: tokenStream,
+                        index: index,
+                        open: "[",
+                        close: "]"
+                      });
+                      index = i;
+                      await dispatch("EXPRESSION_EVALUATOR", {
+                        expectedDtype: "int",
+                        expression: expr,
+                        evaluateArray: true,
+                        illegalWords: [],
+                        illegalTokens: [],
+                        legalIds: [],
+                      });
+                      if (tokenStream[index].word !== "[") moreArray = false;
+                    }
                   }
 
                   if(elementIndex < 0) commit("ADD_ELEMENT", element); //if no duplicate
@@ -500,24 +508,28 @@ export default {
                 forDeclare: true
               });
 
+              let moreArray = true;
               index++;
               if (tokenStream[index].word === "[") {
-                index++;
-                const { i, expr } = await dispatch("ADD_TO_EXPRESSION_SET", {
-                  tokenStream: tokenStream,
-                  index: index,
-                  open: "[",
-                  close: "]"
-                });
-                index = i;
-                await dispatch("EXPRESSION_EVALUATOR", {
-                  expectedDtype: "int",
-                  expression: expr,
-                  evaluateArray: true,
-                  illegalWords: [],
-                  illegalTokens: [],
-                  legalIds: [],
-                });
+                while(moreArray){
+                  index++;
+                  const { i, expr } = await dispatch("ADD_TO_EXPRESSION_SET", {
+                    tokenStream: tokenStream,
+                    index: index,
+                    open: "[",
+                    close: "]"
+                  });
+                  index = i;
+                  await dispatch("EXPRESSION_EVALUATOR", {
+                    expectedDtype: "int",
+                    expression: expr,
+                    evaluateArray: true,
+                    illegalWords: [],
+                    illegalTokens: [],
+                    legalIds: [],
+                  });
+                  if (tokenStream[index].word !== "[") moreArray = false;
+                }
               }
 
               if (idIndex < 0) commit("ADD_ID", variable); //if no duplicate
@@ -545,27 +557,34 @@ export default {
 
             index++;
             if (tokenStream[index].word === "[") {
-              index++;
-              const { i, expr } = await dispatch("ADD_TO_EXPRESSION_SET", {
-                tokenStream: tokenStream,
-                index: index,
-                open: "[",
-                close: "]"
-              });
-              index = i;
-              await dispatch("EXPRESSION_EVALUATOR", {
-                expectedDtype: "int",
-                expression: expr,
-                evaluateArray: true,
-                illegalWords: [],
-                illegalTokens: [],
-                legalIds: [],
-              });
+              let moreArray = true;
+              while(moreArray){
+                index++;
+                const { i, expr } = await dispatch("ADD_TO_EXPRESSION_SET", {
+                  tokenStream: tokenStream,
+                  index: index,
+                  open: "[",
+                  close: "]"
+                });
+                index = i;
+                await dispatch("EXPRESSION_EVALUATOR", {
+                  expectedDtype: "int",
+                  expression: expr,
+                  evaluateArray: true,
+                  illegalWords: [],
+                  illegalTokens: [],
+                  legalIds: [],
+                });
+                if(tokenStream[index].word !== "[") moreArray = false;
+              }
             }
             const bool = ["<", ">", "<=", ">=", "==", "!=", "!", "and", "or"];
             const int  = ["-", "*", "**", "/", "//", "%", "++", "--", "~"];
             const assign = ["-=", "*=", "**=", "/=", "//=", "%="]
+            // if()
+
             const expr = [];
+            console.log(tokenStream[index])
             while(tokenStream[index].word !== ";"){
               expr.push(tokenStream[index]);
               index++;
