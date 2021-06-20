@@ -217,36 +217,30 @@ export default {
     },
     async run() {
       console.clear();
+      this.clearOutput();
       this.runClicked = true;
-      this.clearOutput(); //clears lex table, error table, and output
 
       this.output = "Checking Lexical...";
-      const tokens = await this.$store.dispatch("lexicalAnalyzer/LEXICAL", this.code); //gets tokenized with spaces
-
+      const tokens = await this.$store.dispatch("lexical/ANALYZE", this.code); //gets tokenized with spaces
       if(this.error.length <= 0){ //if no lex-error
 
         this.output += "\nNo Lexical Error\n\nChecking Syntax...";
-        await this.$store.dispatch("lexicalAnalyzer/SYNTAX", tokens); //check syntax and pass the tokens with spaces
+        await this.$store.dispatch("syntax/ANALYZE", tokens); //check syntax and pass the tokens with spaces
 
         if(this.error.length <= 0){ //if no syn-error
 
           this.output += "\nNo Syntax Error\n\nChecking Semantics...";
-          await this.$store.dispatch("lexicalAnalyzer/SEMANTICS", tokens); 
+          await this.$store.dispatch("semantics/ANALYZE", tokens); 
 
           if(this.error.length <= 0) this.output += "\nNo Semantics Error"
           else this.output += "\nSemantics Error Found"
 
-          // const ast = JSON.stringify(this.$store.getters["lexicalAnalyzer/OUTPUT"], null, "  "); //create AST from nearley output and convert to string
-          // let output = "\n\nAST:\n" + ast;
-
-          // const statements = JSON.parse(ast); //convert ast to object
-          // output += await this.$store.dispatch('lexicalAnalyzer/WRITE_JAVASCRIPT', statements); //write js from statements
-
-          // if(this.error.length <= 0) this.output += "\nNo Semantics Error" + output
-          // else this.output += "\nSemantics Error Found" + output
         }else this.output += "\nSyntax Error Found";
       }
-      else this.output += "\nLexical Error Found";
+      else{
+        this.output += "\nLexical Error Found";
+        console.log("%cLexical Errors: ", "color: cyan; font-size: 15px", this.error);
+      }
       this.runClicked = false;
     },
     stop() {
@@ -257,17 +251,20 @@ export default {
       this.clearOutput();
     },
     clearOutput() {
-      console.clear();
       this.output = null;
-      this.$store.commit("lexicalAnalyzer/CLEAR_OUTPUTS");
+      this.$store.commit("lexical/CLEAR");
+      this.$store.commit("main/CLEAR");
+      this.$store.commit("semantics/CLEAR");
     },
   },
   computed: {
     lexeme() {
-      return this.$store.getters["lexicalAnalyzer/LEXEME"];
+      return this.$store.getters["lexical/LEXEME"];
     },
     error() {
-      return this.$store.getters["lexicalAnalyzer/ERROR"];
+      const error = this.$store.getters["main/ERROR"];
+      error.sort((a, b) => a.line - b.line);
+      return error;
     },
   },
 };

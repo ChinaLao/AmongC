@@ -822,46 +822,6 @@ export default {
 
       let index = 0;
       while(index < tokenStream.length){
-        if(tokenStream[index].word === "task"){
-          const taskType = tokenStream[index+1];
-
-          let counter = index+3;
-          let paramCounter = 0;
-          tokenStream[index+2].parameters = [];
-          while(
-                dataTypes.includes(tokenStream[counter].word) 
-            ||  tokenStream[counter].word !== ")" 
-            ||  (tokenStream[counter].token === "id" && tokenStream[counter+1].token === "id")
-          ){
-            if(
-                  dataTypes.includes(tokenStream[counter].word) 
-                ||(tokenStream[counter].token === "id" && tokenStream[counter+1].token === "id")
-              ){
-              paramCounter++;
-              tokenStream[index+2].parameters.push(tokenStream[counter].word);
-            }
-            counter++;
-          }
-
-          tokenStream[index+2].type = taskType.word;
-          tokenStream[index+2].paramCount = paramCounter;
-          const taskIndex = tasks.findIndex(task => task.lex === tokenStream[index+2].lex);
-          if(taskIndex >= 0) commit("SET_ERROR", {
-            type: "sem-error",
-            msg: `Duplicate declaration of task (${tokenStream[index+2].word})`,
-            line: tokenStream[index+2].line,
-            col: tokenStream[index+2].col,
-            exp: "-",
-          });
-          tasks.push(tokenStream[index+2]);
-          index = counter-1;
-
-        }
-        index++;
-      }
-
-      index = 0;
-      while(index < tokenStream.length){
         if (tokenStream[index].word === "struct") {
           const structIndex = structs.findIndex(struct => struct.lex === tokenStream[index + 1].lex);
           if (structIndex >= 0) commit("SET_ERROR", {
@@ -883,11 +843,11 @@ export default {
                 tokenStream[index].dtype = dtype;
                 tokenStream[index].struct = struct;
                 const elementIndex = elements.findIndex(
-                  element => 
-                  element.lex === tokenStream[index].lex 
-                  && element.struct === tokenStream[index].struct
+                  element =>
+                    element.lex === tokenStream[index].lex
+                    && element.struct === tokenStream[index].struct
                 );
-                if(elementIndex >= 0) commit("SET_ERROR", {
+                if (elementIndex >= 0) commit("SET_ERROR", {
                   type: "sem-error",
                   msg: `Duplicate declaration of element (${tokenStream[index].word})`,
                   line: tokenStream[index].line,
@@ -895,13 +855,79 @@ export default {
                   exp: "-",
                 });
                 elements.push(tokenStream[index]);
-                index += tokenStream[index+1].word === ","
+                if(tokenStream[index+1].word === "[") index = await dispatch("ARRAY_EVALUATOR", {
+                  index: index+2,
+                  tokenStream: tokenStream,
+                  ids: ids,
+                  tasks: tasks,
+                  structs: structs,
+                  elements: elements
+                }) - 1;
+                index += tokenStream[index + 1].word === ","
                   ? 2
                   : 1;
               }
             }
           }
           index++;
+        }
+        if(tokenStream[index].word === "task"){
+          const taskType = tokenStream[index+1];
+
+          let counter = index+3;
+          let paramCounter = 0;
+          tokenStream[index+2].parameters = [];
+          while(
+                dataTypes.includes(tokenStream[counter].word) 
+            ||  tokenStream[counter].word !== ")" 
+            ||  (tokenStream[counter].token === "id" && tokenStream[counter+1].token === "id")
+          ){
+            if(
+                  dataTypes.includes(tokenStream[counter].word) 
+                ||(tokenStream[counter].token === "id" && tokenStream[counter+1].token === "id")
+              ){
+              const structIndex = structs.findIndex(struct => struct.lex === tokenStream[counter].lex);
+              if (structIndex < 0) commit("SET_ERROR", {
+                type: "sem-error",
+                msg: `Undeclared struct (${tokenStream[counter].word})`,
+                line: tokenStream[counter].line,
+                col: tokenStream[counter].col,
+                exp: "-",
+              });
+              paramCounter++;
+              tokenStream[index+2].parameters.push(tokenStream[counter].word);
+            }
+            counter++;
+          }
+
+          tokenStream[index+2].type = taskType.word;
+          tokenStream[index+2].paramCount = paramCounter;
+          const taskIndex = tasks.findIndex(task => task.lex === tokenStream[index+2].lex);
+          if(taskIndex >= 0) commit("SET_ERROR", {
+            type: "sem-error",
+            msg: `Duplicate declaration of task (${tokenStream[index+2].word})`,
+            line: tokenStream[index+2].line,
+            col: tokenStream[index+2].col,
+            exp: "-",
+          });
+          tasks.push(tokenStream[index+2]);
+          index = counter-1;
+
+        }
+        if(tokenStream[index].word !== "struct")
+          index++;
+      }
+
+      index = 0;
+      while(index < tokenStream.length){
+        if(tokenStream[index].word === "struct"){
+          index += 3;
+          let curlyCounter = 1;
+          while(curlyCounter > 0){
+            if(tokenStream[index].word === "{") curlyCounter++;
+            else if(tokenStream[index].word === "}") curlyCounter--;
+            index++;
+          }
         }
 
         if(tokenStream[index].word === "IN"){
@@ -925,15 +951,15 @@ export default {
         }
 
         index = await dispatch("TYPE_AND_DECLARATION_CHECKER", 
-            {
-              index: index, 
-              tokenStream: tokenStream, 
-              dataTypes: dataTypes, 
-              location: location,
-              ids: ids,
-              tasks: tasks,
-              structs: structs,
-              elements: elements
+          {
+            index: index, 
+            tokenStream: tokenStream, 
+            dataTypes: dataTypes, 
+            location: location,
+            ids: ids,
+            tasks: tasks,
+            structs: structs,
+            elements: elements
           }
         );
 
@@ -1034,6 +1060,8 @@ export default {
                   tokenStream: tokenStream,
                   ids: ids,
                   tasks: tasks,
+                  structs: structs,
+                  elements: elements
                 });
                 index = i;
               }
@@ -1050,14 +1078,14 @@ export default {
           }
           ids.pop();
         }
-        if(tokenStream[index].word !== "struct")
-          index++;
+        index++;
       }
       console.log("%cSemantic Errors: ", "color: cyan; font-size: 15px", state.error);
     },
     async TYPE_AND_DECLARATION_CHECKER({commit, dispatch}, payload){
       let {index, tokenStream, dataTypes, location, ids, tasks, structs, elements} = payload;
       const assignOper = ["=", "+=", "-=", "*=", "**=", "/=", "//=", "%="];
+      const iterate = ["++", "--"]
       if(tokenStream[index].word === "vital"){
         let moreConst = true;
         const dtype = tokenStream[index+1]
@@ -1090,6 +1118,8 @@ export default {
                   tokenStream: tokenStream,
                   ids: ids,
                   tasks: tasks,
+                  structs: structs,
+                  elements: elements
                 });
                 index = i;
                 curlyCounter = counter;
@@ -1105,12 +1135,24 @@ export default {
               tokenStream: tokenStream,
               ids: ids,
               tasks: tasks,
+              structs: structs,
+              elements: elements
             });
             index = i;
           }
           if(tokenStream[index].word === ";") moreConst = false;
         }
       } else if (dataTypes.includes(tokenStream[index].word) || (tokenStream[index].token === "id" && tokenStream[index+1].token === "id")){
+        if(tokenStream[index].token === "id"){
+          const structIndex = structs.findIndex(struct => struct.lex === tokenStream[index].lex);
+          if (structIndex < 0) commit("SET_ERROR", {
+            type: "sem-error",
+            msg: `Undeclared struct (${tokenStream[index].word})`,
+            line: tokenStream[index].line,
+            col: tokenStream[index].col,
+            exp: "-",
+          });
+        }
         let moreVar = true;
         let dtype = tokenStream[index]
         while(moreVar){
@@ -1130,7 +1172,15 @@ export default {
           ids.push(tokenStream[index+1]);
 
           if(tokenStream[index+2].word === "["){
-            index += 2;
+            index = await dispatch("ARRAY_EVALUATOR", {
+              index: index + 3,
+              tokenStream: tokenStream,
+              ids: ids,
+              tasks: tasks,
+              structs: structs,
+              elements: elements
+            }) - 1;
+            //here
             let curlyCounter = 1;
             while(tokenStream[index].word !== "=" && tokenStream[index].word !== ";") index++;
             if(tokenStream[index].word !== ";")
@@ -1145,6 +1195,8 @@ export default {
                   tokenStream: tokenStream,
                   ids: ids,
                   tasks: tasks,
+                  structs: structs,
+                  elements: elements
                 });
                 index = i;
                 curlyCounter = counter;
@@ -1161,6 +1213,8 @@ export default {
               tokenStream: tokenStream,
               ids: ids,
               tasks: tasks,
+              structs: structs,
+              elements: elements
             });
             index = i;
           } else index+=2;
@@ -1170,7 +1224,6 @@ export default {
       } else if(tokenStream[index].token === "id"){
         const taskIndex = tasks.findIndex(task => task.lex === tokenStream[index].lex);
         const idIndex   = ids.findIndex(id => id.lex === tokenStream[index].lex);
-        console.log(tokenStream[index], tasks, taskIndex, ids, idIndex)
         const undeclaredMsg = tokenStream[index+1].word === "("
           ? "task"
           : "variable"
@@ -1182,25 +1235,94 @@ export default {
             col: tokenStream[index].col,
             exp: "-",
           });
+          while(tokenStream[index].word !== ";" && tokenStream[index].word !== "{"){
+            if(assignOper.includes(tokenStream[index].word)){
+              const {i, counter} = await dispatch("EXPRESSION_EVALUATOR",
+              {
+                expectedDType: undefined,
+                index: index+1,
+                tokenStream: tokenStream,
+                ids: ids,
+                tasks: tasks,
+                structs: structs,
+                elements: elements
+              });
+              index = i;
+            } else if(tokenStream[index].token === "id" && tokenStream[index-1].word === "."){
+              let counter = index-1;
+              while(tokenStream[counter].token !== "id") counter--;
+              const idIndex = ids.findIndex(id => id.lex === tokenStream[counter].lex);
+              if (idIndex < 0) commit("SET_ERROR", {
+                type: "sem-error",
+                msg: `Variable (${tokenStream[counter].word}) is not a struct`,
+                line: tokenStream[counter].line,
+                col: tokenStream[counter].col,
+                exp: `-`,
+              });
+              const elementIndex = elements.findIndex(element => element.lex === tokenStream[index].lex && ids[idIndex].dtype === element.struct);
+              if(elementIndex < 0) commit("SET_ERROR", {
+                type: "sem-error",
+                msg: `Undeclared element (${tokenStream[index].word})`,
+                line: tokenStream[index].line,
+                col: tokenStream[index].col,
+                exp: "-",
+              });
+              index++;
+            }
+            else index++;
+          }
         } else if(tokenStream[index+1].word !== "("){
-          if(!ids[idIndex].editable) commit("SET_ERROR", {
-            type: "sem-error",
+          if(!ids[idIndex].editable && (assignOper.includes(tokenStream[index+1].word) || iterate.includes(tokenStream[index+1].word))) commit("SET_ERROR", {
+            type: "sem-error", //+ - * ** / // %
             msg: `Illegal re-assignment of vital id (${ids[idIndex].word})`,
             line: tokenStream[index].line,
             col: tokenStream[index].col,
             exp: "-",
           });
-          while(tokenStream[index].word !== ";"){
+          while(tokenStream[index].word !== ";" && tokenStream[index].word !== "{"){
+            let dtype;
             if(assignOper.includes(tokenStream[index].word)){
+              if(!dataTypes.includes(ids[idIndex].dtype)){
+                let counter = index-1;
+                while(tokenStream[counter].token !== "id") counter--;
+                const ind = elements.findIndex(element => 
+                  element.lex === tokenStream[counter].lex
+                  && element.struct === ids[idIndex].dtype
+                );
+                if(ind >= 0) dtype = elements[ind].dtype;
+                else dtype = "undefined";
+              }
               const {i, counter} = await dispatch("EXPRESSION_EVALUATOR",
               {
-                expectedDType: ids[idIndex].dtype,
+                expectedDType: dtype || ids[idIndex].dtype,
                 index: index+1,
                 tokenStream: tokenStream,
                 ids: ids,
                 tasks: tasks,
+                structs: structs,
+                elements: elements
               });
               index = i;
+            } else if(tokenStream[index].token === "id" && tokenStream[index-1].word === "."){
+              let counter = index-1;
+              while(tokenStream[counter].token !== "id") counter--;
+              const idIndex = ids.findIndex(id => id.lex === tokenStream[counter].lex);
+              if (idIndex >= 0 && dataTypes.includes(ids[idIndex].dtype)) commit("SET_ERROR", {
+                type: "sem-error",
+                msg: `Variable (${tokenStream[counter].word}) is not a struct`,
+                line: tokenStream[counter].line,
+                col: tokenStream[counter].col,
+                exp: `-`,
+              });
+              const elementIndex = elements.findIndex(element => element.lex === tokenStream[index].lex && ids[idIndex].dtype === element.struct);
+              if(elementIndex < 0) commit("SET_ERROR", {
+                type: "sem-error",
+                msg: `Undeclared element (${tokenStream[index].word})`,
+                line: tokenStream[index].line,
+                col: tokenStream[index].col,
+                exp: "-",
+              });
+              index++;
             }
             else index++;
           }
@@ -1210,7 +1332,6 @@ export default {
             ? 0
             : 1;
           while(tokenStream[counter].word !== ";"){
-            console.log(tokenStream[counter])
             if(tokenStream[counter].word === ",") paramCounter++;
             counter++;
           }
@@ -1229,6 +1350,8 @@ export default {
               tokenStream: tokenStream,
               ids: ids,
               tasks: tasks,
+              structs: structs,
+              elements: elements
             });
             index = i;
           }
@@ -1256,7 +1379,40 @@ export default {
                 col: tokenStream[index].col,
                 exp: `-`,
               });
-              else dtype = ids[ind].dtype;
+              else{
+                dtype = ids[ind].dtype;
+                const struct = tokenStream[index];
+                if(!dataTypes.includes(dtype)){
+                  const legal = ["[", "]"]
+                  while(
+                    tokenStream[index].word !== "." 
+                    && (legal.includes(tokenStream[index].word) || tokenStream[index].token === "litInt")
+                  ) index++;
+                  if (tokenStream[index].word === "."){
+                    index++;
+                    const elementIndex = elements.findIndex(element => element.lex === tokenStream[index].lex && dtype === element.struct)
+                    if(elementIndex < 0) commit("SET_ERROR", {
+                      type: "sem-error",
+                      msg: `Undeclared element (${tokenStream[index].word})`,
+                      line: tokenStream[index].line,
+                      col: tokenStream[index].col,
+                      exp: `-`,
+                    });
+                    dtype = elementIndex < 0
+                      ? undefined
+                      : elements[elementIndex].dtype;
+                  } else{
+                    dtype = undefined;
+                    commit("SET_ERROR", {
+                      type: "sem-error",
+                      msg: `Illegal access of object struct (${struct.word})`,
+                      line: struct.line,
+                      col: struct.col,
+                      exp: `element access`,
+                    });
+                  }
+                }
+              }
             }
           } else if(tokenStream[index].lex.includes("Lit")){
             dtype = tokenStream[index].lex.split("Lit")[0];
@@ -1269,6 +1425,8 @@ export default {
               tokenStream: tokenStream,
               ids: ids,
               tasks: tasks,
+              structs: structs,
+              elements: elements
             });
             index = i;
           } else index++;
@@ -1276,56 +1434,72 @@ export default {
       }
       return index;
     },
-    async EXPRESSION_EVALUATOR({commit}, payload){ // return num1 + (num2 - num3 * (num4 / num5));
-      let {expectedDType, index, tokenStream, ids, tasks} = payload;
+    async EXPRESSION_EVALUATOR({commit}, payload){
+      let {expectedDType, index, tokenStream, ids, tasks, structs, elements} = payload;
       const numberTokens = ["litInt", "negaLitInt", "litDec"];
+      const legal = ["litInt", "negaLitInt", "litDec", "litBool", "litStr", "id"];
       const numberDTypes = ["int", "dec"];
       const numberCompareTokens = ["<", ">", "<=", ">="];
       const boolConnector = ["and", "or"];
+      const dataTypes = ["int", "dec", "str", "bool"];
 
       let errorFound = false;
       let err;
       let curlyCounter = 1;
+      let prevStruct = expectedDType;
       while(tokenStream[index].word !== ";" && tokenStream[index].word !== "," && curlyCounter > 0){
         errorFound = false;
-        if(tokenStream[index].token === "id"){
+        if(tokenStream[index].token === "id" && expectedDType !== undefined){
           let idIndex = tokenStream[index+1].word === "("
             ? tasks.findIndex(task => task.lex === tokenStream[index].lex)
             : ids.findIndex(id => id.lex === tokenStream[index].lex);
+
+          if (idIndex < 0 && dataTypes.includes(prevStruct) && tokenStream[index - 1].word === "."){
+            let counter = index-2;
+            while(tokenStream[counter].token !== "id") counter--;
+            commit("SET_ERROR", {
+              type: "sem-error",
+              msg: `Variable (${tokenStream[counter].word}) is not a struct`,
+              line: tokenStream[counter].line,
+              col: tokenStream[counter].col,
+              exp: `-`,
+            });
+          }
+
+          idIndex = idIndex < 0
+            ? elements.findIndex(element => element.lex === tokenStream[index].lex && prevStruct === element.struct)
+            : idIndex;
           
           let dtype = idIndex < 0
             ? null
             : tokenStream[index+1].word === "("
               ? tasks[idIndex].type
               : ids[idIndex].dtype;
+          
+          if (idIndex >= 0)
+            dtype = dtype
+              ? dtype
+              : elements[idIndex].dtype
 
-          const undeclaredMsg = tokenStream[index+1].word === "("
-            ? "task"
-            : "variable"
+          prevStruct = dtype;
 
-          if(idIndex < 0) commit("SET_ERROR", {
-            type: "sem-error",
-            msg: `Undeclared ${undeclaredMsg} (${tokenStream[index].word})`,
-            line: tokenStream[index].line,
-            col: tokenStream[index].col,
-            exp: `-`,
-          });
-
-          else if(
+          if(
             ( !numberDTypes.includes(dtype) 
               || !numberDTypes.includes(expectedDType)
             ) 
             && dtype !== expectedDType 
             && expectedDType !== "bool"
+            && dataTypes.includes(dtype)
+            && idIndex >= 0
           ){
             errorFound = true;
             err = dtype
           }
-        } else if(numberTokens.includes(tokenStream[index].token)){
+        } else if (numberTokens.includes(tokenStream[index].token) && expectedDType !== undefined){
           if(!numberDTypes.includes(expectedDType) && expectedDType !== "bool")  errorFound = true;
-        } else if(tokenStream[index].token === "litStr"){
+        } else if (tokenStream[index].token === "litStr" && expectedDType !== undefined){
           if(expectedDType !== "str" && expectedDType !== "bool")  errorFound = true;
-        } else if(tokenStream[index].token === "litBool"){
+        } else if (tokenStream[index].token === "litBool" && expectedDType !== undefined){
           if(expectedDType !== "bool") errorFound = true;
         } else if(boolConnector.includes(tokenStream[index].word)){
           if(expectedDType !== "bool") commit("SET_ERROR", {
@@ -1344,12 +1518,37 @@ export default {
             exp: "-",
           });
         }
-        if(errorFound) commit("SET_ERROR", {
+        if(tokenStream[index].token === "id"){
+          const idIndex = ids.findIndex(id => id.lex === tokenStream[index].lex);
+          const taskIndex = tokenStream[index+1].word === "("
+            ? tasks.findIndex(task => task.lex === tokenStream[index].lex)
+            : -1;
+          let elementIndex = -1;
+          if(tokenStream[index-1].word === "."){
+            let counter = index-2;
+            while(tokenStream[counter].token !== "id") counter--;
+            const structIndex = structs.findIndex(struct => struct.lex === tokenStream[counter].lex);
+            if(structIndex >= 0) elementIndex = elements.findIndex(element => 
+              element.lex === tokenStream[index].lex 
+              && structs[structIndex].dtype === element.struct
+            );
+          }
+          if (idIndex < 0 && taskIndex < 0 && elementIndex < 0) commit("SET_ERROR", {
+            type: "sem-error",
+            msg: `Undeclared variable (${tokenStream[index].word})`,
+            line: tokenStream[index].line,
+            col: tokenStream[index].col,
+            exp: `-`,
+          });
+        }
+        if ((errorFound || expectedDType === undefined) && legal.includes(tokenStream[index].token)) commit("SET_ERROR", {
           type: "sem-error",
           msg: `Mismatched data type (${expectedDType}) and value (${err ? err : tokenStream[index].word})`,
           line: tokenStream[index].line,
           col: tokenStream[index].col,
-          exp: `${expectedDType} value`,
+          exp: expectedDType === undefined
+            ? "-"
+            : `${expectedDType} value`,
         });
         index++; 
         if(tokenStream[index].word === "{"){
@@ -1365,6 +1564,70 @@ export default {
         i: index,
         counter: curlyCounter
       };
+    }, 
+    async ARRAY_EVALUATOR({ commit }, payload) {
+      let {index, tokenStream, ids, tasks, structs, elements} = payload;
+      let bracketCounter = 1;
+      const dataTypes = ["int", "dec", "str", "bool"];
+      while(bracketCounter > 0){
+        if(tokenStream[index].word === "[") bracketCounter++;
+        else if(tokenStream[index].word === "]") bracketCounter--;
+        else if(tokenStream[index].token === "id"){
+          const idIndex = ids.findIndex(id => id.lex === tokenStream[index].lex);
+          const taskIndex = tokenStream[index+1].word === "("
+            ? tasks.findIndex(task => task.lex === tokenStream[index].lex)
+            : -1;
+          let elementIndex;
+          if (tokenStream[index-1].word === "."){
+            let counter = index-2;
+            while(tokenStream[counter].token !== "id") counter--;
+            const ind = ids.findIndex(id => id.lex === tokenStream[counter].lex);
+            if(ind >= 0){
+              elementIndex = elements.findIndex(element => 
+                element.lex === tokenStream[index].lex
+                && ids[ind].dtype === element.struct
+              )
+              if (elementIndex < 0) commit("SET_ERROR", {
+                type: "sem-error",
+                msg: `Undeclared element (${tokenStream[index].word})`,
+                line: tokenStream[index].line,
+                col: tokenStream[index].col,
+                exp: `-`,
+              });
+              else if (elements[elementIndex].dtype !== "int") commit("SET_ERROR", {
+                type: "sem-error",
+                msg: `Cannot access using variable with ${elements[elementIndex].dtype} value (${tokenStream[index].word})`,
+                line: tokenStream[index].line,
+                col: tokenStream[index].col,
+                exp: `-`,
+              });
+            }
+          }
+          if (idIndex < 0 && taskIndex < 0 && elementIndex < 0) commit("SET_ERROR", {
+            type: "sem-error",
+            msg: `Undeclared ${tokenStream[index + 1].word === "(" ? 'task' : 'variable'} (${tokenStream[index].word})`,
+            line: tokenStream[index].line,
+            col: tokenStream[index].col,
+            exp: `-`,
+          });
+          else if (idIndex >= 0 && ids[idIndex].dtype !== "int" && dataTypes.includes(ids[idIndex].dtype)) commit("SET_ERROR", {
+            type: "sem-error",
+            msg: `Cannot access using variable with ${ids[idIndex].dtype} value (${tokenStream[index].word})`,
+            line: tokenStream[index].line,
+            col: tokenStream[index].col,
+            exp: `-`,
+          });
+          else if (taskIndex >= 0 && ids[taskIndex].dtype !== "int") commit("SET_ERROR", {
+            type: "sem-error",
+            msg: `Cannot access using variable with ${tasks[taskIndex].type} task (${tokenStream[index].word})`,
+            line: tokenStream[index].line,
+            col: tokenStream[index].col,
+            exp: `-`,
+          });
+        }
+        index++;
+      }
+      return index;
     },
     async WRITE_JAVASCRIPT({ state, dispatch, commit }, statements){
       const javascriptStatements = [];
