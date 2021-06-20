@@ -99,7 +99,6 @@ export default {
                     expectedDtype: "int",
                     expression: expr,
                     evaluateArray: true,
-                    illegalWords: [],
                     illegalTokens: [],
                     legalIds: [],
                   });
@@ -165,7 +164,6 @@ export default {
                         expectedDtype: "int",
                         expression: expr,
                         evaluateArray: true,
-                        illegalWords: [],
                         illegalTokens: [],
                         legalIds: [],
                       });
@@ -226,15 +224,17 @@ export default {
         index: index+1
       });
     },
-    async FIND_INDEX({ commit }, payload){ //returns index to be used if no idea where it is
+    async FIND_INDEX({ state, commit }, payload){ //returns index to be used if no idea where it is
       const { idStream, variable, struct, location, forDeclare } = payload;
       let index = -1;
+      const globals = state.globalIds;
 
       if(idStream) index = location === "element"
         ? struct
           ? idStream.findIndex(id => id.lex === variable.lex && struct === variable.struct)
           : idStream.findIndex(id => id.lex === variable.lex && id.struct === variable.struct)
         : idStream.findIndex(id => id.lex === variable.lex);
+      if(index < 0) index = globals.findIndex(global => global.lex === variable.lex);
       if(index >= 0 && forDeclare){
         commit("main/SET_ERROR", {
           type: "sem-error",
@@ -250,7 +250,7 @@ export default {
       return index;
     },
     async EXPRESSION_EVALUATOR({ state, commit, dispatch }, payload){
-      const { expectedDtype, expression, evaluateArray, illegalWords, illegalTokens, legalIds } = payload;
+      const { expectedDtype, expression, evaluateArray, illegalTokens, legalIds } = payload;
       console.log(payload)
       const legalTokens = ["equal", "id"];
       const literals = ["litInt", "litDec", "litStr", "litBool"];
@@ -293,48 +293,30 @@ export default {
             root: true
           });
           while(index < expression.length){
-            if (illegalWords.includes(expression[index].word) 
-                || (illegalWords.length === 0 
-                && (!legalTokens.includes(expression[index].token) 
-                && illegalWords.includes(expression[index].word)))
-                && !literals.includes(expression[index].token)
+            const dtype = expression[index].token === "id"
+              ? await dispatch("FIND_GROUP", {
+                  previous: expression[index - 1],
+                  current: expression[index],
+                  next: expression[index + 1],
+                  expression: expression,
+                  index: index
+                })
+              : null;
+            if (!legalIds.includes(dtype) 
+                && (dataTypes.includes(dtype) 
+                || dtype === "empty"
+                || (dtype === undefined && expectedDtype !== undefined) 
+                || illegalTokens.includes(expression[index].token))
             ) commit("main/SET_ERROR", {
               type: "sem-error",
-              msg: `Cannot use symbol ${expression[index].word} on ${expectedDtype}`,
+              msg: `Mismatched types of ${expectedDtype} and ${dtype === null ? expression[index].token : dtype} (${expression[index].word})`,
               line: expression[index].line,
               col: expression[index].col,
-              exp: `-`
+              exp: `${expectedDtype} value`
             },
             {
               root: true
             });
-            else {
-              const dtype = expression[index].token === "id"
-                ? await dispatch("FIND_GROUP", {
-                    previous: expression[index - 1],
-                    current: expression[index],
-                    next: expression[index + 1],
-                    expression: expression,
-                    index: index
-                  })
-                : null;
-              if (!legalIds.includes(dtype) 
-                  && (dataTypes.includes(dtype) 
-                  || dtype === "empty"
-                  || (dtype === undefined && expectedDtype !== undefined) 
-                  || illegalTokens.includes(expression[index].token))
-              ) commit("main/SET_ERROR", {
-                type: "sem-error",
-                msg: `Mismatched types of ${expectedDtype} and ${dtype === null ? expression[index].token : dtype} (${expression[index].word})`,
-                line: expression[index].line,
-                col: expression[index].col,
-                exp: `${expectedDtype} value`
-              },
-              {
-                root: true
-              });
-
-            }
             index++;
           }
         } 
@@ -359,7 +341,7 @@ export default {
           if(idIndex >= 0) return ids[idIndex].dtype;
           else commit("main/SET_ERROR", {
             type: "sem-error",
-            msg: `Undeclared variable (${current.word})a`,
+            msg: `Undeclared variable (${current.word})`,
             line: current.line,
             col: current.col,
             exp: "-"
@@ -466,6 +448,7 @@ export default {
       const close = ["}", "OUT"]
       const dataTypes = state.dataTypes;
       const ids = state.ids;
+      const globals = state.globalIds;
       let blockCounter = 1;
       while (blockCounter > 0) {
         let editable = true;
@@ -524,7 +507,6 @@ export default {
                     expectedDtype: "int",
                     expression: expr,
                     evaluateArray: true,
-                    illegalWords: [],
                     illegalTokens: [],
                     legalIds: [],
                   });
@@ -547,10 +529,16 @@ export default {
             }
           } else if(tokenStream[index].token === "id"){
             const variable = tokenStream[index]
-            const idIndex = ids.findIndex(id => id.lex === variable.lex);
+            let idIndex = ids.findIndex(id => id.lex === variable.lex);
+            let searchList;
+            if(idIndex >= 0) searchList = ids;
+            else{
+              idIndex = globals.findIndex(global => global.lex === variable.lex);
+              if(idIndex >= 0) searchList = globals;
+            } 
             if (idIndex < 0) commit("main/SET_ERROR", {
               type: "sem-error",
-              msg: `Undeclared variable (${variable.word})`,
+              msg: `Undeclared variable ${variable.word}`,
               line: variable.line,
               col: variable.col,
               exp: "-"
@@ -561,7 +549,7 @@ export default {
 
             const dtype = idIndex < 0
               ? undefined
-              : ids[idIndex].dtype;
+              : searchList[idIndex].dtype;
 
             index++;
             if (tokenStream[index].word === "[") {
@@ -579,19 +567,25 @@ export default {
                   expectedDtype: "int",
                   expression: expr,
                   evaluateArray: true,
-                  illegalWords: [],
                   illegalTokens: [],
                   legalIds: [],
                 });
                 if(tokenStream[index].word !== "[") moreArray = false;
               }
             }
+            console.log(!tokenStream[index].word)
+            const editable = idIndex >= 0 
+              ? searchList[idIndex].editable
+                ? true
+                : tokenStream[index].word === "="
+              : true;
+            console.log(editable, searchList[idIndex].editable)
 
             index = await dispatch("VALUE_EVALUATOR", {
               tokenStream: tokenStream,
               index: index,
               dtype: dtype,
-              editable: idIndex >= 0 ? ids[idIndex].editable : true,
+              editable: editable,
               variable: variable
             });
           } else if(tokenStream[index].token === "shoot"){
@@ -619,8 +613,7 @@ export default {
     },
     async VALUE_EVALUATOR({ dispatch, commit }, payload){
       let { tokenStream, index, dtype, editable, variable } = payload;
-      const bool = ["<", ">", "<=", ">=", "==", "!=", "!", "and", "or"];
-      const int = ["-", "*", "**", "/", "//", "%", "++", "--", "~"];
+      console.log(payload)
       const assign = ["-=", "*=", "**=", "/=", "//=", "%="];
       const notBool = [...assign, "++", "--", "="];
 
@@ -648,11 +641,6 @@ export default {
         expr.push(tokenStream[index]);
         index++;
       }
-      const illegalWords = subDtype === "int" || subDtype === "dec"
-        ? [...bool, "@"]
-        : subDtype === "str"
-          ? [...bool, ...int, ...assign]
-          : [];
 
       const illegalTokens = subDtype === "int" || subDtype === "dec"
         ? ["litStr", "litBool"]
@@ -673,7 +661,6 @@ export default {
           expectedDtype: subDtype,
           expression: expr,
           evaluateArray: false,
-          illegalWords: illegalWords,
           illegalTokens: illegalTokens,
           legalIds: legalIds,
         });
@@ -681,8 +668,6 @@ export default {
     },
     async SHOOT_EVALUATOR({ state, commit, dispatch }, expression){
       const dataTypes = state.dataTypes;
-      const bool = ["<", ">", "<=", ">=", "==", "!=", "!", "and", "or"];
-      const int = ["-", "*", "**", "/", "//", "%", "++", "--", "~"];
       const literals = ["litInt", "litDec", "litStr", "litBool"];
 
       let dtype = null;
@@ -714,11 +699,6 @@ export default {
         expectedDtype: dtype,
         expression: expression,
         evaluateArray: false,
-        illegalWords: dtype === "int" || dtype === "dec"
-          ? ["@"]
-          : dtype === "str"
-            ? [...bool, ...int]
-            : [...bool, ...int, "@", "+"],
         illegalTokens: [],
         legalIds: dtype === "int" || dtype === "dec"
           ? ["int", "dec"]
