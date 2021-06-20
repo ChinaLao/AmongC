@@ -262,7 +262,9 @@ export default {
       return this.$store.getters["lexical/LEXEME"];
     },
     error() {
-      return this.$store.getters["main/ERROR"];
+      const error = this.$store.getters["main/ERROR"];
+      error.sort((a, b) => a.line - b.line);
+      return error;
     },
   },
 };
