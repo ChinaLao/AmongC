@@ -435,8 +435,19 @@ struct_size_choice ->
 struct_size ->
         %id struct_size_choice
     #|   %posi_int_literal (removed bc of ambiguity)
-    |   compute_choice_less #changed compute_choice to compute_choice_less
+    |   struct_compute_choice #changed compute_choice to compute_choice_less #changed compute_choice_less to struct_compute_choice
     |   %unary_oper %id iterate_id #changed id_array to struct_choice #changed struct_choice to iterate_id
+
+#for negative numbers
+oper_compute_none ->
+        %arith_oper compute_choice
+    |   %append append_choice
+
+#added this for negative numbers
+struct_compute_choice ->
+        %posi_int_literal oper_compute
+    |   %nega_int_literal oper_compute_none
+    |   negation %open_paren compute_choice %close_paren oper_compute
 
 assign_struct_2D ->
         %open_bracket struct_size %close_bracket
