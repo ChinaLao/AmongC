@@ -254,7 +254,7 @@ export default {
     },
     async EXPRESSION_EVALUATOR({ state, commit, dispatch }, payload){
       const { expectedDtype, expression, evaluateArray, illegalWords, illegalTokens, legalIds } = payload;
-      const legalTokens = ["equal", "id"];
+      const legalTokens = ["equal", "id", "litInt", "litDec", "litStr", "litBool"];
       console.log(payload)
       const dataTypes = state.dataTypes;
       if(evaluateArray){
@@ -284,7 +284,7 @@ export default {
       } else{
         if (legalIds.includes(expectedDtype) || expectedDtype === undefined){
           let index = 0;
-          if(expectedDtype === undefined) commit("main/SET_ERROR", {
+          if(expectedDtype === undefined && expression[index].word === "=") commit("main/SET_ERROR", {
             type: "sem-error",
             msg: `Cannot set value of ${expectedDtype}`,
             line: expression[0].line,
@@ -581,45 +581,46 @@ export default {
             const bool = ["<", ">", "<=", ">=", "==", "!=", "!", "and", "or"];
             const int  = ["-", "*", "**", "/", "//", "%", "++", "--", "~"];
             const assign = ["-=", "*=", "**=", "/=", "//=", "%="]
-            // if()
 
-            const expr = [];
-            console.log(tokenStream[index])
-            while(tokenStream[index].word !== ";"){
-              expr.push(tokenStream[index]);
-              index++;
+            if(tokenStream[index].word === "=" || dtype === undefined){
+              const expr = [];
+              console.log(tokenStream[index])
+              while(tokenStream[index].word !== ";" && (tokenStream[index].word !== ")" && tokenStream[index+1].word !== "{")){
+                expr.push(tokenStream[index]);
+                index++;
+              }
+              const illegalWords = dtype === "int" || dtype === "dec"
+                ? [...bool, "@"]
+                : dtype === "str"
+                  ? [...bool, ...int, ...assign]
+                  : dtype === "bool"
+                    ? ["@"]
+                    : [];
+
+              const illegalTokens = dtype === "int" || dtype === "dec"
+                ? ["litStr", "litBool"]
+                : dtype === "str"
+                  ? ["litInt", "litDec", "litBool"]
+                  : dtype === "bool"
+                    ? ["litInt", "litDec", "litStr"]
+                    : [];
+
+              const legalIds = dtype === "int" || dtype === "dec"
+                ? ["int", "dec"]
+                : dtype === undefined
+                  ? []
+                  : dtype;
+
+              if(expr.length > 0)
+                await dispatch("EXPRESSION_EVALUATOR", {
+                  expectedDtype: dtype,
+                  expression: expr,
+                  evaluateArray: false,
+                  illegalWords: illegalWords,
+                  illegalTokens: illegalTokens,
+                  legalIds: legalIds,
+                });
             }
-            const illegalWords = dtype === "int" || dtype === "dec"
-              ? [...bool, "@"]
-              : dtype === "str"
-                ? [...bool, ...int, ...assign]
-                : dtype === "bool"
-                  ? ["@"]
-                  : [];
-
-            const illegalTokens = dtype === "int" || dtype === "dec"
-              ? ["litStr", "litBool"]
-              : dtype === "str"
-                ? ["litInt", "litDec", "litBool"]
-                : dtype === "bool"
-                  ? ["litInt", "litDec", "litStr"]
-                  : [];
-
-            const legalIds = dtype === "int" || dtype === "dec"
-              ? ["int", "dec"]
-              : dtype === undefined
-                ? []
-                : dtype;
-
-            await dispatch("EXPRESSION_EVALUATOR", {
-              expectedDtype: dtype,
-              expression: expr,
-              evaluateArray: false,
-              illegalWords: illegalWords,
-              illegalTokens: illegalTokens,
-              legalIds: legalIds,
-            });
-
           }
         }
         index++;
