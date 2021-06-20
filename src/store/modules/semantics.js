@@ -1,5 +1,3 @@
-import lexicalAnalyzer from "./lexicalAnalyzer";
-
 export default {
   namespaced: true,
   state: {
@@ -46,7 +44,6 @@ export default {
   actions: {
     async ANALYZE({ state, commit, dispatch }, tokenStream){
       const dataTypes = state.dataTypes;
-      const ids = state.ids;
       const globals = state.globalIds;
       const structs = state.structs;
       const elements = state.elements;
@@ -254,6 +251,7 @@ export default {
     },
     async EXPRESSION_EVALUATOR({ state, commit, dispatch }, payload){
       const { expectedDtype, expression, evaluateArray, illegalWords, illegalTokens, legalIds } = payload;
+      console.log(payload)
       const legalTokens = ["equal", "id"];
       const literals = ["litInt", "litDec", "litStr", "litBool"];
       const dataTypes = state.dataTypes;
@@ -360,7 +358,7 @@ export default {
           if(idIndex >= 0) return ids[idIndex].dtype;
           else commit("main/SET_ERROR", {
             type: "sem-error",
-            msg: `Undeclared variable (${current.word})`,
+            msg: `Undeclared variable (${current.word})a`,
             line: current.line,
             col: current.col,
             exp: "-"
@@ -595,6 +593,23 @@ export default {
               editable: idIndex >= 0 ? ids[idIndex].editable : true,
               variable: variable
             });
+          } else if(tokenStream[index].token === "shoot"){
+            index += 2;
+            let parenCounter = 1;
+            while(parenCounter > 0){
+              console.log(tokenStream[index], index)
+              const expr = [];
+              while(tokenStream[index].word !== "," && parenCounter > 0){
+                if(tokenStream[index].word === "(") parenCounter++;
+                else if(tokenStream[index].word === ")") parenCounter--;
+                if(parenCounter > 0) expr.push(tokenStream[index]);
+                index++;
+                console.log(tokenStream[index])
+              }
+              await dispatch("SHOOT_EVALUATOR", expr);
+              if(parenCounter > 0) index++;
+              console.log(tokenStream[index])
+            }
           }
         }
         index++;
@@ -658,6 +673,54 @@ export default {
           legalIds: legalIds,
         });
       return index;
+    },
+    async SHOOT_EVALUATOR({ state, commit, dispatch }, expression){
+      const dataTypes = state.dataTypes;
+      const bool = ["<", ">", "<=", ">=", "==", "!=", "!", "and", "or"];
+      const int = ["-", "*", "**", "/", "//", "%", "++", "--", "~"];
+      // const assign = ["-=", "*=", "**=", "/=", "//=", "%="];
+      // const notBool = [...assign, "++", "--", "="];
+      const literals = ["litInt", "litDec", "litStr", "litBool"];
+
+      let dtype = null;
+      let counter = 0;
+      const deleteExpr = [];
+      console.log(expression)
+      while(dtype !== "empty" && !dataTypes.includes(dtype) && !literals.includes(expression[counter].token) && dtype !== undefined){
+        
+        dtype = expression[counter].token === "id"
+          ? await dispatch("FIND_GROUP", {
+              previous: expression[counter - 1],
+              current: expression[counter],
+              next: expression[counter + 1],
+              expression: expression,
+              index: counter
+            })
+          : null;
+        counter++;
+      }
+      if(dtype === null) dtype = expression[counter].token === "litInt"
+        ? "int"
+        : expression[counter].token === "litDec"
+          ? "dec"
+          : expression[counter].token === "litStr"
+            ? "str"
+            : "bool";
+      console.log(expression)
+      await dispatch("EXPRESSION_EVALUATOR", {
+        expectedDtype: dtype,
+        expression: expression,
+        evaluateArray: false,
+        illegalWords: dtype === "int" || dtype === "dec"
+          ? ["@"]
+          : dtype === "str"
+            ? [...bool, ...int]
+            : [...bool, ...int, "@", "+"],
+        illegalTokens: [],
+        legalIds: dtype === "int" || dtype === "dec"
+          ? ["int", "dec"]
+          : dtype ? dtype : [],
+      });
     }
 
 
