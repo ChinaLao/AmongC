@@ -256,7 +256,6 @@ export default {
       const { expectedDtype, expression, evaluateArray, illegalWords, illegalTokens, legalIds } = payload;
       const legalTokens = ["equal", "id"];
       const literals = ["litInt", "litDec", "litStr", "litBool"];
-      console.log(payload)
       const dataTypes = state.dataTypes;
       if(evaluateArray){
         let index = 0;
@@ -536,7 +535,9 @@ export default {
               index = await dispatch("VALUE_EVALUATOR", {
                 tokenStream: tokenStream,
                 index: index,
-                dtype: dtype
+                dtype: dtype,
+                editable: true,
+                variable: variable,
               });
 
               if (idIndex < 0) commit("ADD_ID", variable); //if no duplicate
@@ -546,12 +547,13 @@ export default {
               else index++; //more declaration; found a comma
             }
           } else if(tokenStream[index].token === "id"){
-            const idIndex = ids.findIndex(id => id.lex === tokenStream[index].lex);
+            const variable = tokenStream[index]
+            const idIndex = ids.findIndex(id => id.lex === variable.lex);
             if (idIndex < 0) commit("main/SET_ERROR", {
               type: "sem-error",
-              msg: `Undeclared variable (${tokenStream[index].word})`,
-              line: tokenStream[index].line,
-              col: tokenStream[index].col,
+              msg: `Undeclared variable (${variable.word})`,
+              line: variable.line,
+              col: variable.col,
               exp: "-"
             },
             {
@@ -585,10 +587,13 @@ export default {
                 if(tokenStream[index].word !== "[") moreArray = false;
               }
             }
+
             index = await dispatch("VALUE_EVALUATOR", {
               tokenStream: tokenStream,
               index: index,
-              dtype: dtype
+              dtype: dtype,
+              editable: idIndex >= 0 ? ids[idIndex].editable : true,
+              variable: variable
             });
           }
         }
@@ -596,12 +601,23 @@ export default {
       }
       return index;
     },
-    async VALUE_EVALUATOR({ dispatch }, payload){
-      let { tokenStream, index, dtype } = payload;
+    async VALUE_EVALUATOR({ dispatch, commit }, payload){
+      let { tokenStream, index, dtype, editable, variable } = payload;
       const bool = ["<", ">", "<=", ">=", "==", "!=", "!", "and", "or"];
       const int = ["-", "*", "**", "/", "//", "%", "++", "--", "~"];
       const assign = ["-=", "*=", "**=", "/=", "//=", "%="];
       const notBool = [...assign, "++", "--", "="];
+
+      if (!editable) commit("main/SET_ERROR", {
+        type: "sem-error",
+        msg: `Illegal re-assignment of vital variable (${variable.word})`,
+        line: variable.line,
+        col: variable.col,
+        exp: "-"
+      },
+      {
+        root: true
+      });
 
       const subDtype = notBool.includes(tokenStream[index].word) || dtype === undefined
         ? dtype
