@@ -207,11 +207,13 @@ export default {
             });
             if(taskIndex < 0) commit("ADD_TASK", task); //if no duplicate
 
-            index += 2; //move forward after opening brace
-            index = await dispatch("FUNCTION_BLOCK_EVALUATOR", {
-              tokenStream: tokenStream,
-              index: index
-            });
+            index += 2;
+            let curlyCounter = 1;
+            while(curlyCounter > 0){
+              if(tokenStream[index].word === "{") curlyCounter++;
+              else if(tokenStream[index].word === "}") curlyCounter--;
+              if(curlyCounter > 0) index++;
+            }
           }
         }
         index++;
@@ -591,6 +593,7 @@ export default {
             await dispatch("SHOOT_EVALUATOR", expr);
             if(parenCounter > 0) index++;
           }
+          console.log(index)
         } else if(tokenStream[index].token === "task"){
           index += 4;
           let parenCounter = 1;
@@ -692,21 +695,37 @@ export default {
     async SHOOT_EVALUATOR({ state, commit, dispatch }, expression){
       const dataTypes = state.dataTypes;
       const literals = ["litInt", "litDec", "litStr", "litBool"];
+      const tasks = state.tasks;
+      const ids = state.ids;
 
       let dtype = null;
       let counter = 0;
       const deleteExpr = [];
       while(dtype !== "empty" && !dataTypes.includes(dtype) && !literals.includes(expression[counter].token) && dtype !== undefined){
-        
-        dtype = expression[counter].token === "id"
-          ? await dispatch("FIND_GROUP", {
-              previous: expression[counter - 1],
-              current: expression[counter],
-              next: expression[counter + 1],
-              expression: expression,
-              index: counter
-            })
-          : null;
+        let idIndex;
+        if(expression[counter+1] === "("){
+          idIndex = tasks.findIndex(task => 
+            task.lex === expression[counter].lex
+          );
+          if(idIndex < 0) dtype = undefined;
+        }
+        else{
+          idIndex = ids.findIndex(id => id.lex === expression[counter].lex);
+          if(idIndex >= 0){
+            dtype = ids[idIndex].dtype;
+            if(!dataTypes.includes(dtype)){
+              counter+=2;
+              let moreArray = true;
+              let bracketCounter = 1;
+              while(moreArray){
+                if(tokenStream[counter].word === "[") bracketCounter++;
+                else if (tokenStream[counter].word === "]") bracketCounter--;
+                if(bracketCounter === 0 && tokenStream[counter+1].word !== "[") moreArray = false;
+                if(moreArray) counter++;
+              }
+            }
+          } else dtype = undefined;
+        }
         counter++;
       }
       if(dtype === null) dtype = expression[counter].token === "litInt"
