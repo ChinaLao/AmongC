@@ -562,23 +562,35 @@ export default {
                 legalIds: [],
               });
             }
-
+            const bool = ["<", ">", "<=", ">=", "==", "!=", "!", "and", "or"];
+            const int  = ["-", "*", "**", "/", "//", "%", "++", "--", "~"];
+            const assign = ["-=", "*=", "**=", "/=", "//=", "%="]
             const expr = [];
             while(tokenStream[index].word !== ";"){
               expr.push(tokenStream[index]);
               index++;
             }
             const illegalWords = dtype === "int" || dtype === "dec"
-              ? ["<", ">", "<=", ">=", "==", "and", "or"]
-              : [];
+              ? [...bool, "@"]
+              : dtype === "str"
+                ? [...bool, ...int, ...assign]
+                : dtype === "bool"
+                  ? ["@"]
+                  : [];
 
             const illegalTokens = dtype === "int" || dtype === "dec"
               ? ["litStr", "litBool"]
-              : [];
+              : dtype === "str"
+                ? ["litInt", "litDec", "litBool"]
+                : dtype === "bool"
+                  ? ["litInt", "litDec", "litStr"]
+                  : [];
 
             const legalIds = dtype === "int" || dtype === "dec"
               ? ["int", "dec"]
-              : [];
+              : dtype === undefined
+                ? []
+                : dtype;
 
             await dispatch("EXPRESSION_EVALUATOR", {
               expectedDtype: dtype,
