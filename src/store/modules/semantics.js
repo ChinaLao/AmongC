@@ -251,9 +251,7 @@ export default {
     },
     async EXPRESSION_EVALUATOR({ state, commit, dispatch }, payload){
       const { expectedDtype, expression, evaluateArray, illegalTokens, legalIds } = payload;
-      console.log(payload)
-      const legalTokens = ["equal", "id"];
-      const literals = ["litInt", "litDec", "litStr", "litBool"];
+      console.log("expression payload: ", payload)
       const dataTypes = state.dataTypes;
       if(evaluateArray){
         let index = 0;
@@ -445,14 +443,14 @@ export default {
     async FUNCTION_BLOCK_EVALUATOR({ state, commit, dispatch }, payload){
       let { tokenStream, index } = payload;
       const open = ["vote", "switch", "task", "for", "if", "elf", "else", "do", "IN"];
-      const close = ["}", "OUT"]
+      const close = ["}", "OUT", "kill"]
       const dataTypes = state.dataTypes;
       const ids = state.ids;
       const globals = state.globalIds;
       let blockCounter = 1;
       while (blockCounter > 0) {
         let editable = true;
-
+        console.log(tokenStream[index].line, tokenStream[index].word, blockCounter)
         if (open.includes(tokenStream[index].word)){
           blockCounter++;
           commit("ADD_ID", { lex: "begin" })
@@ -528,7 +526,8 @@ export default {
               else index++; //more declaration; found a comma
             }
           } else if(tokenStream[index].token === "id"){
-            const variable = tokenStream[index]
+            const variable = tokenStream[index];
+            const variableIndex = index;
             let idIndex = ids.findIndex(id => id.lex === variable.lex);
             let searchList;
             if(idIndex >= 0) searchList = ids;
@@ -536,16 +535,6 @@ export default {
               idIndex = globals.findIndex(global => global.lex === variable.lex);
               if(idIndex >= 0) searchList = globals;
             } 
-            if (idIndex < 0) commit("main/SET_ERROR", {
-              type: "sem-error",
-              msg: `Undeclared variable ${variable.word}`,
-              line: variable.line,
-              col: variable.col,
-              exp: "-"
-            },
-            {
-              root: true
-            });
 
             const dtype = idIndex < 0
               ? undefined
@@ -573,17 +562,17 @@ export default {
                 if(tokenStream[index].word !== "[") moreArray = false;
               }
             }
-            console.log(!tokenStream[index].word)
             const editable = idIndex >= 0 
               ? searchList[idIndex].editable
                 ? true
                 : tokenStream[index].word === "="
               : true;
-            console.log(editable, searchList[idIndex].editable)
 
             index = await dispatch("VALUE_EVALUATOR", {
               tokenStream: tokenStream,
-              index: index,
+              index: tokenStream[index].word === "."
+                ? variableIndex
+                : index,
               dtype: dtype,
               editable: editable,
               variable: variable
@@ -592,18 +581,15 @@ export default {
             index += 2;
             let parenCounter = 1;
             while(parenCounter > 0){
-              console.log(tokenStream[index], index)
               const expr = [];
               while(tokenStream[index].word !== "," && parenCounter > 0){
                 if(tokenStream[index].word === "(") parenCounter++;
                 else if(tokenStream[index].word === ")") parenCounter--;
                 if(parenCounter > 0) expr.push(tokenStream[index]);
                 index++;
-                console.log(tokenStream[index])
               }
               await dispatch("SHOOT_EVALUATOR", expr);
               if(parenCounter > 0) index++;
-              console.log(tokenStream[index])
             }
           }
         }
@@ -613,7 +599,7 @@ export default {
     },
     async VALUE_EVALUATOR({ dispatch, commit }, payload){
       let { tokenStream, index, dtype, editable, variable } = payload;
-      console.log(payload)
+      console.log("value payload: ", payload)
       const assign = ["-=", "*=", "**=", "/=", "//=", "%="];
       const notBool = [...assign, "++", "--", "="];
 
@@ -673,7 +659,6 @@ export default {
       let dtype = null;
       let counter = 0;
       const deleteExpr = [];
-      console.log(expression)
       while(dtype !== "empty" && !dataTypes.includes(dtype) && !literals.includes(expression[counter].token) && dtype !== undefined){
         
         dtype = expression[counter].token === "id"
@@ -694,7 +679,6 @@ export default {
           : expression[counter].token === "litStr"
             ? "str"
             : "bool";
-      console.log(expression)
       await dispatch("EXPRESSION_EVALUATOR", {
         expectedDtype: dtype,
         expression: expression,
