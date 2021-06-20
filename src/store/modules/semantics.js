@@ -246,6 +246,7 @@ export default {
     },
     async EXPRESSION_EVALUATOR({ state, commit, dispatch }, payload){
       const { expectedDtype, expression, evaluateArray, illegalWords, illegalTokens, legalIds } = payload;
+      const legalTokens = ["equal", "id"];
       console.log(payload)
       const dataTypes = state.dataTypes;
       if(evaluateArray){
@@ -286,7 +287,10 @@ export default {
             root: true
           });
           while(index < expression.length){
-            if (illegalWords.includes(expression[index].word)) commit("main/SET_ERROR", {
+            if (illegalWords.includes(expression[index].word) 
+                || (illegalWords.length === 0 
+                && !legalTokens.includes(expression[index].token))
+            ) commit("main/SET_ERROR", {
               type: "sem-error",
               msg: `Cannot use symbol ${expression[index].word} on ${expectedDtype}`,
               line: expression[index].line,
