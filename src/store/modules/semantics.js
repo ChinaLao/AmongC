@@ -254,7 +254,8 @@ export default {
     },
     async EXPRESSION_EVALUATOR({ state, commit, dispatch }, payload){
       const { expectedDtype, expression, evaluateArray, illegalWords, illegalTokens, legalIds } = payload;
-      const legalTokens = ["equal", "id", "litInt", "litDec", "litStr", "litBool"];
+      const legalTokens = ["equal", "id"];
+      const literals = ["litInt", "litDec", "litStr", "litBool"];
       console.log(payload)
       const dataTypes = state.dataTypes;
       if(evaluateArray){
@@ -289,7 +290,7 @@ export default {
             msg: `Cannot set value of ${expectedDtype}`,
             line: expression[0].line,
             col: expression[0].col,
-            exp: `${expectedDtype} value`
+            exp: `-`
           },
           {
             root: true
@@ -298,6 +299,7 @@ export default {
             if (illegalWords.includes(expression[index].word) 
                 || (illegalWords.length === 0 
                 && !legalTokens.includes(expression[index].token))
+                && !literals.includes(expression[index].token)
             ) commit("main/SET_ERROR", {
               type: "sem-error",
               msg: `Cannot use symbol ${expression[index].word} on ${expectedDtype}`,
@@ -578,53 +580,62 @@ export default {
                 if(tokenStream[index].word !== "[") moreArray = false;
               }
             }
-            const bool = ["<", ">", "<=", ">=", "==", "!=", "!", "and", "or"];
-            const int  = ["-", "*", "**", "/", "//", "%", "++", "--", "~"];
-            const assign = ["-=", "*=", "**=", "/=", "//=", "%="]
-
-            if(tokenStream[index].word === "=" || dtype === undefined){
-              const expr = [];
-              console.log(tokenStream[index])
-              while(tokenStream[index].word !== ";" && (tokenStream[index].word !== ")" && tokenStream[index+1].word !== "{")){
-                expr.push(tokenStream[index]);
-                index++;
-              }
-              const illegalWords = dtype === "int" || dtype === "dec"
-                ? [...bool, "@"]
-                : dtype === "str"
-                  ? [...bool, ...int, ...assign]
-                  : dtype === "bool"
-                    ? ["@"]
-                    : [];
-
-              const illegalTokens = dtype === "int" || dtype === "dec"
-                ? ["litStr", "litBool"]
-                : dtype === "str"
-                  ? ["litInt", "litDec", "litBool"]
-                  : dtype === "bool"
-                    ? ["litInt", "litDec", "litStr"]
-                    : [];
-
-              const legalIds = dtype === "int" || dtype === "dec"
-                ? ["int", "dec"]
-                : dtype === undefined
-                  ? []
-                  : dtype;
-
-              if(expr.length > 0)
-                await dispatch("EXPRESSION_EVALUATOR", {
-                  expectedDtype: dtype,
-                  expression: expr,
-                  evaluateArray: false,
-                  illegalWords: illegalWords,
-                  illegalTokens: illegalTokens,
-                  legalIds: legalIds,
-                });
-            }
+            index = await dispatch("VALUE_EVALUATOR", {
+              tokenStream: tokenStream,
+              index: index,
+              dtype: dtype
+            });
           }
         }
         index++;
       }
+      return index;
+    },
+    async VALUE_EVALUATOR({ dispatch }, payload){
+      let { tokenStream, index, dtype } = payload;
+      const bool = ["<", ">", "<=", ">=", "==", "!=", "!", "and", "or"];
+      const int = ["-", "*", "**", "/", "//", "%", "++", "--", "~"];
+      const assign = ["-=", "*=", "**=", "/=", "//=", "%="];
+      const notBool = [...assign, "++", "--", "="];
+
+      const subDtype = notBool.includes(tokenStream[index].word) || dtype === undefined
+        ? dtype
+        : "bool";
+
+      const expr = [];
+      while (tokenStream[index].word !== ";" && (tokenStream[index].word !== ")" && tokenStream[index + 1].word !== "{")) {
+        expr.push(tokenStream[index]);
+        index++;
+      }
+      const illegalWords = subDtype === "int" || subDtype === "dec"
+        ? [...bool, "@"]
+        : subDtype === "str"
+          ? [...bool, ...int, ...assign]
+          : subDtype === "bool"
+            ? ["@"]
+            : [];
+
+      const illegalTokens = subDtype === "int" || subDtype === "dec"
+        ? ["litStr", "litBool"]
+        : subDtype === "str"
+          ? ["litInt", "litDec", "litBool"]
+          : [];
+
+      const legalIds = subDtype === "int" || subDtype === "dec"
+        ? ["int", "dec"]
+        : subDtype === undefined
+          ? []
+          : subDtype;
+
+      if (expr.length > 0)
+        await dispatch("EXPRESSION_EVALUATOR", {
+          expectedDtype: subDtype,
+          expression: expr,
+          evaluateArray: false,
+          illegalWords: illegalWords,
+          illegalTokens: illegalTokens,
+          legalIds: legalIds,
+        });
       return index;
     }
 
