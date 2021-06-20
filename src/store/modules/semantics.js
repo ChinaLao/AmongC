@@ -533,6 +533,11 @@ export default {
                   if (tokenStream[index].word !== "[") moreArray = false;
                 }
               }
+              index = await dispatch("VALUE_EVALUATOR", {
+                tokenStream: tokenStream,
+                index: index,
+                dtype: dtype
+              });
 
               if (idIndex < 0) commit("ADD_ID", variable); //if no duplicate
 
@@ -603,7 +608,7 @@ export default {
         : "bool";
 
       const expr = [];
-      while (tokenStream[index].word !== ";" && (tokenStream[index].word !== ")" && tokenStream[index + 1].word !== "{")) {
+      while (tokenStream[index].word !== ";" && tokenStream[index].word !== "," && (tokenStream[index].word !== ")" && tokenStream[index + 1].word !== "{")) {
         expr.push(tokenStream[index]);
         index++;
       }
