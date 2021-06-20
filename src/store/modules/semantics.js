@@ -99,7 +99,10 @@ export default {
                 await dispatch("EXPRESSION_EVALUATOR", {
                   expectedDtype: "int",
                   expression: expr,
-                  evaluateArray: true
+                  evaluateArray: true,
+                  illegalWords: [],
+                  illegalTokens: [],
+                  legalIds: [],
                 });
               }
 
@@ -158,7 +161,10 @@ export default {
                     await dispatch("EXPRESSION_EVALUATOR", {
                       expectedDtype: "int",
                       expression: expr,
-                      evaluateArray: true
+                      evaluateArray: true,
+                      illegalWords: [],
+                      illegalTokens: [],
+                      legalIds: [],
                     });
                   }
 
@@ -239,7 +245,7 @@ export default {
       return index;
     },
     async EXPRESSION_EVALUATOR({ state, commit, dispatch }, payload){
-      const { expectedDtype, expression, evaluateArray } = payload;
+      const { expectedDtype, expression, evaluateArray, illegalWords, illegalTokens, legalIds } = payload;
       console.log(payload)
       const dataTypes = state.dataTypes;
       if(evaluateArray){
@@ -267,10 +273,7 @@ export default {
           index++;
         }
       } else{
-        if(expectedDtype === "int" || expectedDtype === undefined){
-          const illegalWords = ["<", ">", "<=", ">=", "==", "and", "or"];
-          const legalIds = ["int", "dec"];
-          const illegalTokens = ["litStr", "litBool"];
+        if (legalIds.includes(expectedDtype) || expectedDtype === undefined){
           let index = 0;
           if(expectedDtype === undefined) commit("main/SET_ERROR", {
             type: "sem-error",
@@ -285,7 +288,7 @@ export default {
           while(index < expression.length){
             if (illegalWords.includes(expression[index].word)) commit("main/SET_ERROR", {
               type: "sem-error",
-              msg: `Cannot use symbol ${expression[index].word} on int`,
+              msg: `Cannot use symbol ${expression[index].word} on ${expectedDtype}`,
               line: expression[index].line,
               col: expression[index].col,
               exp: `-`
@@ -322,7 +325,7 @@ export default {
             }
             index++;
           }
-        }
+        } 
       }
     },
     async FIND_GROUP({ state, commit }, payload){ //returns data type or undefined
@@ -506,7 +509,10 @@ export default {
                 await dispatch("EXPRESSION_EVALUATOR", {
                   expectedDtype: "int",
                   expression: expr,
-                  evaluateArray: true
+                  evaluateArray: true,
+                  illegalWords: [],
+                  illegalTokens: [],
+                  legalIds: [],
                 });
               }
 
@@ -546,7 +552,10 @@ export default {
               await dispatch("EXPRESSION_EVALUATOR", {
                 expectedDtype: "int",
                 expression: expr,
-                evaluateArray: true
+                evaluateArray: true,
+                illegalWords: [],
+                illegalTokens: [],
+                legalIds: [],
               });
             }
 
@@ -555,10 +564,25 @@ export default {
               expr.push(tokenStream[index]);
               index++;
             }
+            const illegalWords = dtype === "int" || dtype === "dec"
+              ? ["<", ">", "<=", ">=", "==", "and", "or"]
+              : [];
+
+            const illegalTokens = dtype === "int" || dtype === "dec"
+              ? ["litStr", "litBool"]
+              : [];
+
+            const legalIds = dtype === "int" || dtype === "dec"
+              ? ["int", "dec"]
+              : [];
+
             await dispatch("EXPRESSION_EVALUATOR", {
               expectedDtype: dtype,
               expression: expr,
-              evaluateArray: false
+              evaluateArray: false,
+              illegalWords: illegalWords,
+              illegalTokens: illegalTokens,
+              legalIds: legalIds,
             });
 
           }
