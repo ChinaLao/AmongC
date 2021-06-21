@@ -157,12 +157,9 @@ export default {
     code: null,
     output: null,
     runClicked: false,
-    lexicalError: false,
-    syntaxError: false,
-    semanticsError: false,
-    lexical: false,
-    syntax: false,
-    semantics: false,
+    lexicalError: null,
+    syntaxError: null,
+    semanticsError: null,
     lexemeTableHeaders: [
       {
         text: "Lexeme",
@@ -238,21 +235,21 @@ export default {
       this.runClicked = true;
 
       this.output = "Checking Lexical...";
-      this.lexical = true;
       const tokens = await this.$store.dispatch("lexical/ANALYZE", this.code); //gets tokenized with spaces
       if(this.error.length <= 0){ //if no lex-error
-
+        this.lexicalError = false;
         this.output += "\nNo Lexical Error\n\nChecking Syntax...";
-        this.syntax =  true;
         await this.$store.dispatch("syntax/ANALYZE", tokens); //check syntax and pass the tokens with spaces
 
         if(this.error.length <= 0){ //if no syn-error
-
+          this.syntaxError = false;
           this.output += "\nNo Syntax Error\n\nChecking Semantics...";
-          this.semantics = true;
           await this.$store.dispatch("semantics/ANALYZE", tokens); 
 
-          if(this.error.length <= 0) this.output += "\nNo Semantics Error"
+          if(this.error.length <= 0){
+            this.semanticsError = false;
+            this.output += "\nNo Semantics Error"
+          }
           else{
             this.output += "\nSemantics Error Found"
             this.semanticsError = true;
@@ -301,6 +298,18 @@ export default {
       error.sort((a, b) => a.col - b.col);
       error.sort((a, b) => a.line - b.line);
       return error;
+    },
+    lexical(){
+      if(this.lexicalError !== null) return true;
+      else return false;
+    },
+    syntax(){
+      if(!this.lexicalError && this.syntaxError !== null) return true;
+      else return false;
+    },
+    semantics(){
+      if(!this.lexicalError && !this.syntaxError && this.semanticsError !== null) return true;
+      else return false;
     },
     lexicalOutput(){
       if(this.lexicalError) return "error darken-2";
