@@ -947,7 +947,7 @@ export default {
 
       let dtype = null;
       let counter = 0;
-      while(dtype !== "empty" && !dataTypes.includes(dtype) && !literals.includes(expression[counter].token) && dtype !== undefined){
+      while(dtype !== "empty" && !dataTypes.includes(dtype) && dtype !== undefined && !literals.includes(expression[counter].token)){
         let idIndex;
         if(expression[counter+1] && expression[counter+1].word === "("){
           idIndex = tasks.findIndex(task => 
