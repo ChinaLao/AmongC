@@ -481,6 +481,7 @@ export default {
       const close = ["}", "OUT", "kill", "EOF"]
       const dataTypes = state.dataTypes;
       const globals = state.globalIds;
+      const tasks = state.tasks;
       let blockCounter = 1;
       let foundWhile = false;
       while (blockCounter > 0) {
@@ -615,6 +616,75 @@ export default {
             editable: editable,
             variable: variable
           });
+        } else if(tokenStream[index].token === "id" && tokenStream[index+1].word === "("){
+          let paramCount;
+          let parameters;
+          const dtype = await dispatch("FIND_GROUP", {
+            previous: tokenStream[index - 1],
+            current: tokenStream[index],
+            next: tokenStream[index + 1],
+            expression: tokenStream[index],
+            index: 0
+          });
+          if(dtype){
+            const taskIndex = tasks.findIndex(task => task.lex === tokenStream[index].lex);
+            paramCount = tasks[taskIndex].paramCount;
+            parameters = [...tasks[taskIndex].parameters];
+            console.log(tasks, paramCount, parameters)
+          }
+          index += 2;
+          console.log(tokenStream[index].word)
+          let parenCounter = 1;
+          let parameterCount = 0;
+          while(parenCounter > 0){
+            const expr = [];
+            while(tokenStream[index].word !== "," && parenCounter > 0){
+              if(tokenStream[index].word === "(") parenCounter++;
+              else if(tokenStream[index].word === ")") parenCounter--;
+              if(tokenStream[index].word !== ","){
+                if(parenCounter > 0) expr.push(tokenStream[index]);
+                index++;
+              }
+            }
+            if(tokenStream[index].word !== ";") index++;
+            if(expr.length > 0){
+              console.log(paramCount, parameterCount)
+              if (paramCount < parameterCount + 1) commit("main/SET_ERROR", {
+                type: "sem-error",
+                msg: `Extra parameter found`,
+                line: expr[0].line,
+                col: expr[0].col,
+                exp: `${paramCount} number of parameters`
+              },
+              {
+                root: true
+              });
+              else{
+                const dtype = parameters ? parameters[parameterCount] : undefined;
+                const illegalTokens = dtype === "int" || dtype === "dec"
+                  ? ["litStr", "litBool"]
+                  : dtype === "str"
+                    ? ["litInt", "litDec", "litBool"]
+                    : [];
+
+                const legalIds = dtype === "int" || dtype === "dec"
+                  ? ["int", "dec"]
+                  : dtype === "bool"
+                    ? ["int", "dec", "str", "bool"]
+                    : dtype === undefined
+                      ? []
+                      : dtype;
+                await dispatch("EXPRESSION_EVALUATOR", {
+                  expectedDtype: dtype,
+                  expression: expr,
+                  evaluateArray: false,
+                  illegalTokens: illegalTokens,
+                  legalIds: legalIds,
+                });
+              }
+              parameterCount++;
+            }
+          }
         } else if(tokenStream[index].token === "shoot"){
           index += 2;
           let parenCounter = 1;
