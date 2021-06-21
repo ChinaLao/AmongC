@@ -255,7 +255,7 @@ export default {
     },
     async EXPRESSION_EVALUATOR({ state, commit, dispatch }, payload){
       const { expectedDtype, expression, evaluateArray, illegalTokens, legalIds } = payload;
-      // console.log("expression payload: ", payload)
+      console.log("expression payload: ", payload)
       const dataTypes = state.dataTypes;
       const illegalBool = ["-=", "*=", "**=", "/=", "//=", "%="];
       const illegalStr = ["++", "--", ...illegalBool];
@@ -506,6 +506,8 @@ export default {
         if (dataTypes.includes(tokenStream[index].word) || (tokenStream[index].token === "id" && tokenStream[index + 1].token === "id")) {
           const dtype = tokenStream[index].token === "id"
             ? await dispatch("CHECK_STRUCT", tokenStream[index])
+              ? await dispatch("CHECK_STRUCT", tokenStream[index])
+              : null
             : tokenStream[index].word;
           index++; //moves forward to the id
           let moreDeclare = true; //for single-line declarations
@@ -575,7 +577,7 @@ export default {
             : searchList[idIndex].dtype;
 
           index++;
-          if (tokenStream[index+1].word === "[") {
+          if (tokenStream[index].word === "[") {
             let moreArray = true;
             while(moreArray){
               index++;
@@ -597,6 +599,7 @@ export default {
               if(tokenStream[index].word !== "[") moreArray = false;
             }
           }
+          console.log(tokenStream[index])
           const editable = idIndex >= 0 
             ? searchList[idIndex].editable
               ? true
@@ -697,7 +700,7 @@ export default {
       let { tokenStream, index, dtype, editable, variable } = payload;
       const dataTypes = state.dataTypes;
       const tokens = ["litInt", "litDec", "litStr", "litBool", "id"];
-      // console.log("value payload: ", payload)
+      console.log("value payload: ", payload)
 
       if (!editable) commit("main/SET_ERROR", {
         type: "sem-error",
@@ -759,9 +762,9 @@ export default {
           exprCounter++;
         }
         console.log(dtype)
-      } else if (dtype === undefined) commit("main/SET_ERROR", {
+      } else if (dtype === undefined && expr.length === 1) commit("main/SET_ERROR", {
         type: "sem-error",
-        msg: `Undeclared variable (${variable.word})`,
+        msg: `Undefined variable (${variable.word})`,
         line: variable.line,
         col: variable.col,
         exp: "-"
@@ -785,7 +788,7 @@ export default {
             : dtype;
 
       if (expr.length > 0){
-        console.log("here val eval: ", expr)
+        console.log("here val eval: ", dtype, expr)
         await dispatch("EXPRESSION_EVALUATOR", {
           expectedDtype: dtype,
           expression: expr,
