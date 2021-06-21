@@ -271,6 +271,7 @@ export default {
               expression: expression,
               index: index
             });
+            console.log(dtype)
             if(dtype !== expectedDtype && (dataTypes.includes(dtype) || dtype === undefined)) commit("main/SET_ERROR", {
               type: "sem-error",
               msg: `Cannot access using ${dtype} (${expression[index].word})`,
@@ -285,9 +286,10 @@ export default {
           index++;
         }
       } else{
-        if (legalIds.includes(expectedDtype) || expectedDtype === undefined){
+        console.log(expectedDtype)
+        if (legalIds && legalIds.includes(expectedDtype) || expectedDtype === undefined){
           let index = 0;
-          if(expectedDtype === undefined && illegalAssign.includes(expression[index].word))
+          if(expectedDtype === undefined && illegalAssign && illegalAssign.includes(expression[index].word))
             commit("main/SET_ERROR", {
               type: "sem-error",
               msg: `Cannot set value of ${expectedDtype}`,
@@ -324,32 +326,6 @@ export default {
             {
               root: true
             });
-            // else{
-            //   console.log(expectedDtype)
-            //   if(expectedDtype === "str"){
-            //     if(illegalStr.includes(expression[index].word)) commit("main/SET_ERROR", {
-            //         type: "sem-error",
-            //         msg: `Cannot use symbol ${expression[index].word} on data type ${expectedDtype}`,
-            //         line: expression[index].line,
-            //         col: expression[index].col,
-            //         exp: `${expectedDtype} value`
-            //       },
-            //       {
-            //         root: true
-            //       });
-            //   } else if(expectedDtype === "bool"){
-            //     if(illegalBool.includes(expression[index].word) || expression[index].word === "+=") commit("main/SET_ERROR", {
-            //         type: "sem-error",
-            //         msg: `Cannot use symbol ${expression[index].word} on data type ${expectedDtype}`,
-            //         line: expression[index].line,
-            //         col: expression[index].col,
-            //         exp: `${expectedDtype} value`
-            //       },
-            //       {
-            //         root: true
-            //       });
-            //   }
-            // }
             index++;
           }
         } 
@@ -947,7 +923,7 @@ export default {
 
       let dtype = null;
       let counter = 0;
-      while(dtype !== "empty" && !dataTypes.includes(dtype) && dtype !== undefined && !literals.includes(expression[counter].token)){
+      while(counter < expression.length && dtype !== "empty" && !dataTypes.includes(dtype) && dtype !== undefined && !literals.includes(expression[counter].token)){
         let idIndex;
         if(expression[counter+1] && expression[counter+1].word === "("){
           idIndex = tasks.findIndex(task => 
@@ -966,8 +942,10 @@ export default {
           }
           if(idIndex >= 0){
             if(!dataTypes.includes(dtype)){
-              counter++;
-              if (expression[counter].word === "[") {
+              if(counter+1 < expression.length)
+                counter++;
+              console.log(expression, counter, expression[counter])
+              if (expression[counter] && expression[counter].word === "[") {
                 let moreArray = true;
                 while (moreArray) {
                   counter++;
@@ -986,6 +964,7 @@ export default {
                     illegalTokens: [],
                     legalIds: [],
                   });
+                   console.log(expression[counter])
                   if (expression[counter].word !== "[") moreArray = false;
                 }
               }
@@ -994,6 +973,7 @@ export default {
         }
         counter++;
       }
+      if(counter >= expression.length) counter--;
       if(dtype === null) dtype = expression[counter].token === "litInt"
         ? "int"
         : expression[counter].token === "litDec"
