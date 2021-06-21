@@ -97,7 +97,7 @@
           </v-row>
           <v-row>
             <v-col>
-              <h2 class="white--text ml-1">Lexeme Table</h2>
+              <h2 class="success--text ml-1">Lexeme Table</h2>
               <v-data-table
                 :headers="lexemeTableHeaders"
                 :items="lexeme"
