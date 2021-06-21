@@ -297,19 +297,20 @@ choice ->
     |   first_condition_choice oper_compute #added oper_compute #variable_next_choice #added this for conditions with id at the start
     |   null
 
-choice_less -> 
-        struct_new choice_choice #changed choice_choice_choice to choice_choice
-    |   function_call_statement_choice choice_choice #changed choice_choice_choice to choice_choice
-    #     struct_new choice_choice_choice #iterate_choice
-    # |   function_call_statement_choice choice_choice_choice #iterate_choice
-     #   first_choice iterate_choice choice_choice_choice #(di ka na kailangan)
-    |   first_compute_choice #variable_next_choice #added this for computes with id at the start
-    |   first_condition_choice #variable_next_choice #added this for conditions with id at the start
-    |   null
+#removed bc unused
+# choice_less -> 
+#         struct_new choice_choice #changed choice_choice_choice to choice_choice
+#     |   function_call_statement_choice choice_choice #changed choice_choice_choice to choice_choice
+#     #     struct_new choice_choice_choice #iterate_choice
+#     # |   function_call_statement_choice choice_choice_choice #iterate_choice
+#      #   first_choice iterate_choice choice_choice_choice #(di ka na kailangan)
+#     |   first_compute_choice #variable_next_choice #added this for computes with id at the start
+#     |   first_condition_choice #variable_next_choice #added this for conditions with id at the start
+#     |   null
 
 negative_choice ->
         %open_paren compute_choice %close_paren oper_compute
-    |   %id choice_less
+    |   %id choice #changed choice_less to choice
 
 not_many ->
         %not not_again
