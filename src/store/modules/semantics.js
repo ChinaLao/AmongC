@@ -95,7 +95,7 @@ export default {
                     close: "]"
                   });
                   index = i;
-                  console.log("here analyze (arrray declare): ", expr);
+                  //console.log("here analyze (arrray declare): ", expr);
                   await dispatch("EXPRESSION_EVALUATOR", {
                     expectedDtype: "int",
                     expression: expr,
@@ -161,7 +161,7 @@ export default {
                         close: "]"
                       });
                       index = i;
-                      console.log("here analyze (array struct): ", expr)
+                      //console.log("here analyze (array struct): ", expr)
                       await dispatch("EXPRESSION_EVALUATOR", {
                         expectedDtype: "int",
                         expression: expr,
@@ -257,6 +257,8 @@ export default {
       const { expectedDtype, expression, evaluateArray, illegalTokens, legalIds } = payload;
       // console.log("expression payload: ", payload)
       const dataTypes = state.dataTypes;
+      const illegalBool = ["-=", "*=", "**=", "/=", "//=", "%="];
+      const illegalStr = ["++", "--", ...illegalBool];
       if(evaluateArray){
         let index = 0;
         while(index < expression.length){
@@ -284,7 +286,11 @@ export default {
       } else{
         if (legalIds.includes(expectedDtype) || expectedDtype === undefined){
           let index = 0;
-          if(expectedDtype === undefined && expression[index].word === "=") commit("main/SET_ERROR", {
+          if(expectedDtype === undefined 
+            && expression[index].word === "=" 
+            || (illegalStr.includes(expression[index].word) 
+                || expression[index].word === "+=")
+          ) commit("main/SET_ERROR", {
             type: "sem-error",
             msg: `Cannot set value of ${expectedDtype}`,
             line: expression[0].line,
@@ -306,9 +312,10 @@ export default {
               : null;
             if (!legalIds.includes(dtype) 
                 && (dataTypes.includes(dtype) 
-                || dtype === "empty"
-                || (dtype === undefined && expectedDtype !== undefined) 
-                || illegalTokens.includes(expression[index].token))
+                    || dtype === "empty"
+                    || (dtype === undefined 
+                        && expectedDtype !== undefined) 
+                    || illegalTokens.includes(expression[index].token))
             ) commit("main/SET_ERROR", {
               type: "sem-error",
               msg: `Mismatched types of ${expectedDtype} and ${dtype === null ? expression[index].token : dtype} (${expression[index].word})`,
@@ -319,6 +326,32 @@ export default {
             {
               root: true
             });
+            // else{
+            //   console.log(expectedDtype)
+            //   if(expectedDtype === "str"){
+            //     if(illegalStr.includes(expression[index].word)) commit("main/SET_ERROR", {
+            //         type: "sem-error",
+            //         msg: `Cannot use symbol ${expression[index].word} on data type ${expectedDtype}`,
+            //         line: expression[index].line,
+            //         col: expression[index].col,
+            //         exp: `${expectedDtype} value`
+            //       },
+            //       {
+            //         root: true
+            //       });
+            //   } else if(expectedDtype === "bool"){
+            //     if(illegalBool.includes(expression[index].word) || expression[index].word === "+=") commit("main/SET_ERROR", {
+            //         type: "sem-error",
+            //         msg: `Cannot use symbol ${expression[index].word} on data type ${expectedDtype}`,
+            //         line: expression[index].line,
+            //         col: expression[index].col,
+            //         exp: `${expectedDtype} value`
+            //       },
+            //       {
+            //         root: true
+            //       });
+            //   }
+            // }
             index++;
           }
         } 
@@ -449,27 +482,25 @@ export default {
       const open = ["vote", "switch", "task", "for", "if", "elf", "else", "do", "IN"];
       const close = ["}", "OUT", "kill", "EOF"]
       const dataTypes = state.dataTypes;
-      const ids = state.ids;
       const globals = state.globalIds;
       let blockCounter = 1;
+      let foundWhile = false;
       while (blockCounter > 0) {
+        const ids = state.ids;
         let editable = true;
-        // console.log(tokenStream[index].line, tokenStream[index].word, blockCounter)
-        if (open.includes(tokenStream[index].word)){
+        console.log(index, tokenStream[index].line, tokenStream[index].word, blockCounter)
+        if (open.includes(tokenStream[index].word) || (foundWhile && tokenStream[index].word === "{")){
           blockCounter++;
           commit("ADD_ID", { lex: "begin" })
-        } else if (close.includes(tokenStream[index].word)){
-          if(tokenStream[index+1] && tokenStream[index+1].word === "while"){
-            let counter = index+1;
-            while(tokenStream[counter] !== ";" && tokenStream[counter].word !== "{") counter++;
-            if (tokenStream[counter] !== ";"){
-              //evaluate content of while
-              index = counter+1;
-            }
+          if(foundWhile) foundWhile = false;
+        } else if (close.includes(tokenStream[index].word) || (foundWhile && tokenStream[index].word === ";")){
+          if((tokenStream[index+1] && tokenStream[index+1].word !== "while") || tokenStream[index].word === "EOF"){
+            commit("REMOVE_IDS");
+            blockCounter--;
           }
-          commit("REMOVE_IDS");
-          blockCounter--;
+          if(foundWhile) foundWhile = false;
         }
+        if(tokenStream[index].word === "while") foundWhile = true;
         if (tokenStream[index].word === "vital") { //if global const
           editable = false;
           index++;
@@ -505,7 +536,7 @@ export default {
                   close: "]"
                 });
                 index = i;
-                console.log("here func blk (array declare): ", expr)
+                // console.log("here func blk (array declare): ", expr)
                 await dispatch("EXPRESSION_EVALUATOR", {
                   expectedDtype: "int",
                   expression: expr,
@@ -546,7 +577,7 @@ export default {
             : searchList[idIndex].dtype;
 
           index++;
-          if (tokenStream[index].word === "[") {
+          if (tokenStream[index+1].word === "[") {
             let moreArray = true;
             while(moreArray){
               index++;
@@ -557,7 +588,7 @@ export default {
                 close: "]"
               });
               index = i;
-              console.log("here func blk (array id): ", expr)
+              //console.log("here func blk (array id): ", expr)
               await dispatch("EXPRESSION_EVALUATOR", {
                 expectedDtype: "int",
                 expression: expr,
@@ -573,7 +604,7 @@ export default {
               ? true
               : tokenStream[index].word === "="
             : true;
-
+          console.log(variable, dtype, tokenStream[index])
           index = await dispatch("VALUE_EVALUATOR", {
             tokenStream: tokenStream,
             index: tokenStream[index].word === "."
@@ -600,7 +631,7 @@ export default {
                     close: "]"
                   });
                   index = i;
-                  console.log("here func blk (shoot array id): ", expr)
+                  //console.log("here func blk (shoot array id): ", expr)
                   await dispatch("EXPRESSION_EVALUATOR", {
                     expectedDtype: "int",
                     expression: expr,
@@ -610,7 +641,7 @@ export default {
                   });
                   if (tokenStream[index].word !== "[") moreArray = false;
                 }
-                console.log(tokenStream[index])
+                //console.log(tokenStream[index])
               }
               if(tokenStream[index].word === "(") parenCounter++;
               else if(tokenStream[index].word === ")") parenCounter--;
@@ -664,11 +695,11 @@ export default {
       }
       return index;
     },
-    async VALUE_EVALUATOR({ dispatch, commit }, payload){
+    async VALUE_EVALUATOR({ state, dispatch, commit }, payload){
       let { tokenStream, index, dtype, editable, variable } = payload;
+      const dataTypes = state.dataTypes;
+      const tokens = ["litInt", "litDec", "litStr", "litBool", "id"];
       // console.log("value payload: ", payload)
-      const assign = ["-=", "*=", "**=", "/=", "//=", "%="];
-      const notBool = [...assign, "++", "--", "="];
 
       if (!editable) commit("main/SET_ERROR", {
         type: "sem-error",
@@ -680,10 +711,6 @@ export default {
       {
         root: true
       });
-
-      const subDtype = notBool.includes(tokenStream[index].word) || dtype === undefined
-        ? dtype
-        : "bool";
 
       const expr = [];
       while (tokenStream[index].word !== ";" 
@@ -702,7 +729,7 @@ export default {
               close: "]"
             });
             index = i;
-            console.log("here func blk (shoot array id): ", expr)
+            //console.log("here func blk (shoot array id): ", expr)
             await dispatch("EXPRESSION_EVALUATOR", {
               expectedDtype: "int",
               expression: expr,
@@ -712,30 +739,57 @@ export default {
             });
             if (tokenStream[index].word !== "[") moreArray = false;
           }
-          console.log(tokenStream[index])
+          //console.log(tokenStream[index])
         }
         expr.push(tokenStream[index]);
         index++;
       }
 
-      const illegalTokens = subDtype === "int" || subDtype === "dec"
+      console.log(dtype)
+      if(!dataTypes.includes(dtype) && dtype !== undefined){
+        let exprCounter = 0;
+        while(exprCounter < expr.length){
+          if(tokens.includes(expr[exprCounter].token)){
+            dtype = await dispatch("FIND_GROUP", {
+              previous: expr[exprCounter - 1],
+              current: expr[exprCounter],
+              next: expr[exprCounter + 1],
+              expression: expr,
+              index: exprCounter
+            });
+          }
+          exprCounter++;
+        }
+        console.log(dtype)
+      } else if (dtype === undefined) commit("main/SET_ERROR", {
+        type: "sem-error",
+        msg: `Undeclared variable (${variable.word})`,
+        line: variable.line,
+        col: variable.col,
+        exp: "-"
+      },
+      {
+        root: true
+      });
+
+      const illegalTokens = dtype === "int" || dtype === "dec"
         ? ["litStr", "litBool"]
-        : subDtype === "str"
+        : dtype === "str"
           ? ["litInt", "litDec", "litBool"]
           : [];
 
-      const legalIds = subDtype === "int" || subDtype === "dec"
+      const legalIds = dtype === "int" || dtype === "dec"
         ? ["int", "dec"]
-        : subDtype === "bool"
+        : dtype === "bool"
           ? ["int", "dec", "str", "bool"]
-          : subDtype === undefined
+          : dtype === undefined
             ? []
-            : subDtype;
+            : dtype;
 
       if (expr.length > 0){
         console.log("here val eval: ", expr)
         await dispatch("EXPRESSION_EVALUATOR", {
-          expectedDtype: subDtype,
+          expectedDtype: dtype,
           expression: expr,
           evaluateArray: false,
           illegalTokens: illegalTokens,
@@ -787,7 +841,7 @@ export default {
           : expression[counter].token === "litStr"
             ? "str"
             : "bool";
-      console.log("here shoot eval: ", expression);
+      //console.log("here shoot eval: ", expression);
       await dispatch("EXPRESSION_EVALUATOR", {
         expectedDtype: dtype,
         expression: expression,

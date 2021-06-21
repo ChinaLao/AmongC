@@ -263,6 +263,7 @@ export default {
     },
     error() {
       const error = this.$store.getters["main/ERROR"];
+      error.sort((a, b) => a.col - b.col);
       error.sort((a, b) => a.line - b.line);
       return error;
     },
