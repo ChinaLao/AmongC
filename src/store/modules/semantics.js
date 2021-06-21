@@ -48,7 +48,7 @@ export default {
       const structs = state.structs;
       const elements = state.elements;
       const tasks = state.tasks;
-
+      console.log(tokenStream);
       //first loop to get all tasks, structs, and global variables
       let index = 0;
       while(index < tokenStream.length){
@@ -462,7 +462,7 @@ export default {
       while (blockCounter > 0) {
         const ids = state.ids;
         let editable = true;
-        // console.log(index, tokenStream[index].line, tokenStream[index].word, blockCounter)
+        console.log(index, tokenStream[index].line, tokenStream[index].word, blockCounter)
         if (open.includes(tokenStream[index].word) || (foundWhile && tokenStream[index].word === "{")){
           blockCounter++;
           commit("ADD_ID", { lex: "begin" })
@@ -591,6 +591,7 @@ export default {
             : searchList[idIndex].dtype;
 
           index++;
+          // console.log(index)
           if (tokenStream[index].word === "[") {
             let moreArray = true;
             while(moreArray){
@@ -618,6 +619,7 @@ export default {
               ? true
               : tokenStream[index].word === "="
             : true;
+          // console.log(variable, index, variableIndex)
           index = await dispatch("VALUE_EVALUATOR", {
             tokenStream: tokenStream,
             index: tokenStream[index].word === "."
@@ -810,7 +812,7 @@ export default {
       let { tokenStream, index, dtype, editable, variable } = payload;
       const dataTypes = state.dataTypes;
       const tokens = ["litInt", "litDec", "litStr", "litBool", "id"];
-      // console.log("value payload: ", payload)
+      console.log("value payload: ", payload)
 
       if (!editable) commit("main/SET_ERROR", {
         type: "sem-error",
@@ -840,6 +842,7 @@ export default {
               close: "]"
             });
             index = i;
+            console.log(i);
             //console.log("here func blk (shoot array id): ", expr)
             await dispatch("EXPRESSION_EVALUATOR", {
               expectedDtype: "int",
@@ -850,11 +853,14 @@ export default {
             });
             if (tokenStream[index].word !== "[") moreArray = false;
           }
-          //console.log(tokenStream[index])
+          console.log(tokenStream[index])
         }
         expr.push(tokenStream[index]);
-        if(tokenStream[index].word !== ")" && tokenStream[index + 1].word !== "{")
-        index++;
+        if (tokenStream[index].word !== ";"
+          && tokenStream[index].word !== ","
+          && (tokenStream[index].word !== ")"
+            && tokenStream[index + 1].word !== "{"))
+          index++;
       }
 
       if(!dataTypes.includes(dtype) && dtype !== undefined){
