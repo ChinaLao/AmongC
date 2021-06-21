@@ -548,13 +548,51 @@ export default {
                 if (tokenStream[index].word !== "[") moreArray = false;
               }
             }
-            index = await dispatch("VALUE_EVALUATOR", {
-              tokenStream: tokenStream,
-              index: index,
-              dtype: dtype,
-              editable: true,
-              variable: variable,
-            });
+            if (tokenStream[index+1].word === "{") {
+              index++;
+              let moreVal = true;
+              while (moreVal) {
+                index++;
+                const { i, expr } = await dispatch("ADD_TO_EXPRESSION_SET", {
+                  tokenStream: tokenStream,
+                  index: index,
+                  open: "{",
+                  close: "}"
+                });
+                index = i;
+
+                const illegalTokens = dtype === "int" || dtype === "dec"
+                  ? ["litStr", "litBool"]
+                  : dtype === "str"
+                    ? ["litInt", "litDec", "litBool"]
+                    : [];
+
+                const legalIds = dtype === "int" || dtype === "dec"
+                  ? ["int", "dec"]
+                  : dtype === "bool"
+                    ? ["int", "dec", "str", "bool"]
+                    : dtype === undefined
+                      ? []
+                      : dtype;
+
+                await dispatch("EXPRESSION_EVALUATOR", {
+                  expectedDtype: dtype,
+                  expression: expr,
+                  evaluateArray: false,
+                  illegalTokens: illegalTokens,
+                  legalIds: legalIds,
+                });
+                if (tokenStream[index].word !== "[") moreVal = false;
+              }
+            }
+            else
+              index = await dispatch("VALUE_EVALUATOR", {
+                tokenStream: tokenStream,
+                index: index,
+                dtype: dtype,
+                editable: true,
+                variable: variable,
+              });
 
             if (idIndex < 0) commit("ADD_ID", variable); //if no duplicate
 
