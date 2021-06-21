@@ -65,49 +65,33 @@
               </v-tooltip>
             </v-row>
           </v-col>
-          <!-- title of lexeme table -->
-          <v-col class="ml-2">
-            <v-row>
-              <h2 class="white--text">Lexeme Table</h2>
-            </v-row>
-          </v-col>
         </v-row>
 
         <!-- inputs and outputs -->
         <v-row align="center">
-          <v-col>
-            <v-row>
-              <prism-editor
-                class="background my-editor pt-8"
-                v-model="code"
-                :highlight="highlighter"
-                line-numbers
-              ></prism-editor>
-            </v-row>
-            <v-row>
-              <h2 class="success--text">Output</h2>
-              <prism-editor
-                class="background msgOutput pt-8"
-                v-model="output"
-                :highlight="highlighter"
-                readonly
-              ></prism-editor>
-            </v-row>
-          </v-col>
-          <v-col class="ml-2">
-            <v-row>
+          <v-row class="ml-1">
+            <prism-editor
+              class="background my-editor pt-8"
+              v-model="code"
+              :highlight="highlighter"
+              line-numbers
+            ></prism-editor>
+          </v-row>
+          <v-row>
+            <v-col>
+              <h2 class="white--text">Lexeme Table</h2>
               <v-data-table
                 :headers="lexemeTableHeaders"
                 :items="lexeme"
                 :items-per-page="-1"
-                height="270"
+                height="180"
                 class="background lexOutput elevation-1"
                 dark
                 hide-default-footer
                 fixed-header
               ></v-data-table>
-            </v-row>
-            <v-row>
+            </v-col>
+            <v-col>
               <h2 class="error--text">Errors</h2>
               <v-data-table
                 :headers="errorTableHeaders"
@@ -119,8 +103,8 @@
                 hide-default-footer
                 fixed-header
               ></v-data-table>
-            </v-row>
-          </v-col>
+            </v-col>
+          </v-row>
         </v-row>
       </v-container>
     </v-main>
@@ -279,18 +263,7 @@ export default {
   background: #080728;
   color: #ffff;
   height: 40vh;
-  width: 100%;
-  font-family: Consolas;
-  font-size: 14px;
-  line-height: 1.5;
-  padding: 5px;
-}
-
-.msgOutput {
-  background: #080728;
-  color: #ffff;
-  height: 27.5vh;
-  width: 100%;
+  width: 170vh;
   font-family: Consolas;
   font-size: 14px;
   line-height: 1.5;
@@ -299,7 +272,7 @@ export default {
 
 .lexOutput {
   border: 2px solid #080728;
-  height: 40vh;
+  height: 30vh;
   width: 100%;
   font-family: Consolas;
   font-size: 14px;
@@ -309,7 +282,7 @@ export default {
 
 .errorOutput {
   border: 2px solid #080728;
-  height: 27.5vh;
+  height: 30vh;
   width: 100%;
   font-family: Consolas;
   font-size: 14px;
