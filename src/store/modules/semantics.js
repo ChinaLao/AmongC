@@ -42,7 +42,7 @@ export default {
     }
   },
   actions: {
-    async ANALYZE({ state, commit, dispatch }, tokenStream){
+    async ANALYZE({ rootState, state, commit, dispatch }, tokenStream){
       const dataTypes = state.dataTypes;
       const globals = state.globalIds;
       const structs = state.structs;
@@ -810,7 +810,7 @@ export default {
       let { tokenStream, index, dtype, editable, variable } = payload;
       const dataTypes = state.dataTypes;
       const tokens = ["litInt", "litDec", "litStr", "litBool", "id"];
-      console.log("value payload: ", payload)
+      // console.log("value payload: ", payload)
 
       if (!editable) commit("main/SET_ERROR", {
         type: "sem-error",

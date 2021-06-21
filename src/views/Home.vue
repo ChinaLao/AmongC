@@ -233,7 +233,10 @@ export default {
           await this.$store.dispatch("semantics/ANALYZE", tokens); 
 
           if(this.error.length <= 0) this.output += "\nNo Semantics Error"
-          else this.output += "\nSemantics Error Found"
+          else{
+            this.output += "\nSemantics Error Found"
+            console.log("%cSemantic Errors: ", "color: cyan; font-size: 15px", this.error);
+          }
 
         }else this.output += "\nSyntax Error Found";
       }
