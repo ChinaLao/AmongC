@@ -84,7 +84,7 @@ global_choice ->
         vital_define 
     |   data_declare
     |   struct_declare
-    |   %singleComment
+    #|   %singleComment
 
 vital_define -> #changed %equal literal recur_vital to declare_choice
         %vital data_type %id vital_declare_choice %terminator
@@ -536,7 +536,7 @@ statement_choice ->
     #|   return_statement #removed for main functio
     |   control_statement 
     |   %clean %open_paren %close_paren %terminator
-    |   %singleComment
+    #|   %singleComment
 
 #removed bc unused
 # assign_next_choice ->
@@ -566,7 +566,7 @@ function_statement_choice ->
     |   return_statement
     |   control_statement 
     |   %clean %open_paren %close_paren %terminator
-    |   %singleComment
+    #|   %singleComment
 
 id_start_statement ->
         %id struct_define_choice
@@ -589,6 +589,7 @@ function_if_statement -> #bakit variable_choice to??? yung iba condition ha
 function_else_choice -> 
         %stateElse statement_in_function
     |   %elf %open_paren variable_choice %close_paren statement_in_function function_else_choice #changed condition to variable_choice
+    #|   %singleComment function_else_choice
     |   null
 
 #added this for function
@@ -962,6 +963,7 @@ if_statement ->
 else_choice ->
         %stateElse statement
     |   %elf %open_paren variable_choice %close_paren statement else_choice #changed condition to variable_choice
+   # |   %singleComment function_else_choice
     |   null
 
 #changed array_size to struct_size

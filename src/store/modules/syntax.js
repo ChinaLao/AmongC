@@ -76,7 +76,8 @@ export default {
       let synError = false; //tag for syntax error
       while(index < lexeme.length && !synError) {
         try {
-          parser.feed(lexeme[index].token); //checks the cfg in grammar.ne
+          if(lexeme[index].token !== "singleComment")
+            parser.feed(lexeme[index].token); //checks the cfg in grammar.ne
         } catch (err) {
           console.log(err);
           let type, msg = null;
