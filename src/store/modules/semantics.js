@@ -943,31 +943,51 @@ export default {
       const literals = ["litInt", "litDec", "litStr", "litBool"];
       const tasks = state.tasks;
       const ids = state.ids;
+      const elements = state.elements;
 
       let dtype = null;
       let counter = 0;
-      const deleteExpr = [];
       while(dtype !== "empty" && !dataTypes.includes(dtype) && !literals.includes(expression[counter].token) && dtype !== undefined){
         let idIndex;
-        if(expression[counter+1] === "("){
+        if(expression[counter+1] && expression[counter+1].word === "("){
           idIndex = tasks.findIndex(task => 
             task.lex === expression[counter].lex
           );
           if(idIndex < 0) dtype = undefined;
         }
         else{
-          idIndex = ids.findIndex(id => id.lex === expression[counter].lex);
+          if(dtype === null){
+            idIndex = ids.findIndex(id => id.lex === expression[counter].lex);
+            if(idIndex >= 0) dtype = ids[idIndex].dtype;
+          }
+          else if(!dataTypes.includes(dtype)){
+            idIndex = elements.findIndex(element => element.word === expression[counter].word && dtype === element.struct);
+            if(idIndex >= 0 ) dtype = elements[idIndex].dtype;
+          }
           if(idIndex >= 0){
-            dtype = ids[idIndex].dtype;
             if(!dataTypes.includes(dtype)){
-              counter+=2;
-              let moreArray = true;
-              let bracketCounter = 1;
-              while(moreArray){
-                if(tokenStream[counter].word === "[") bracketCounter++;
-                else if (tokenStream[counter].word === "]") bracketCounter--;
-                if(bracketCounter === 0 && tokenStream[counter+1].word !== "[") moreArray = false;
-                if(moreArray) counter++;
+              counter++;
+              if (expression[counter].word === "[") {
+                let moreArray = true;
+                while (moreArray) {
+                  counter++;
+                  const { i, expr } = await dispatch("ADD_TO_EXPRESSION_SET", {
+                    tokenStream: expression,
+                    index: counter,
+                    open: "[",
+                    close: "]"
+                  });
+                  counter = i;
+                  //console.log("here analyze (arrray declare): ", expr);
+                  await dispatch("EXPRESSION_EVALUATOR", {
+                    expectedDtype: "int",
+                    expression: expr,
+                    evaluateArray: true,
+                    illegalTokens: [],
+                    legalIds: [],
+                  });
+                  if (expression[counter].word !== "[") moreArray = false;
+                }
               }
             }
           } else dtype = undefined;
@@ -981,7 +1001,7 @@ export default {
           : expression[counter].token === "litStr"
             ? "str"
             : "bool";
-      //console.log("here shoot eval: ", expression);
+      console.log("here shoot eval: ", dtype, expression);
       await dispatch("EXPRESSION_EVALUATOR", {
         expectedDtype: dtype,
         expression: expression,
