@@ -259,6 +259,7 @@ export default {
       const dataTypes = state.dataTypes;
       const illegalBool = ["-=", "*=", "**=", "/=", "//=", "%="];
       const illegalStr = ["++", "--", ...illegalBool];
+      const illegalAssign = ["=", "+=", ...illegalStr];
       if(evaluateArray){
         let index = 0;
         while(index < expression.length){
@@ -286,20 +287,17 @@ export default {
       } else{
         if (legalIds.includes(expectedDtype) || expectedDtype === undefined){
           let index = 0;
-          if(expectedDtype === undefined 
-            && expression[index].word === "=" 
-            || (illegalStr.includes(expression[index].word) 
-                || expression[index].word === "+=")
-          ) commit("main/SET_ERROR", {
-            type: "sem-error",
-            msg: `Cannot set value of ${expectedDtype}`,
-            line: expression[0].line,
-            col: expression[0].col,
-            exp: `-`
-          },
-          {
-            root: true
-          });
+          if(expectedDtype === undefined && illegalAssign.includes(expression[index].word))
+            commit("main/SET_ERROR", {
+              type: "sem-error",
+              msg: `Cannot set value of ${expectedDtype}`,
+              line: expression[0].line,
+              col: expression[0].col,
+              exp: `-`
+            },
+            {
+              root: true
+            });
           while(index < expression.length){
             const dtype = expression[index].token === "id"
               ? await dispatch("FIND_GROUP", {
@@ -376,7 +374,7 @@ export default {
           if(idIndex >= 0) return ids[idIndex].dtype;
           else commit("main/SET_ERROR", {
             type: "sem-error",
-            msg: `Undeclared variable (${current.word})`,
+            msg: `Undeclared identifier (${current.word})`,
             line: current.line,
             col: current.col,
             exp: "-"
@@ -561,7 +559,7 @@ export default {
             if (tokenStream[index].word === ";") moreDeclare = false; //end of declaration
             else index++; //more declaration; found a comma
           }
-        } else if(tokenStream[index].token === "id"){
+        } else if(tokenStream[index].token === "id" && tokenStream[index+1].word !== "("){
           const variable = tokenStream[index];
           const variableIndex = index;
           let idIndex = ids.findIndex(id => id.lex === variable.lex);
