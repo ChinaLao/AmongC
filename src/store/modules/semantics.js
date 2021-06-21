@@ -255,7 +255,7 @@ export default {
     },
     async EXPRESSION_EVALUATOR({ state, commit, dispatch }, payload){
       const { expectedDtype, expression, evaluateArray, illegalTokens, legalIds } = payload;
-      console.log("expression payload: ", payload)
+      // console.log("expression payload: ", payload)
       const dataTypes = state.dataTypes;
       const illegalBool = ["-=", "*=", "**=", "/=", "//=", "%="];
       const illegalStr = ["++", "--", ...illegalBool];
@@ -271,7 +271,6 @@ export default {
               expression: expression,
               index: index
             });
-            console.log(dtype)
             if(dtype !== expectedDtype && (dataTypes.includes(dtype) || dtype === undefined)) commit("main/SET_ERROR", {
               type: "sem-error",
               msg: `Cannot access using ${dtype} (${expression[index].word})`,
@@ -286,7 +285,6 @@ export default {
           index++;
         }
       } else{
-        console.log(expectedDtype)
         if (legalIds && legalIds.includes(expectedDtype) || expectedDtype === undefined){
           let index = 0;
           if(expectedDtype === undefined && illegalAssign && illegalAssign.includes(expression[index].word))
@@ -340,7 +338,8 @@ export default {
       const elements = state.elements;
       
       if( //if not an element or task
-        (!previous || previous.word !== ".") 
+        current.token === "id"
+        && (!previous || previous.word !== ".") 
         && (!next || next.word !== "(")
       ){
         let idIndex = globals.findIndex(global => global.lex === current.lex);
@@ -463,7 +462,7 @@ export default {
       while (blockCounter > 0) {
         const ids = state.ids;
         let editable = true;
-        console.log(index, tokenStream[index].line, tokenStream[index].word, blockCounter)
+        // console.log(index, tokenStream[index].line, tokenStream[index].word, blockCounter)
         if (open.includes(tokenStream[index].word) || (foundWhile && tokenStream[index].word === "{")){
           blockCounter++;
           commit("ADD_ID", { lex: "begin" })
@@ -614,13 +613,11 @@ export default {
               if(tokenStream[index].word !== "[") moreArray = false;
             }
           }
-          console.log(tokenStream[index])
           const editable = idIndex >= 0 
             ? searchList[idIndex].editable
               ? true
               : tokenStream[index].word === "="
             : true;
-          console.log(variable, dtype, tokenStream[index])
           index = await dispatch("VALUE_EVALUATOR", {
             tokenStream: tokenStream,
             index: tokenStream[index].word === "."
@@ -644,10 +641,8 @@ export default {
             const taskIndex = tasks.findIndex(task => task.lex === tokenStream[index].lex);
             paramCount = tasks[taskIndex].paramCount;
             parameters = [...tasks[taskIndex].parameters];
-            console.log(tasks, paramCount, parameters)
           }
           index += 2;
-          console.log(tokenStream[index].word)
           let parenCounter = 1;
           let parameterCount = 0;
           while(parenCounter > 0){
@@ -861,7 +856,6 @@ export default {
         index++;
       }
 
-      console.log(dtype, expr)
       if(!dataTypes.includes(dtype) && dtype !== undefined){
         let exprCounter = 0;
         while(exprCounter < expr.length){
@@ -876,7 +870,6 @@ export default {
           }
           exprCounter++;
         }
-        console.log(dtype)
       } else if (dtype === undefined && expr.length < 2) commit("main/SET_ERROR", {
         type: "sem-error",
         msg: `Undefined variable (${variable.word})`,
@@ -903,7 +896,7 @@ export default {
             : dtype;
 
       if (expr.length > 0){
-        console.log("here val eval: ", dtype, expr)
+        // console.log("here val eval: ", dtype, expr)
         await dispatch("EXPRESSION_EVALUATOR", {
           expectedDtype: dtype,
           expression: expr,
@@ -944,7 +937,6 @@ export default {
             if(!dataTypes.includes(dtype)){
               if(counter+1 < expression.length)
                 counter++;
-              console.log(expression, counter, expression[counter])
               if (expression[counter] && expression[counter].word === "[") {
                 let moreArray = true;
                 while (moreArray) {
@@ -964,7 +956,6 @@ export default {
                     illegalTokens: [],
                     legalIds: [],
                   });
-                   console.log(expression[counter])
                   if (expression[counter].word !== "[") moreArray = false;
                 }
               }
@@ -981,7 +972,7 @@ export default {
           : expression[counter].token === "litStr"
             ? "str"
             : "bool";
-      console.log("here shoot eval: ", dtype, expression);
+      // console.log("here shoot eval: ", dtype, expression);
       await dispatch("EXPRESSION_EVALUATOR", {
         expectedDtype: dtype,
         expression: expression,
