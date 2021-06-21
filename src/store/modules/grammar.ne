@@ -281,8 +281,8 @@ iterate_first_choice ->
 
 #changed choice_choice_choice to choice_choice
 choice_choice ->
-        first_compute_choice
-    |   first_condition_choice
+        first_compute_choice oper_condition
+    |   first_condition_choice oper_compute
     #|   iterate_choice
     |   null
 
@@ -293,8 +293,8 @@ choice ->
     #     struct_new choice_choice_choice #iterate_choice
     # |   function_call_statement_choice choice_choice_choice #iterate_choice
      #   first_choice iterate_choice choice_choice_choice #(di ka na kailangan)
-    |   first_compute_choice #variable_next_choice #added this for computes with id at the start
-    |   first_condition_choice #variable_next_choice #added this for conditions with id at the start
+    |   first_compute_choice oper_condition #added oper_condition #variable_next_choice #added this for computes with id at the start
+    |   first_condition_choice oper_compute #added oper_compute #variable_next_choice #added this for conditions with id at the start
     |   null
 
 choice_less -> 
@@ -338,8 +338,8 @@ variable_recur ->
         struct_new iterate_first_choice choice_choice variable_again #changed iterate_id back to struct_new
     |   function_call_statement_choice iterate_first_choice choice_choice variable_again
     |   iterate_choice choice_choice
-    |   first_compute_choice 
-    |   first_condition_choice
+    |   first_compute_choice oper_condition #added oper_condition
+    |   first_condition_choice oper_compute #added oper_compute
     |   variable_again #changed %comma %id variable_again to variable_again
 
 recur_variable ->
@@ -733,9 +733,10 @@ digit_notter_less ->
 #         oper_compute
 #     |   negation %open_paren compute_choice %close_paren oper_compute
 
-compute_choice_less -> #changed digit_choice_less to digit_notter_less
-        digit_notter_less oper_compute
-    |   negation %open_paren compute_choice %close_paren oper_compute
+#removed bc unused
+# compute_choice_less -> #changed digit_choice_less to digit_notter_less
+#         digit_notter_less oper_compute
+#     |   negation %open_paren compute_choice %close_paren oper_compute
 
 # compute_less ->
 #         digit_choice_less
@@ -993,8 +994,8 @@ function_choice ->
     #     struct_new choice_choice_choice #iterate_choice
     # |   function_call_statement_choice choice_choice_choice #iterate_choice
      #   first_choice iterate_choice choice_choice_choice #(di ka na kailangan)
-    |   first_compute_choice #variable_next_choice #added this for computes with id at the start
-    |   first_condition_choice #variable_next_choice #added this for conditions with id at the start
+    |   first_compute_choice oper_condition #added oper_condition #variable_next_choice #added this for computes with id at the start
+    |   first_condition_choice oper_compute #added oper_compute #variable_next_choice #added this for conditions with id at the start
     #|   null
 
 return_choice ->
