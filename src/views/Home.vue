@@ -8,7 +8,7 @@
           <!-- buttons -->
           <v-col>
             <v-row>
-              <h2 class="white--text">Editor</h2>
+              <h2 class="white--text ml-1">Editor</h2>
               <v-tooltip bottom>
                 <template v-slot:activator="{ on, attrs }">
                   <v-btn
@@ -63,12 +63,39 @@
                 </template>
                 <span>Clear All</span>
               </v-tooltip>
+              <v-chip class="ml-5 mt-2" small :color="lexicalOutput" v-show="lexical">
+                <v-icon small class="mr-1" v-show="lexicalError">
+                  clear
+                </v-icon>
+                <v-icon small class="mr-1" v-show="!lexicalError">
+                  done
+                </v-icon>
+                Lexical
+              </v-chip>
+              <v-chip class="ml-5 mt-2" small :color="syntaxOutput" v-show="syntax">
+                <v-icon small class="mr-1" v-show="syntaxError">
+                  clear
+                </v-icon>
+                <v-icon small class="mr-1" v-show="!syntaxError">
+                  done
+                </v-icon>
+                Syntax
+              </v-chip>
+              <v-chip class="ml-5 mt-2" small :color="semanticsOutput" v-show="semantics">
+                <v-icon small class="mr-1" v-show="semanticsError">
+                  clear
+                </v-icon>
+                <v-icon small class="mr-1" v-show="!semanticsError">
+                  done
+                </v-icon>
+                Semantics
+              </v-chip>
             </v-row>
           </v-col>
         </v-row>
 
         <!-- inputs and outputs -->
-        <v-row align="center">
+        <v-row align="center" class="mb-1">
           <v-row class="ml-1">
             <prism-editor
               class="background my-editor pt-8"
@@ -79,7 +106,7 @@
           </v-row>
           <v-row>
             <v-col>
-              <h2 class="white--text">Lexeme Table</h2>
+              <h2 class="white--text ml-1">Lexeme Table</h2>
               <v-data-table
                 :headers="lexemeTableHeaders"
                 :items="lexeme"
@@ -130,6 +157,12 @@ export default {
     code: null,
     output: null,
     runClicked: false,
+    lexicalError: false,
+    syntaxError: false,
+    semanticsError: false,
+    lexical: false,
+    syntax: false,
+    semantics: false,
     lexemeTableHeaders: [
       {
         text: "Lexeme",
@@ -205,27 +238,36 @@ export default {
       this.runClicked = true;
 
       this.output = "Checking Lexical...";
+      this.lexical = true;
       const tokens = await this.$store.dispatch("lexical/ANALYZE", this.code); //gets tokenized with spaces
       if(this.error.length <= 0){ //if no lex-error
 
         this.output += "\nNo Lexical Error\n\nChecking Syntax...";
+        this.syntax =  true;
         await this.$store.dispatch("syntax/ANALYZE", tokens); //check syntax and pass the tokens with spaces
 
         if(this.error.length <= 0){ //if no syn-error
 
           this.output += "\nNo Syntax Error\n\nChecking Semantics...";
+          this.semantics = true;
           await this.$store.dispatch("semantics/ANALYZE", tokens); 
 
           if(this.error.length <= 0) this.output += "\nNo Semantics Error"
           else{
             this.output += "\nSemantics Error Found"
+            this.semanticsError = true;
             console.log("%cSemantic Errors: ", "color: cyan; font-size: 15px", this.error);
           }
 
-        }else this.output += "\nSyntax Error Found";
+        }else{
+          this.syntaxError = true;
+          this.output += "\nSyntax Error Found";
+          console.log("%Syntax Errors: ", "color: cyan; font-size: 15px", this.error);
+        }
       }
       else{
         this.output += "\nLexical Error Found";
+        this.lexicalError = true;
         console.log("%cLexical Errors: ", "color: cyan; font-size: 15px", this.error);
       }
       this.runClicked = false;
@@ -239,6 +281,12 @@ export default {
     },
     clearOutput() {
       this.output = null;
+      this.lexical = false;
+      this.syntax = false;
+      this.semantics = false;
+      this.lexicalError = false;
+      this.syntaxError = false;
+      this.semanticsError = false;
       this.$store.commit("lexical/CLEAR");
       this.$store.commit("main/CLEAR");
       this.$store.commit("semantics/CLEAR");
@@ -253,6 +301,18 @@ export default {
       error.sort((a, b) => a.col - b.col);
       error.sort((a, b) => a.line - b.line);
       return error;
+    },
+    lexicalOutput(){
+      if(this.lexicalError) return "error";
+      else return "success"
+    },
+    syntaxOutput(){
+      if(this.syntaxError) return "error";
+      else return "success"
+    },
+    semanticsOutput(){
+      if(this.semanticsError) return "error";
+      else return "success"
     },
   },
 };
@@ -272,7 +332,7 @@ export default {
 
 .lexOutput {
   border: 2px solid #080728;
-  height: 30vh;
+  height: 28vh;
   width: 100%;
   font-family: Consolas;
   font-size: 14px;
@@ -282,7 +342,7 @@ export default {
 
 .errorOutput {
   border: 2px solid #080728;
-  height: 30vh;
+  height: 28vh;
   width: 100%;
   font-family: Consolas;
   font-size: 14px;
