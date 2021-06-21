@@ -303,16 +303,16 @@ export default {
       return error;
     },
     lexicalOutput(){
-      if(this.lexicalError) return "error";
-      else return "success"
+      if(this.lexicalError) return "error darken-2";
+      else return "success darken-2"
     },
     syntaxOutput(){
-      if(this.syntaxError) return "error";
-      else return "success"
+      if(this.syntaxError) return "error darken-2";
+      else return "success darken-2"
     },
     semanticsOutput(){
-      if(this.semanticsError) return "error";
-      else return "success"
+      if(this.semanticsError) return "error darken-2";
+      else return "success darken-2"
     },
   },
 };
