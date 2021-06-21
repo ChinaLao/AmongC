@@ -853,6 +853,7 @@ export default {
           //console.log(tokenStream[index])
         }
         expr.push(tokenStream[index]);
+        if(tokenStream[index].word !== ")" && tokenStream[index + 1].word !== "{")
         index++;
       }
 
