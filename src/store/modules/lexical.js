@@ -125,12 +125,12 @@ export default {
           description: "String Literal",
         },
         negaLitInt: {
-          lex: "intLit",
+          lex: "negaIntLit",
           delims: ["minus", "multiply", "divide", "exponent", "floor", "modulo", "greater", "lesser", "greaterEqual", "lesserEqual", "closeParen", "colon", "isEqual", "isNotEqual", "closeBrace", "comma", "terminator", "whitespace", "append"],
           description: "Integer Literal",
         },
         litInt: {
-          lex: "intLit",
+          lex: "posiIntLit",
           delims: ["minus", "multiply", "divide", "exponent", "floor", "modulo", "greater", "lesser", "greaterEqual", "lesserEqual", "closeParen", "closeBracket", "colon", "isEqual", "isNotEqual", "closeBrace", "comma", "terminator", "whitespace", "append"],
           description: "Integer Literal",
         },
