@@ -641,6 +641,28 @@ export default {
             while(tokenStream[index].word !== "," && parenCounter > 0){
               if(tokenStream[index].word === "(") parenCounter++;
               else if(tokenStream[index].word === ")") parenCounter--;
+              if (tokenStream[index].word === "[") {
+                let moreArray = true;
+                while (moreArray) {
+                  index++;
+                  const { i, expr } = await dispatch("ADD_TO_EXPRESSION_SET", {
+                    tokenStream: tokenStream,
+                    index: index,
+                    open: "[",
+                    close: "]"
+                  });
+                  index = i;
+                  //console.log("here func blk (array id): ", expr)
+                  await dispatch("EXPRESSION_EVALUATOR", {
+                    expectedDtype: "int",
+                    expression: expr,
+                    evaluateArray: true,
+                    illegalTokens: [],
+                    legalIds: [],
+                  });
+                  if (tokenStream[index].word !== "[") moreArray = false;
+                }
+              }
               if(tokenStream[index].word !== ","){
                 if(parenCounter > 0) expr.push(tokenStream[index]);
                 index++;
@@ -648,40 +670,12 @@ export default {
             }
             if(tokenStream[index].word !== ";") index++;
             if(expr.length > 0){
-              console.log(paramCount, parameterCount)
-              if (paramCount < parameterCount + 1) commit("main/SET_ERROR", {
-                type: "sem-error",
-                msg: `Extra parameter found`,
-                line: expr[0].line,
-                col: expr[0].col,
-                exp: `${paramCount} number of parameters`
-              },
-              {
-                root: true
-              });
-              else{
-                const dtype = parameters ? parameters[parameterCount] : undefined;
-                const illegalTokens = dtype === "int" || dtype === "dec"
-                  ? ["litStr", "litBool"]
-                  : dtype === "str"
-                    ? ["litInt", "litDec", "litBool"]
-                    : [];
-
-                const legalIds = dtype === "int" || dtype === "dec"
-                  ? ["int", "dec"]
-                  : dtype === "bool"
-                    ? ["int", "dec", "str", "bool"]
-                    : dtype === undefined
-                      ? []
-                      : dtype;
-                await dispatch("EXPRESSION_EVALUATOR", {
-                  expectedDtype: dtype,
-                  expression: expr,
-                  evaluateArray: false,
-                  illegalTokens: illegalTokens,
-                  legalIds: legalIds,
-                });
-              }
+              await dispatch("PARAMETER_EVALUATOR", {
+                expression: expr,
+                parameters: parameters,
+                paramCount: paramCount,
+                parameterCount: parameterCount,
+              })
               parameterCount++;
             }
           }
@@ -765,6 +759,43 @@ export default {
         index++;
       }
       return index;
+    },
+    async PARAMETER_EVALUATOR({ commit, dispatch }, payload){
+      const { expression, parameters, paramCount, parameterCount } = payload;
+      if (paramCount < parameterCount + 1) commit("main/SET_ERROR", {
+        type: "sem-error",
+        msg: `Extra parameter found`,
+        line: expression[0].line,
+        col: expression[0].col,
+        exp: `${paramCount} number of parameters`
+      },
+        {
+          root: true
+        });
+      else {
+        const dtype = parameters ? parameters[parameterCount] : undefined;
+        const illegalTokens = dtype === "int" || dtype === "dec"
+          ? ["litStr", "litBool"]
+          : dtype === "str"
+            ? ["litInt", "litDec", "litBool"]
+            : [];
+
+        const legalIds = dtype === "int" || dtype === "dec"
+          ? ["int", "dec"]
+          : dtype === "bool"
+            ? ["int", "dec", "str", "bool"]
+            : dtype === undefined
+              ? []
+              : dtype;
+
+        await dispatch("EXPRESSION_EVALUATOR", {
+          expectedDtype: dtype,
+          expression: expression,
+          evaluateArray: false,
+          illegalTokens: illegalTokens,
+          legalIds: legalIds,
+        });
+      }
     },
     async VALUE_EVALUATOR({ state, dispatch, commit }, payload){
       let { tokenStream, index, dtype, editable, variable } = payload;
