@@ -64,29 +64,20 @@
                 <span>Clear All</span>
               </v-tooltip>
               <v-chip class="ml-5 mt-2" small :color="lexicalOutput" v-show="lexical">
-                <v-icon small class="mr-1" v-show="lexicalError">
-                  clear
-                </v-icon>
-                <v-icon small class="mr-1" v-show="!lexicalError">
-                  done
+                <v-icon small class="mr-1">
+                  {{ lexicalError ? 'clear' : 'done' }}
                 </v-icon>
                 Lexical
               </v-chip>
               <v-chip class="ml-5 mt-2" small :color="syntaxOutput" v-show="syntax">
-                <v-icon small class="mr-1" v-show="syntaxError">
-                  clear
-                </v-icon>
-                <v-icon small class="mr-1" v-show="!syntaxError">
-                  done
+                <v-icon small class="mr-1">
+                  {{ syntaxError ? 'clear' : 'done' }}
                 </v-icon>
                 Syntax
               </v-chip>
               <v-chip class="ml-5 mt-2" small :color="semanticsOutput" v-show="semantics">
-                <v-icon small class="mr-1" v-show="semanticsError">
-                  clear
-                </v-icon>
-                <v-icon small class="mr-1" v-show="!semanticsError">
-                  done
+                <v-icon small class="mr-1">
+                  {{ semanticsError ? 'clear' : 'done' }}
                 </v-icon>
                 Semantics
               </v-chip>
