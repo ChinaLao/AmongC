@@ -885,7 +885,7 @@ export default {
         index++;
       }
 
-      console.log(dtype)
+      console.log(dtype, expr)
       if(!dataTypes.includes(dtype) && dtype !== undefined){
         let exprCounter = 0;
         while(exprCounter < expr.length){
@@ -901,7 +901,7 @@ export default {
           exprCounter++;
         }
         console.log(dtype)
-      } else if (dtype === undefined && expr.length === 1) commit("main/SET_ERROR", {
+      } else if (dtype === undefined && expr.length < 2) commit("main/SET_ERROR", {
         type: "sem-error",
         msg: `Undefined variable (${variable.word})`,
         line: variable.line,
