@@ -618,10 +618,13 @@ export default {
               if(tokenStream[index].word !== "[") moreArray = false;
             }
           }
+          console.log(searchList, idIndex)
           const editable = idIndex >= 0 
-            ? searchList[idIndex].editable
-              ? true
-              : tokenStream[index].word === "="
+            ? searchList[idIndex].editable === false
+              ? tokenStream[index].word === "="
+                ? false
+                : true
+              : true
             : true;
           // console.log(variable, index, variableIndex)
           index = await dispatch("VALUE_EVALUATOR", {
