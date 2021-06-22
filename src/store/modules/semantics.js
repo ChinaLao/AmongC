@@ -84,7 +84,8 @@ export default {
               });
 
               index++;
-              if (tokenStream[index].word === "[") {
+              if (tokenStream[index].word === "[" || tokenStream[index].word === "@") {
+                if(tokenStream[index].word === "@") index++;
                 let moreArray = true;
                 while(moreArray){
                   index++;
@@ -150,7 +151,8 @@ export default {
                   });
 
                   index++;
-                  if (tokenStream[index].word === "[") {
+                  if (tokenStream[index].word === "[" || tokenStream[index].word === "@") {
+                    if(tokenStream[index].word === "@") index++;
                     let moreArray = true;
                     while(moreArray){
                       index++;
@@ -502,7 +504,8 @@ export default {
 
             let moreArray = true;
             index++;
-            if (tokenStream[index].word === "[") {
+            if (tokenStream[index].word === "[" || tokenStream[index].word === "@") {
+              if (tokenStream[index].word === "@") index++;
               while(moreArray){
                 index++;
                 const { i, expr } = await dispatch("ADD_TO_EXPRESSION_SET", {
@@ -591,8 +594,9 @@ export default {
             : searchList[idIndex].dtype;
 
           index++;
-          // console.log(index)
-          if (tokenStream[index].word === "[") {
+          console.log(index)
+          if (tokenStream[index].word === "[" || tokenStream[index].word === "@") {
+            if (tokenStream[index].word === "@") index++;
             let moreArray = true;
             while(moreArray){
               index++;
@@ -651,8 +655,10 @@ export default {
             const expr = [];
             while(tokenStream[index].word !== "," && parenCounter > 0){
               if(tokenStream[index].word === "(") parenCounter++;
-              else if(tokenStream[index].word === ")") parenCounter--;
-              if (tokenStream[index].word === "[") {
+              if(tokenStream[index].word === ")") parenCounter--;
+              console.log(index, tokenStream[index].word)
+              if (tokenStream[index].word === "[" || tokenStream[index].word === "@") {
+                if (tokenStream[index].word === "@") index++;
                 let moreArray = true;
                 while (moreArray) {
                   index++;
@@ -663,7 +669,7 @@ export default {
                     close: "]"
                   });
                   index = i;
-                  //console.log("here func blk (array id): ", expr)
+                  console.log("here func blk (array id): ", expr)
                   await dispatch("EXPRESSION_EVALUATOR", {
                     expectedDtype: "int",
                     expression: expr,
@@ -673,9 +679,10 @@ export default {
                   });
                   if (tokenStream[index].word !== "[") moreArray = false;
                 }
+                console.log(index, tokenStream[index].word)
               }
-              if(tokenStream[index].word !== ","){
-                if(parenCounter > 0) expr.push(tokenStream[index]);
+              if(tokenStream[index].word !== "," && tokenStream[index].word !== ")"){
+                if(parenCounter > 0 && tokenStream[index].word !== ")") expr.push(tokenStream[index]);
                 index++;
               }
             }
@@ -696,7 +703,8 @@ export default {
           while(parenCounter > 0){
             const expression = [];
             while(tokenStream[index].word !== "," && parenCounter > 0){
-              if(tokenStream[index].word === "["){
+              if (tokenStream[index].word === "[" || tokenStream[index].word === "@") {
+                if (tokenStream[index].word === "@") index++;
                 let moreArray = true;
                 while (moreArray) {
                   index++;
@@ -752,7 +760,8 @@ export default {
 
               let moreArray = true;
               index++;
-              if (tokenStream[index].word === "[") {
+              if (tokenStream[index].word === "[" || tokenStream[index].word === "@") {
+                if (tokenStream[index].word === "@") index++;
                 while (moreArray) {
                   index+=2;
                   if (tokenStream[index].word !== "[") moreArray = false;
@@ -773,6 +782,7 @@ export default {
     },
     async PARAMETER_EVALUATOR({ commit, dispatch }, payload){
       const { expression, parameters, paramCount, parameterCount } = payload;
+      console.log(payload)
       if (paramCount < parameterCount + 1) commit("main/SET_ERROR", {
         type: "sem-error",
         msg: `Extra parameter found`,
@@ -780,9 +790,19 @@ export default {
         col: expression[0].col,
         exp: `${paramCount} number of parameters`
       },
-        {
-          root: true
-        });
+      {
+        root: true
+      });
+      else if (paramCount > parameterCount + 1) commit("main/SET_ERROR", {
+        type: "sem-error",
+        msg: `Insufficient number of parameters found`,
+        line: expression[0].line,
+        col: expression[0].col,
+        exp: `${paramCount} number of parameters`
+      },
+      {
+        root: true
+      });
       else {
         const dtype = parameters ? parameters[parameterCount] : undefined;
         const illegalTokens = dtype === "int" || dtype === "dec"
@@ -831,7 +851,8 @@ export default {
         && (tokenStream[index].word !== ")" 
         && tokenStream[index + 1].word !== "{")
       ) {
-        if (tokenStream[index].word === "[") {
+        if (tokenStream[index].word === "[" || tokenStream[index].word === "@") {
+          if (tokenStream[index].word === "@") index++;
           let moreArray = true;
           while (moreArray) {
             index++;
@@ -935,7 +956,8 @@ export default {
             if(!dataTypes.includes(dtype)){
               if(counter+1 < expression.length)
                 counter++;
-              if (expression[counter] && expression[counter].word === "[") {
+              if (expression[counter] && expression[counter].word === "[" || expression[counter].word === "@") {
+                if (expression[counter].word === "@") counter++;
                 let moreArray = true;
                 while (moreArray) {
                   counter++;
