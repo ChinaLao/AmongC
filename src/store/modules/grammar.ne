@@ -343,12 +343,21 @@ variable_recur ->
     |   first_condition_choice oper_compute #added oper_compute
     |   variable_again #changed %comma %id variable_again to variable_again
 
+variable_recur_iterate ->
+        struct_new choice_choice variable_again #changed iterate_id back to struct_new
+    #|   function_call_statement_choice iterate_first_choice choice_choice variable_again
+    #|   iterate_choice choice_choice
+    |   first_compute_choice oper_condition #added oper_condition
+    |   first_condition_choice oper_compute #added oper_compute
+    |   variable_again #changed %comma %id variable_again to variable_again
+
 recur_variable ->
         %id variable_recur
     |   condition_notter_less oper_condition 
     |   not_many not_choice 
     |   %negative negative_choice 
-    |   %open_paren variable_choice %close_paren variable_next_null 
+    |   %open_paren variable_choice %close_paren variable_next_null
+    |   %unary_oper %id variable_recur_iterate #added this ++id
 
 variable ->
         %equal recur_variable recur_array
@@ -651,8 +660,14 @@ digit_choice ->
 #added this to remove ambiguity PERO PARANG MERON PA RIN E
 digit_another_choice ->
         #id_array
+        #function_call_statement_choice
+        struct_new
+    |   null
+
+digit_another_choice_iterate ->
         function_call_statement_choice
-    |   struct_new
+    |   struct_new %unary_oper
+    |   %unary_oper
     |   null
 
 #TEKA LANG, COMMENT LANG SAGLIT TONG DIGIT_NOTTER KASI GUMAWA AKO BAGO
@@ -706,8 +721,9 @@ oper_compute ->
 digit_notter ->
         int_literal
     |   %dec_literal
-    |   %negative %id digit_another_choice
-    |   %id digit_another_choice
+    |   %negative %id digit_another_choice_iterate
+    |   %id digit_another_choice_iterate
+    |   %unary_oper %id digit_another_choice
 
 append_choice ->
         compute_choice
@@ -789,20 +805,20 @@ digit_notter_less ->
 condition_notter_choice ->
         struct_new #iterate_choice
     |   function_call_statement_choice #iterate_choice
-    |   iterate_choice #(di ka na kailangan)
+    #|   iterate_choice #(di ka na kailangan)
     |   first_compute_choice #added this for computes with id at the start
     |   null
 
 #added condition_notter_choice
 condition_notter ->
-        negation %id condition_notter_choice #condition_notter_choice #may problem pa to kasi pwedeng i-negate yung string access
+        negation %id digit_another_choice_iterate #changed condition_notter_choice to digit_another_choice_iterate#condition_notter_choice #may problem pa to kasi pwedeng i-negate yung string access
     #|   literal
     |   %str_literal string_choice #changed string_access to string_choice
     |   %bool_literal
     |   int_literal oper_compute
     |   %dec_literal oper_compute
     #|   iterate_statement_condition
-    |   %unary_oper unary_choice 
+    |   %unary_oper %id digit_another_choice #changed condition_notter_choice to digit_another_choice
     #|   %unary_oper unary_choice iterate_statement_extra
     #|   compute_choice_less #changed compute_choice to compute_choice_less
 
