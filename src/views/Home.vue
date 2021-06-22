@@ -88,12 +88,12 @@
         <!-- inputs and outputs -->
         <v-row align="center" class="mb-1">
           <v-row class="ml-1">
-            <prism-editor
-              class="background my-editor pt-8"
+            <codemirror
+              @cursorActivity="highlight"
+              ref="codeEditor"
               v-model="code"
-              :highlight="highlighter"
-              line-numbers
-            ></prism-editor>
+              :options="cmOptions"
+            />
           </v-row>
           <v-row>
             <v-col>
@@ -132,19 +132,85 @@
 
 <script>
 import Header from "@/components/Header.vue";
-import { PrismEditor } from "vue-prism-editor";
-import "vue-prism-editor/dist/prismeditor.min.css";
-import { highlight, languages } from "prismjs/components/prism-core";
-import "prismjs/components/prism-clike";
-import "prismjs/components/prism-javascript";
-import "prismjs/themes/prism-tomorrow.css";
+
+import { codemirror, CodeMirror } from 'vue-codemirror';
+
+require("codemirror/addon/mode/simple.js");
+
+import "codemirror/lib/codemirror.css";
+import "codemirror/theme/yonce.css";
+import "codemirror/addon/display/fullscreen.css";
+import "codemirror/addon/scroll/simplescrollbars.css";
+
+import "codemirror/addon/edit/matchbrackets";
+import "codemirror/addon/lint/lint";
+import "codemirror/addon/edit/closebrackets";
+import "codemirror/addon/selection/active-line";
+import "codemirror/addon/display/fullscreen";
+import "codemirror/addon/search/searchcursor";
+import "codemirror/addon/search/search";
+import "codemirror/addon/scroll/simplescrollbars";
+import "codemirror/addon/display/placeholder";
+import "codemirror/addon/comment/comment";
+
+CodeMirror.defineSimpleMode("amongc", {
+  start: [
+    { regex: /"(?:[^"\\]|\\.)*"/, token: "string" },
+    { regex: /[~]?[0-9]{1,9}([.][0-9]{1,5})?/, token: "number" },
+    { regex: /(?:true|false)\b/, token: "number" },
+    {
+      regex: /(?:IN|OUT|struct|shoot|scan|if|elf|else|switch|vote|default|for|while|do|kill|continue|return|and|or|vital|task|clean)\b/,
+      token: "keyword"
+    },
+    { regex: /(?:int|dec|str|bool|empty)\b/, token: "atom" },
+    { regex: /[-+/*%=<>!@]+/, token: "tag" },
+    { regex: /[a-z][a-z0-9A-Z]{1,14}/, token: "variable" },
+    { regex: /#.*/, token: "comment "},
+
+  ],
+  comment: [
+    { regex: /#.*/, token: "comment"}
+  ],
+  meta: { dontIndentStates: ["comment"], lineComment: "#"}
+})
+
+
 export default {
   name: "Home",
   components: {
     Header,
-    PrismEditor,
+    codemirror
   },
   data: () => ({
+    cmOptions: {
+      tabSize: 2,
+      theme: "yonce",
+      mode: "amongc",
+      lineNumbers: true,
+      line: true,
+      autofocus: true,
+      lineWiseCopyCut: true,
+      autoCloseBrackets: {
+        pairs: '(){}[]""',
+        explode: "[]{}()"
+      },
+      matchBrackets: true,
+      styleActiveLine: true,
+      scrollbarStyle: "overlay",
+      lint: true,
+      dragDrop: false,
+      extraKeys: {
+        "Ctrl-Enter": () => self.runCode(),
+        "Cmd-Enter": () => self.runCode(),
+        "Ctrl-/": (cm) => cm.execCommand("toggleComment"),
+        "Cmd-/": (cm) => cm.execCommand("toggleComment"),
+        Tab: (cm) => cm.replaceSelection("  ", "end")
+      }
+    },
+    cmCursorPos: {
+      line: 1,
+      ch: 0
+    },
     code: null,
     output: null,
     runClicked: false,
@@ -217,8 +283,12 @@ export default {
     ],
   }),
   methods: {
-    highlighter(code) {
-      return highlight(code, languages.js);
+    highlight(cursor) {
+      const { ch, line } = cursor.getCursor();
+      this.cmCursorPos = Object.assign({}, this.cmCursorPos, {
+        ch,
+        line: line + 1
+      });
     },
     async run() {
       console.clear();
@@ -319,8 +389,8 @@ export default {
 </script>
 
 <style>
-.my-editor {
-  background: #080728;
+.CodeMirror {
+  background: #2c2c2c;
   color: #ffff;
   height: 40vh;
   width: 170vh;
@@ -348,10 +418,6 @@ export default {
   font-size: 14px;
   line-height: 1.5;
   padding: 5px;
-}
-
-.prism-editor__textarea:focus {
-  outline: none;
 }
 
 .bg {
