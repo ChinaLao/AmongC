@@ -181,105 +181,108 @@ export default {
     Header,
     codemirror
   },
-  data: () => ({
-    cmOptions: {
-      tabSize: 2,
-      theme: "yonce",
-      mode: "amongc",
-      lineNumbers: true,
-      line: true,
-      autofocus: true,
-      lineWiseCopyCut: true,
-      autoCloseBrackets: {
-        pairs: '(){}[]""',
-        explode: "[]{}()"
+  data() {
+    const self = this;
+    return{
+      cmOptions: {
+        tabSize: 2,
+        theme: "yonce",
+        mode: "amongc",
+        lineNumbers: true,
+        line: true,
+        autofocus: true,
+        lineWiseCopyCut: true,
+        autoCloseBrackets: {
+          pairs: '(){}[]""',
+          explode: "[]{}()"
+        },
+        matchBrackets: true,
+        styleActiveLine: true,
+        scrollbarStyle: "overlay",
+        lint: true,
+        dragDrop: false,
+        extraKeys: {
+          "Ctrl-Enter": () => self.run(),
+          "Ctrl-/": (cm) => cm.execCommand("toggleComment"),
+          Tab: (cm) => cm.replaceSelection("  ", "end")
+        }
       },
-      matchBrackets: true,
-      styleActiveLine: true,
-      scrollbarStyle: "overlay",
-      lint: true,
-      dragDrop: false,
-      extraKeys: {
-        "Ctrl-Enter": () => self.run(),
-        "Ctrl-/": (cm) => cm.execCommand("toggleComment"),
-        Tab: (cm) => cm.replaceSelection("  ", "end")
-      }
-    },
-    cmCursorPos: {
-      line: 1,
-      ch: 0
-    },
-    code: null,
-    output: null,
-    runClicked: false,
-    lexicalError: null,
-    syntaxError: null,
-    semanticsError: null,
-    lexemeTableHeaders: [
-      {
-        text: "Lexeme",
-        align: "center",
-        sortable: false,
-        value: "word",
+      cmCursorPos: {
+        line: 1,
+        ch: 0
       },
-      {
-        text: "Token",
-        align: "center",
-        sortable: false,
-        value: "lex",
-      },
-      {
-        text: "Description",
-        align: "center",
-        sortable: false,
-        value: "description",
-      },
-      {
-        text: "Line",
-        align: "center",
-        sortable: false,
-        value: "line",
-      },
-      {
-        text: "Column",
-        align: "center",
-        sortable: false,
-        value: "col"
-      },
-    ],
-    errorTableHeaders: [
-      {
-        text: "Error Type",
-        align: "center",
-        sortable: false,
-        value: "type",
-      },
-      {
-        text: "Error Message",
-        align: "center",
-        sortable: false,
-        value: "msg",
-      },
-      {
-        text: "Expected",
-        align: "center",
-        sortable: false,
-        value: "exp",
-      },
-      {
-        text: "Line",
-        align: "center",
-        sortable: false,
-        value: "line",
-      },
-      {
-        text: "Column",
-        align: "center",
-        sortable: false,
-        value: "col",
-      }
-    ],
-  }),
+      code: null,
+      output: null,
+      runClicked: false,
+      lexicalError: null,
+      syntaxError: null,
+      semanticsError: null,
+      lexemeTableHeaders: [
+        {
+          text: "Lexeme",
+          align: "center",
+          sortable: false,
+          value: "word",
+        },
+        {
+          text: "Token",
+          align: "center",
+          sortable: false,
+          value: "lex",
+        },
+        {
+          text: "Description",
+          align: "center",
+          sortable: false,
+          value: "description",
+        },
+        {
+          text: "Line",
+          align: "center",
+          sortable: false,
+          value: "line",
+        },
+        {
+          text: "Column",
+          align: "center",
+          sortable: false,
+          value: "col"
+        },
+      ],
+      errorTableHeaders: [
+        {
+          text: "Error Type",
+          align: "center",
+          sortable: false,
+          value: "type",
+        },
+        {
+          text: "Error Message",
+          align: "center",
+          sortable: false,
+          value: "msg",
+        },
+        {
+          text: "Expected",
+          align: "center",
+          sortable: false,
+          value: "exp",
+        },
+        {
+          text: "Line",
+          align: "center",
+          sortable: false,
+          value: "line",
+        },
+        {
+          text: "Column",
+          align: "center",
+          sortable: false,
+          value: "col",
+        }
+      ],
+    }
+  },
   methods: {
     highlight(cursor) {
       const { ch, line } = cursor.getCursor();
@@ -289,6 +292,7 @@ export default {
       });
     },
     async run() {
+      if(this.code === null || this.code === "") return;
       console.clear();
       this.clearOutput();
       this.runClicked = true;
