@@ -534,7 +534,7 @@ statement_choice ->
     |   %id id_start_statement
     |   %unary_oper %id iterate_id %terminator #kulang to #changed assign_next_choice to iterate_id
     #|   return_statement #removed for main functio
-    |   control_statement 
+    #|   control_statement 
     |   %clean %open_paren %close_paren %terminator
     #|   %singleComment
 
@@ -564,7 +564,7 @@ function_statement_choice ->
     |   %id id_start_statement
     |   %unary_oper %id iterate_id %terminator #kulang to #changed assign_next_choice to iterate_id
     |   return_statement
-    |   control_statement 
+    #|   control_statement 
     |   %clean %open_paren %close_paren %terminator
     #|   %singleComment
 
@@ -608,9 +608,9 @@ iterate_statement_choice -> #changed interate_choice to iterate_intdec
     |   %assign_oper iterate_intdec
     #|   null
 
-control_statement ->
-        %control %terminator
-    |   %kill %terminator
+# control_statement ->
+#         %control %terminator
+#     |   %kill %terminator
 
 out_statement ->
         %shoot %open_paren output %close_paren %terminator
