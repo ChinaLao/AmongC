@@ -484,7 +484,6 @@ assign_array ->
 #         %comma declare_choice
 #     |   null
 
-
 vital_array -> #changed recur_variable to recur_array
         %open_bracket struct_size %close_bracket vital_array_define_first #recur_array
 
@@ -1032,7 +1031,16 @@ return_choice ->
     |   condition_notter_less oper_condition #oper_compute
     |   not_many not_choice #repeated !!!
     |   %negative negative_choice 
-    |   %open_paren return_next_choice
+    |   %open_paren variable_choice_null %close_paren #return_next_choice 
+    |   null
+
+variable_choice_null ->
+        %id choice #variable_next_choice
+  # |   condition_less_choice_choice
+    |   condition_notter_less oper_condition
+    |   not_many not_choice #repeated !!!
+    |   %negative negative_choice 
+    |   %open_paren variable_choice_null %close_paren variable_next_null
     |   null
 
 return_statement ->
