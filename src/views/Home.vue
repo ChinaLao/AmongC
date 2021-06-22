@@ -63,19 +63,19 @@
                 </template>
                 <span>Clear All</span>
               </v-tooltip>
-              <v-chip class="ml-5 mt-2" small :color="lexicalOutput" v-show="lexical">
+              <v-chip class="ml-5 mt-2" small :color="lexicalOutput" v-show="lexicalError !== null">
                 <v-icon small class="mr-1">
                   {{ lexicalError ? 'clear' : 'done' }}
                 </v-icon>
                 Lexical
               </v-chip>
-              <v-chip class="ml-5 mt-2" small :color="syntaxOutput" v-show="syntax">
+              <v-chip class="ml-5 mt-2" small :color="syntaxOutput" v-show="syntaxError !== null">
                 <v-icon small class="mr-1">
                   {{ syntaxError ? 'clear' : 'done' }}
                 </v-icon>
                 Syntax
               </v-chip>
-              <v-chip class="ml-5 mt-2" small :color="semanticsOutput" v-show="semantics">
+              <v-chip class="ml-5 mt-2" small :color="semanticsOutput" v-show="semanticsError !== null">
                 <v-icon small class="mr-1">
                   {{ semanticsError ? 'clear' : 'done' }}
                 </v-icon>
@@ -348,6 +348,9 @@ export default {
       this.$store.commit("semantics/CLEAR");
     },
   },
+  watch: {
+
+  },
   computed: {
     lexeme() {
       return this.$store.getters["lexical/LEXEME"];
@@ -357,18 +360,6 @@ export default {
       error.sort((a, b) => a.col - b.col);
       error.sort((a, b) => a.line - b.line);
       return error;
-    },
-    lexical(){
-      if(this.lexicalError !== null) return true;
-      else return false;
-    },
-    syntax(){
-      if(!this.lexicalError && this.syntaxError !== null) return true;
-      else return false;
-    },
-    semantics(){
-      if(!this.lexicalError && !this.syntaxError && this.semanticsError !== null) return true;
-      else return false;
     },
     lexicalOutput(){
       if(this.lexicalError) return "error darken-2";
