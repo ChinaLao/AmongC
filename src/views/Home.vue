@@ -340,9 +340,9 @@ export default {
       this.lexical = false;
       this.syntax = false;
       this.semantics = false;
-      this.lexicalError = false;
-      this.syntaxError = false;
-      this.semanticsError = false;
+      this.lexicalError = null;
+      this.syntaxError = null;
+      this.semanticsError = null;
       this.$store.commit("lexical/CLEAR");
       this.$store.commit("main/CLEAR");
       this.$store.commit("semantics/CLEAR");
