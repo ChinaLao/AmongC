@@ -159,7 +159,7 @@ CodeMirror.defineSimpleMode("amongc", {
     { regex: /[~]?[0-9]{1,9}([.][0-9]{1,5})?/, token: "number" },
     { regex: /(?:true|false)\b/, token: "number" },
     {
-      regex: /(?:IN|OUT|struct|shoot|scan|if|elf|else|switch|vote|default|for|while|do|kill|continue|return|and|or|vital|task|clean)\b/,
+      regex: /(?:IN|OUT|struct|shoot|scan|if|elf|else|switch|vote|default|for|while|do|kill|return|and|or|vital|task|clean)\b/,
       token: "keyword"
     },
     { regex: /(?:int|dec|str|bool|empty)\b/, token: "atom" },
