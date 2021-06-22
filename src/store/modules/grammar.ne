@@ -343,17 +343,21 @@ variable_recur ->
     |   first_condition_choice oper_compute #added oper_compute
     |   variable_again #changed %comma %id variable_again to variable_again
 
+# oper_choices ->
+#         oper_condition oper_choices
+#     |   oper_compute oper_choices
+
 variable_recur_iterate ->
-        struct_new choice_choice variable_again #changed iterate_id back to struct_new
+        struct_new choice_choice #variable_again #changed iterate_id back to struct_new
     #|   function_call_statement_choice iterate_first_choice choice_choice variable_again
     #|   iterate_choice choice_choice
     |   first_compute_choice oper_condition #added oper_condition
     |   first_condition_choice oper_compute #added oper_compute
-    |   variable_again #changed %comma %id variable_again to variable_again
+    #|   variable_again #changed %comma %id variable_again to variable_again
 
 recur_variable ->
         %id variable_recur
-    |   condition_notter_less oper_condition 
+    |   condition_notter_less oper_condition #oper_compute
     |   not_many not_choice 
     |   %negative negative_choice 
     |   %open_paren variable_choice %close_paren variable_next_null
@@ -697,9 +701,13 @@ digit_another_choice_iterate ->
 # extra_compute ->
 #         %arith_oper compute_choice
 
+combined ->
+        compute_choice
+    |   condition
+
 compute_choice ->
         computation
-    |   negation %open_paren compute_choice %close_paren oper_compute
+    |   negation %open_paren combined %close_paren oper_compute
 
 computation ->
         digit_choice oper_compute
@@ -802,12 +810,13 @@ digit_notter_less ->
 # extra_condition ->
 #         oper_choice condition
 
-condition_notter_choice ->
-        struct_new #iterate_choice
-    |   function_call_statement_choice #iterate_choice
-    #|   iterate_choice #(di ka na kailangan)
-    |   first_compute_choice #added this for computes with id at the start
-    |   null
+#removed bc unused
+# condition_notter_choice ->
+#         struct_new #iterate_choice
+#     |   function_call_statement_choice #iterate_choice
+#     #|   iterate_choice #(di ka na kailangan)
+#     |   first_compute_choice #added this for computes with id at the start
+#     |   null
 
 #added condition_notter_choice
 condition_notter ->
@@ -827,7 +836,7 @@ condition -> #moved conditional, and notter %open_paren... to conditional_choice
        
 conditional_choice -> #added this to remove ambiguity with notter
         conditional 
-    |   %open_paren condition %close_paren oper_condition
+    |   %open_paren combined %close_paren oper_condition
 
 conditional -> #changed condition_choice to condition_notter
         condition_notter oper_condition
@@ -1020,7 +1029,7 @@ function_choice ->
 return_choice ->
         %id choice #variable_next_choice
   # |   condition_less_choice_choice
-    |   condition_notter_less oper_condition
+    |   condition_notter_less oper_condition #oper_compute
     |   not_many not_choice #repeated !!!
     |   %negative negative_choice 
     |   %open_paren return_next_choice
