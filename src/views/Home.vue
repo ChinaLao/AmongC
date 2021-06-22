@@ -103,7 +103,7 @@
                 :items="lexeme"
                 :items-per-page="-1"
                 height="180"
-                class="background lexOutput elevation-1"
+                class="#1C1C1C lexOutput elevation-1"
                 dark
                 hide-default-footer
                 fixed-header
@@ -116,7 +116,7 @@
                 :items="error"
                 :items-per-page="-1"
                 height="180"
-                class="background errorOutput elevation-1"
+                class="#1C1C1C errorOutput elevation-1"
                 dark
                 hide-default-footer
                 fixed-header
@@ -200,10 +200,8 @@ export default {
       lint: true,
       dragDrop: false,
       extraKeys: {
-        "Ctrl-Enter": () => self.runCode(),
-        "Cmd-Enter": () => self.runCode(),
+        "Ctrl-Enter": () => self.run(),
         "Ctrl-/": (cm) => cm.execCommand("toggleComment"),
-        "Cmd-/": (cm) => cm.execCommand("toggleComment"),
         Tab: (cm) => cm.replaceSelection("  ", "end")
       }
     },
@@ -401,7 +399,7 @@ export default {
 }
 
 .lexOutput {
-  border: 2px solid #080728;
+  border: 2px solid #1C1C1C;
   height: 28vh;
   width: 100%;
   font-family: Consolas;
@@ -411,7 +409,7 @@ export default {
 }
 
 .errorOutput {
-  border: 2px solid #080728;
+  border: 2px solid #1C1C1C;
   height: 28vh;
   width: 100%;
   font-family: Consolas;
