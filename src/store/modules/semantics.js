@@ -695,19 +695,18 @@ export default {
                 parameterCount: parameterCount,
               })
               parameterCount++;
-            } else {
-              if (paramCount > 0) commit("main/SET_ERROR", {
-                type: "sem-error",
-                msg: `Insufficient number of parameters found`,
-                line: tokenStream[index-2].line,
-                col: tokenStream[index-2].col,
-                exp: `${paramCount} number of parameters`
-              },
-              {
-                root: true
-              });
             }
           }
+          if (parameterCount < paramCount) commit("main/SET_ERROR", {
+            type: "sem-error",
+            msg: `Insufficient number of parameters foundd`,
+            line: tokenStream[index-2].line,
+            col: tokenStream[index-2].col,
+            exp: `${paramCount} number of parameters`
+          },
+          {
+            root: true
+          });
         } else if(tokenStream[index].token === "shoot"){
           index += 2;
           let parenCounter = 1;
@@ -797,16 +796,6 @@ export default {
       if (paramCount < parameterCount + 1) commit("main/SET_ERROR", {
         type: "sem-error",
         msg: `Extra parameter found`,
-        line: expression[0].line,
-        col: expression[0].col,
-        exp: `${paramCount} number of parameters`
-      },
-      {
-        root: true
-      });
-      else if (paramCount > parameterCount + 1) commit("main/SET_ERROR", {
-        type: "sem-error",
-        msg: `Insufficient number of parameters found`,
         line: expression[0].line,
         col: expression[0].col,
         exp: `${paramCount} number of parameters`
