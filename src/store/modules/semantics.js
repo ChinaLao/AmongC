@@ -877,16 +877,7 @@ export default {
           }
           exprCounter++;
         }
-      } else if (dtype === undefined && expr.length < 2) commit("main/SET_ERROR", {
-        type: "sem-error",
-        msg: `Undefined variable (${variable.word})`,
-        line: variable.line,
-        col: variable.col,
-        exp: "-"
-      },
-      {
-        root: true
-      });
+      } else if (dtype === undefined) expr.unshift(variable);
 
       const illegalTokens = dtype === "int" || dtype === "dec"
         ? ["litStr", "litBool"]
