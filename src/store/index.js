@@ -1,7 +1,10 @@
 import Vue from "vue";
 import Vuex from "vuex";
 
-import lexicalAnalyzer from "./modules/lexicalAnalyzer";
+import lexical from "./modules/lexical";
+import main from "./modules/main"
+import syntax from "./modules/syntax"
+import semantics from "./modules/semantics"
 
 Vue.use(Vuex);
 
@@ -10,6 +13,9 @@ export default new Vuex.Store({
   mutations: {},
   actions: {},
   modules: {
-    lexicalAnalyzer,
+    lexical,
+    main,
+    syntax,
+    semantics
   },
 });

@@ -8,7 +8,7 @@
           <!-- buttons -->
           <v-col>
             <v-row>
-              <h2 class="white--text">Editor</h2>
+              <h2 class="white--text ml-1">Editor</h2>
               <v-tooltip bottom>
                 <template v-slot:activator="{ on, attrs }">
                   <v-btn
@@ -63,64 +63,66 @@
                 </template>
                 <span>Clear All</span>
               </v-tooltip>
-            </v-row>
-          </v-col>
-          <!-- title of lexeme table -->
-          <v-col class="ml-2">
-            <v-row>
-              <h2 class="white--text">Lexeme Table</h2>
+              <v-chip class="ml-5 mt-2" small :color="lexicalOutput" v-show="lexical">
+                <v-icon small class="mr-1">
+                  {{ lexicalError ? 'clear' : 'done' }}
+                </v-icon>
+                Lexical
+              </v-chip>
+              <v-chip class="ml-5 mt-2" small :color="syntaxOutput" v-show="syntax">
+                <v-icon small class="mr-1">
+                  {{ syntaxError ? 'clear' : 'done' }}
+                </v-icon>
+                Syntax
+              </v-chip>
+              <v-chip class="ml-5 mt-2" small :color="semanticsOutput" v-show="semantics">
+                <v-icon small class="mr-1">
+                  {{ semanticsError ? 'clear' : 'done' }}
+                </v-icon>
+                Semantics
+              </v-chip>
             </v-row>
           </v-col>
         </v-row>
 
         <!-- inputs and outputs -->
-        <v-row align="center">
-          <v-col>
-            <v-row>
-              <prism-editor
-                class="background my-editor pt-8"
-                v-model="code"
-                :highlight="highlighter"
-                line-numbers
-              ></prism-editor>
-            </v-row>
-            <v-row>
-              <h2 class="success--text">Output</h2>
-              <prism-editor
-                class="background semOutput pt-8"
-                v-model="semantics"
-                :highlight="highlighter"
-                readonly
-              ></prism-editor>
-            </v-row>
-          </v-col>
-          <v-col class="ml-2">
-            <v-row>
+        <v-row align="center" class="mb-1">
+          <v-row class="ml-1">
+            <codemirror
+              @cursorActivity="highlight"
+              ref="codeEditor"
+              v-model="code"
+              :options="cmOptions"
+            />
+          </v-row>
+          <v-row>
+            <v-col>
+              <h2 class="success--text ml-1">Lexeme Table</h2>
               <v-data-table
                 :headers="lexemeTableHeaders"
                 :items="lexeme"
                 :items-per-page="-1"
-                height="270"
-                class="background lexOutput elevation-1"
+                height="180"
+                class="#1C1C1C lexOutput elevation-1"
                 dark
                 hide-default-footer
                 fixed-header
               ></v-data-table>
-            </v-row>
-            <v-row>
+            </v-col>
+            <v-col>
               <h2 class="error--text">Errors</h2>
               <v-data-table
                 :headers="errorTableHeaders"
                 :items="error"
                 :items-per-page="-1"
                 height="180"
-                class="background errorOutput elevation-1"
+                class="#1C1C1C errorOutput elevation-1"
                 dark
                 hide-default-footer
                 fixed-header
               ></v-data-table>
-            </v-row>
-          </v-col>
+            </v-col>
+          </v-row>
         </v-row>
       </v-container>
     </v-main>
@@ -130,22 +132,89 @@
 
 <script>
 import Header from "@/components/Header.vue";
-import { PrismEditor } from "vue-prism-editor";
-import "vue-prism-editor/dist/prismeditor.min.css";
-import { highlight, languages } from "prismjs/components/prism-core";
-import "prismjs/components/prism-clike";
-import "prismjs/components/prism-javascript";
-import "prismjs/themes/prism-tomorrow.css";
+
+import { codemirror, CodeMirror } from 'vue-codemirror';
+
+require("codemirror/addon/mode/simple.js");
+
+import "codemirror/lib/codemirror.css";
+import "codemirror/theme/yonce.css";
+import "codemirror/addon/display/fullscreen.css";
+import "codemirror/addon/scroll/simplescrollbars.css";
+
+import "codemirror/addon/edit/matchbrackets";
+import "codemirror/addon/lint/lint";
+import "codemirror/addon/edit/closebrackets";
+import "codemirror/addon/selection/active-line";
+import "codemirror/addon/display/fullscreen";
+import "codemirror/addon/search/searchcursor";
+import "codemirror/addon/search/search";
+import "codemirror/addon/scroll/simplescrollbars";
+import "codemirror/addon/display/placeholder";
+import "codemirror/addon/comment/comment";
+
+CodeMirror.defineSimpleMode("amongc", {
+  start: [
+    { regex: /"(?:[^"\\]|\\.)*"/, token: "string" },
+    { regex: /[~]?[0-9]{1,9}([.][0-9]{1,5})?/, token: "number" },
+    { regex: /(?:true|false)\b/, token: "number" },
+    {
+      regex: /(?:IN|OUT|struct|shoot|scan|if|elf|else|switch|vote|default|for|while|do|kill|continue|return|and|or|vital|task|clean)\b/,
+      token: "keyword"
+    },
+    { regex: /(?:int|dec|str|bool|empty)\b/, token: "atom" },
+    { regex: /[-+/*%=<>!@]+/, token: "tag" },
+    { regex: /[a-z][a-z0-9A-Z]{1,14}/, token: "variable" },
+    { regex: /#.*/, token: "comment "},
+
+  ],
+  comment: [
+    { regex: /#.*/, token: "comment"}
+  ],
+  meta: { dontIndentStates: ["comment"], lineComment: "#"}
+})
+
+
 export default {
   name: "Home",
   components: {
     Header,
-    PrismEditor,
+    codemirror
   },
   data: () => ({
+    cmOptions: {
+      tabSize: 2,
+      theme: "yonce",
+      mode: "amongc",
+      lineNumbers: true,
+      line: true,
+      autofocus: true,
+      lineWiseCopyCut: true,
+      autoCloseBrackets: {
+        pairs: '(){}[]""',
+        explode: "[]{}()"
+      },
+      matchBrackets: true,
+      styleActiveLine: true,
+      scrollbarStyle: "overlay",
+      lint: true,
+      dragDrop: false,
+      extraKeys: {
+        "Ctrl-Enter": () => self.run(),
+        "Ctrl-/": (cm) => cm.execCommand("toggleComment"),
+        Tab: (cm) => cm.replaceSelection("  ", "end")
+      }
+    },
+    cmCursorPos: {
+      line: 1,
+      ch: 0
+    },
     code: null,
-    semantics: null,
+    output: null,
     runClicked: false,
+    lexicalError: null,
+    syntaxError: null,
+    semanticsError: null,
     lexemeTableHeaders: [
       {
         text: "Lexeme",
@@ -212,26 +281,51 @@ export default {
     ],
   }),
   methods: {
-    highlighter(code) {
-      return highlight(code, languages.js);
+    highlight(cursor) {
+      const { ch, line } = cursor.getCursor();
+      this.cmCursorPos = Object.assign({}, this.cmCursorPos, {
+        ch,
+        line: line + 1
+      });
     },
     async run() {
-      this.runClicked = true;
+      console.clear();
       this.clearOutput();
-      this.semantics = "Checking Lexical...";
-      await this.$store.dispatch("lexicalAnalyzer/LEXICAL", this.code);
-      if(this.error.length <= 0){
-        this.semantics += "\nNo Lexical Error";
-        this.semantics += "\n\nChecking Syntax...";
-        await this.$store.dispatch("lexicalAnalyzer/SYNTAX");
-        if(this.error.length <= 0){
-          this.semantics += "\nNo Syntax Error";
-          // const output = JSON.stringify(this.$store.getters["lexicalAnalyzer/OUTPUT"], null, " ");
-          // const statements = JSON.parse(output);
-          // this.semantics += "\n\nAST:\n" + await this.$store.dispatch('lexicalAnalyzer/WRITE_JAVASCRIPT', statements);
-        }else this.semantics += "\nSyntax Error Found";
+      this.runClicked = true;
+
+      this.output = "Checking Lexical...";
+      const tokens = await this.$store.dispatch("lexical/ANALYZE", this.code); //gets tokenized with spaces
+      if(this.error.length <= 0){ //if no lex-error
+        this.lexicalError = false;
+        this.output += "\nNo Lexical Error\n\nChecking Syntax...";
+        await this.$store.dispatch("syntax/ANALYZE", tokens); //check syntax and pass the tokens with spaces
+
+        if(this.error.length <= 0){ //if no syn-error
+          this.syntaxError = false;
+          this.output += "\nNo Syntax Error\n\nChecking Semantics...";
+          await this.$store.dispatch("semantics/ANALYZE", tokens); 
+
+          if(this.error.length <= 0){
+            this.semanticsError = false;
+            this.output += "\nNo Semantics Error"
+          }
+          else{
+            this.output += "\nSemantics Error Found"
+            this.semanticsError = true;
+            console.log("%cSemantic Errors: ", "color: cyan; font-size: 15px", this.error);
+          }
+
+        }else{
+          this.syntaxError = true;
+          this.output += "\nSyntax Error Found";
+          console.log("%Syntax Errors: ", "color: cyan; font-size: 15px", this.error);
+        }
       }
-      else this.semantics += "\nLexical Error Found";
+      else{
+        this.output += "\nLexical Error Found";
+        this.lexicalError = true;
+        console.log("%cLexical Errors: ", "color: cyan; font-size: 15px", this.error);
+      }
       this.runClicked = false;
     },
     stop() {
@@ -242,38 +336,62 @@ export default {
       this.clearOutput();
     },
     clearOutput() {
-      this.semantics = null;
-      this.$store.commit("lexicalAnalyzer/CLEAR_OUTPUTS");
+      this.output = null;
+      this.lexical = false;
+      this.syntax = false;
+      this.semantics = false;
+      this.lexicalError = false;
+      this.syntaxError = false;
+      this.semanticsError = false;
+      this.$store.commit("lexical/CLEAR");
+      this.$store.commit("main/CLEAR");
+      this.$store.commit("semantics/CLEAR");
     },
   },
   computed: {
     lexeme() {
-      return this.$store.getters["lexicalAnalyzer/LEXEME"];
+      return this.$store.getters["lexical/LEXEME"];
     },
     error() {
-      return this.$store.getters["lexicalAnalyzer/ERROR"];
+      const error = this.$store.getters["main/ERROR"];
+      error.sort((a, b) => a.col - b.col);
+      error.sort((a, b) => a.line - b.line);
+      return error;
+    },
+    lexical(){
+      if(this.lexicalError !== null) return true;
+      else return false;
+    },
+    syntax(){
+      if(!this.lexicalError && this.syntaxError !== null) return true;
+      else return false;
+    },
+    semantics(){
+      if(!this.lexicalError && !this.syntaxError && this.semanticsError !== null) return true;
+      else return false;
+    },
+    lexicalOutput(){
+      if(this.lexicalError) return "error darken-2";
+      else return "success darken-2"
+    },
+    syntaxOutput(){
+      if(this.syntaxError) return "error darken-2";
+      else return "success darken-2"
+    },
+    semanticsOutput(){
+      if(this.semanticsError) return "error darken-2";
+      else return "success darken-2"
     },
   },
 };
 </script>
 
 <style>
-.my-editor {
-  background: #080728;
+.CodeMirror {
+  background: #2c2c2c;
   color: #ffff;
   height: 40vh;
-  width: 100%;
-  font-family: Consolas;
-  font-size: 14px;
-  line-height: 1.5;
-  padding: 5px;
-}
-
-.semOutput {
-  background: #080728;
-  color: #ffff;
-  height: 27.5vh;
-  width: 100%;
+  width: 170vh;
   font-family: Consolas;
   font-size: 14px;
   line-height: 1.5;
@@ -281,8 +399,8 @@ export default {
 }
 
 .lexOutput {
-  border: 2px solid #080728;
-  height: 40vh;
+  border: 2px solid #1C1C1C;
+  height: 28vh;
   width: 100%;
   font-family: Consolas;
   font-size: 14px;
@@ -291,17 +409,13 @@ export default {
 }
 
 .errorOutput {
-  border: 2px solid #080728;
-  height: 27.5vh;
+  border: 2px solid #1C1C1C;
+  height: 28vh;
   width: 100%;
   font-family: Consolas;
   font-size: 14px;
   line-height: 1.5;
   padding: 5px;
-}
-
-.prism-editor__textarea:focus {
-  outline: none;
 }
 
 .bg {
