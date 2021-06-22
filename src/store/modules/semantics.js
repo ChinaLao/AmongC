@@ -745,6 +745,7 @@ export default {
               if(parenCounter > 0) expression.push(tokenStream[index]);
               index++;
             }
+            console.log(expression)
             await dispatch("SHOOT_EVALUATOR", expression);
             if(parenCounter > 0) index++;
           }
@@ -935,6 +936,7 @@ export default {
       const tasks = state.tasks;
       const ids = state.ids;
       const elements = state.elements;
+      const globals = state.globalIds;
 
       let dtype = null;
       let counter = 0;
@@ -950,6 +952,10 @@ export default {
           if(dtype === null){
             idIndex = ids.findIndex(id => id.lex === expression[counter].lex);
             if(idIndex >= 0) dtype = ids[idIndex].dtype;
+            else{
+              idIndex = globals.findIndex(id => id.lex === expression[counter].lex);
+              if(idIndex >= 0) dtype = globals[idIndex].dtype;
+            }
           }
           else if(!dataTypes.includes(dtype)){
             idIndex = elements.findIndex(element => element.word === expression[counter].word && dtype === element.struct);
@@ -995,7 +1001,7 @@ export default {
           : expression[counter].token === "litStr"
             ? "str"
             : "bool";
-      // console.log("here shoot eval: ", dtype, expression);
+      console.log("here shoot eval: ", dtype, expression);
       await dispatch("EXPRESSION_EVALUATOR", {
         expectedDtype: dtype,
         expression: expression,
