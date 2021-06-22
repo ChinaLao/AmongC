@@ -930,7 +930,8 @@ export default {
       }
       return index;
     },
-    async SHOOT_EVALUATOR({ state, commit, dispatch }, expression){
+    async SHOOT_EVALUATOR({ state, dispatch }, expression){
+      console.log(expression)
       const dataTypes = state.dataTypes;
       const literals = ["litInt", "litDec", "litStr", "litBool"];
       const tasks = state.tasks;
@@ -943,10 +944,12 @@ export default {
       while(counter < expression.length && dtype !== "empty" && !dataTypes.includes(dtype) && dtype !== undefined && !literals.includes(expression[counter].token)){
         let idIndex;
         if(expression[counter+1] && expression[counter+1].word === "("){
+          console.log(tasks, expression[counter])
           idIndex = tasks.findIndex(task => 
             task.lex === expression[counter].lex
           );
           if(idIndex < 0) dtype = undefined;
+          else dtype = tasks[idIndex].dtype
         }
         else{
           if(dtype === null){
