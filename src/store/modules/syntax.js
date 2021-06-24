@@ -102,8 +102,7 @@ export default {
                 const group = await dispatch('lexical/FIND_GROUP', expect, { root: true });
                 //find the lex from deignated group
                 const lex = results[group][expect]["lex"];
-                if(expect !== "negaLitInt")
-                  expectations.push(lex);
+                expectations.push(lex);
               }
             }
             type = "syn-error";
