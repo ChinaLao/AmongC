@@ -385,8 +385,8 @@ export default {
 .CodeMirror {
   background: #2c2c2c;
   color: #ffff;
-  height: 40vh;
-  width: 170vh;
+  height: 38vh;
+  width: 178vh;
   font-family: Consolas;
   font-size: 14px;
   line-height: 1.5;
