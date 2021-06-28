@@ -1,5 +1,13 @@
 # amongc
 
+A compiler based on C language
+
+Used moo.js for tokenizing.
+
+Used Nearley js for syntax analyzing.
+
+Semantic analyzing is not fully implemented.
+
 ## Project setup
 ```
 yarn install
