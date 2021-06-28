@@ -10,6 +10,11 @@ yarn install
 yarn serve
 ```
 
+### Re-compiles and regenerates grammar.js
+```
+yarn generate-grammar
+```
+
 ### Compiles and minifies for production
 ```
 yarn build
