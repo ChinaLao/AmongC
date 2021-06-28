@@ -18,4 +18,9 @@
 	};
 </script>
 
-<style></style>
+<style>
+iframe {
+  background: url(../assets/loading.gif) center center no-repeat, url(../assets/loading-gif.gif) center center no-repeat;
+	background-size: 100px, 200px;
+}
+</style>
