@@ -19,7 +19,7 @@
 			</v-col>
 			<v-col cols="1" class="ml-16 mt-1">
 				<v-btn outlined color="primary" @click="goto('Documentation')">
-					<span class="text-h5 text-lowercase white--text">Documentation ></span>
+					<span class="text-h5 text-lowercase white--text">Documentation</span>
 				</v-btn>
 			</v-col>
 		</v-row>

@@ -10,6 +10,8 @@ Semantic analyzing is not fully implemented.
 
 Hosted compiler: https://amongc.netlify.app/#/
 
+Documentation: https://docs.google.com/document/d/1a9Gp33z9k2D8gbXX-Vde3UBebsyGtkIs0beKN4bckwo/edit?usp=sharing
+
 ## Project setup
 ```
 yarn install
