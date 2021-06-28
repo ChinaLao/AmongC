@@ -8,6 +8,8 @@ Used Nearley js for syntax analyzing.
 
 Semantic analyzing is not fully implemented.
 
+Hosted compiler: https://amongc.netlify.app/#/
+
 ## Project setup
 ```
 yarn install
