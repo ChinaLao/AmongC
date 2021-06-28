@@ -126,7 +126,19 @@
         </v-row>
       </v-container>
     </v-main>
-    <v-footer class="primary center" dark>Among C Compiler &copy; 2021</v-footer>
+    <v-footer class="primary justify-center" dark>
+      <span class="mr-10"> Among C Compiler &copy; 2021 </span>
+      <span class="ml-16"> China Marie Lao </span>
+      <span class="ml-5"> | </span>
+      <span class="ml-5"> Clarissa Faye Gamboa </span>
+      <span class="ml-5"> | </span>
+      <span class="ml-5"> Celeste June Panganiban </span>
+      <span class="ml-5"> | </span>
+      <span class="ml-5 mr-10"> Kendrell Derek Acibar </span>
+      <span class="ml-16"> Moo.js </span>
+      <span class="ml-5"> | </span>
+      <span class="ml-5"> Nearley </span>
+    </v-footer>
   </v-app>
 </template>
 
