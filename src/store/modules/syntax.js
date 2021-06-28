@@ -129,8 +129,6 @@ export default {
         }
         index++;
       }
-      // if(parser.results && parser.results.length > 1)
-      //   console.log("%cAMBIGUOUS GRAMMAR DETECTED", "color: red; font-size: 20px");
       if(parser.results){
         console.log("%cParser Results: ", "color: cyan; font-size: 15px", parser.results);
       }
